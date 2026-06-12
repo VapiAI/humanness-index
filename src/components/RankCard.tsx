@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 
 import { voiceStats } from '../data/providers';
 import { modelDetailLinkForId } from '../lib/detail';
@@ -83,7 +83,6 @@ export const RankCardArt = ({ model, playing, animate, onPlay, featured = false 
 
 /** A Top-10 leaderboard card: rank, identity, visualizer + listen, score, stats. */
 export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardProps) => {
-  const [hovered, setHovered] = useState(false);
   const stats = voiceStats(model);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
@@ -101,12 +100,12 @@ export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardPr
           '--card-to': palette.to,
         } as CSSProperties
       }
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <div className="rcard-rank">#{rank}</div>
       <RankCardIdentity model={model} />
-      <RankCardArt model={model} playing={playing} animate={playing || hovered} onPlay={onPlay} />
+      {/* The viz animates only during playback: hover-started animation made
+          the canvas spin up right as the pointer crossed cards mid-scroll. */}
+      <RankCardArt model={model} playing={playing} animate={playing} onPlay={onPlay} />
       <div className="rcard-score">
         <span className="rcard-score-label">Humanness</span>
         <span className="rcard-score-value">{humannessScore(model, allModels)}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 
 import { modelBlurb, voiceStats } from '../data/providers';
 import { humannessScore } from '../lib/scoring';
@@ -10,7 +10,6 @@ import { RankScale } from './RankScale';
 
 /** The #1 card — double-width hero with Vapi's editorial blurb on the leader. */
 export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCardProps) => {
-  const [hovered, setHovered] = useState(false);
   const stats = voiceStats(model);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
@@ -28,16 +27,15 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
           '--card-to': palette.to,
         } as CSSProperties
       }
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
     >
       <div className="fcard-top">
         <div className="fcard-graphic">
           <div className="rcard-rank">#{rank} · Humanness leader</div>
+          {/* Playback-only animation; see RankCard. */}
           <RankCardArt
             model={model}
             playing={playing}
-            animate={playing || hovered}
+            animate={playing}
             onPlay={onPlay}
             featured
           />
