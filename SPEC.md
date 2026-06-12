@@ -1,6 +1,9 @@
 # The Humanness Index: standalone open-source extraction spec
 
-Status: DRAFT for review. As of 2026-06-12.
+Status: EXECUTED through phase 3 (extraction, infra, production deploy and
+verification all complete; site live). Remaining: phase 4 public flip
+(gated on Turnstile keys + history squash) and the DNS/Git-integration
+items listed at the end. As of 2026-06-12.
 
 This repo will become the standalone, open-source home of The Humanness
 Index, currently shipping inside the private `VapiAI/landing-v2` site as
@@ -78,15 +81,13 @@ a benchmark whose credibility depends on it.
   born clean (see section 5).
 - Licensed audio: no `pipeline/results/`, no source masters, no clips.
   `.gitignore` carries these from day one.
-- Private-infra references: Vapi monorepo paths in comments (the xAI WS
-  protocol note cites `xaiVoiceStream.ts`; rewrite against xAI public docs),
-  the borrowed-key provenance notes in the RUNBOOK, internal Vercel
-  project ids, the `voice-arena` repo references (rewrite as "the original
-  prototype"), and the Vapi-internal Sesame clone endpoint note.
-- The unlisted Deepgram Aura 3 registry entry: its existence reveals an
-  unannounced partner model. Strip the entry from the public registry and
-  keep it in a private overlay until Deepgram launches (registry supports
-  this cleanly; see 4.3).
+- Private-infra references: internal repo paths in comments (provider
+  protocol notes rewritten against the vendors' public docs), credential
+  provenance notes in the RUNBOOK, internal project ids, references to the
+  pre-launch prototype, and internal service endpoints.
+- Embargoed registry entries: any unlisted entry for a model without a
+  public launch is stripped from the public registry and kept in the
+  gitignored overlay until its vendor announces (see 4.3).
 
 ### 3.4 Permitted relaxations (post-extraction cleanups, not blockers)
 
@@ -128,10 +129,11 @@ the Vercel GitHub integration.
 ### 4.3 Registry and the private overlay
 
 The public registry holds every LISTED model. Unannounced or embargoed
-entries (today: Deepgram Aura 3) live in a tiny private overlay the deploy
-injects via env-gated import, keeping the public repo truthful without
-leaking partner timelines. If the overlay is empty the mechanism is
-dormant. This is the only private code path and it is documented as such.
+entries live in a tiny gitignored overlay (`catalog/overlay.local.ts`,
+type-constrained to unlisted status) merged at load, keeping the public
+repo truthful without leaking partner timelines. If the overlay is absent
+the mechanism is dormant. This is the only private code path and it is
+documented as such.
 
 ## 5. History and provenance
 
