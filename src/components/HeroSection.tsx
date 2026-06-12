@@ -207,6 +207,10 @@ export const HeroSection = ({
               </button>
             </div>
           )}
+          <p className="lab-keys">
+            <kbd>←</kbd>
+            <kbd>→</kbd> play each side · <kbd>space</kbd> vote, then next pair
+          </p>
         </div>
       </div>
     </section>

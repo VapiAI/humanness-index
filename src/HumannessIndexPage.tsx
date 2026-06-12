@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import './styles/tokens.css';
 import './styles/humanness-index.css';
@@ -16,7 +16,13 @@ import { useVoteGate } from './hooks/useVoteGate';
 import { voiceStats } from './data/providers';
 import { trackRoundStarted, trackVote } from './lib/analytics';
 import { parseLatencyMs, voteMatchesCrowd } from './lib/scoring';
-import type { ScoredModel, TableSort, TableSortKey, VoteChoice } from './lib/types';
+import type {
+  BattleSide,
+  ScoredModel,
+  TableSort,
+  TableSortKey,
+  VoteChoice,
+} from './lib/types';
 
 const ALL_PROVIDERS = 'All providers';
 
@@ -159,6 +165,24 @@ export const HumannessIndexPage = () => {
     });
   };
 
+  const handleToggleSide = (side: BattleSide) => {
+    // From idle this opens the round in manual mode, so the pair must be
+    // pinned and the start tracked just like the auto-sequence path.
+    if (audio.roundPhase === 'idle') {
+      setReveal(null);
+      arena.markRoundStarted();
+      trackRoundStarted({
+        leftModelId: leftModel.id,
+        rightModelId: rightModel.id,
+      });
+    }
+    audio.toggleBattleSide(
+      side,
+      side === 'left' ? leftModel : rightModel,
+      side === 'left' ? currentBattle.leftAudio : currentBattle.rightAudio,
+    );
+  };
+
   const handleVote = (winner: VoteChoice) => {
     if (!audio.bothStarted || revealed) return;
 
@@ -196,7 +220,74 @@ export const HumannessIndexPage = () => {
     audio.resetRound();
     arena.advanceBattle();
     setReveal(null);
+    lastSideRef.current = null;
   };
+
+  // --- Keyboard fast mode -------------------------------------------------
+  // ← / → play (or switch to) a side, Space votes the side being listened to,
+  // and Space on the reveal jumps straight into the next round.
+
+  /** The side the listener is judging: the one playing, else the last played. */
+  const lastSideRef = useRef<BattleSide | null>(null);
+  useEffect(() => {
+    if (revealed || audio.roundPhase === 'idle') return;
+    if (audio.playingId === leftModel.id) lastSideRef.current = 'left';
+    else if (audio.playingId === rightModel.id) lastSideRef.current = 'right';
+  }, [audio.playingId, audio.roundPhase, revealed, leftModel.id, rightModel.id]);
+
+  // Space on the reveal advances AND auto-starts once the next pair lands.
+  const autoStartRef = useRef(false);
+  const playRoundRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    playRoundRef.current = handlePlayRound;
+  });
+  useEffect(() => {
+    if (!autoStartRef.current) return;
+    autoStartRef.current = false;
+    playRoundRef.current();
+  }, [currentBattle]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (voteGate.challengeOpen) return;
+      // Stand down inside form fields and on focused controls, where these
+      // keys already mean something.
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest('input, select, textarea, button, a, [contenteditable]')) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        if (revealed) return;
+        event.preventDefault();
+        handleToggleSide(event.key === 'ArrowLeft' ? 'left' : 'right');
+        return;
+      }
+
+      if (event.key === ' ') {
+        event.preventDefault();
+        if (revealed) {
+          autoStartRef.current = true;
+          handleNextComparison();
+          return;
+        }
+        if (audio.roundPhase === 'idle') {
+          handlePlayRound();
+          return;
+        }
+        const side =
+          audio.playingId === leftModel.id
+            ? 'left'
+            : audio.playingId === rightModel.id
+              ? 'right'
+              : lastSideRef.current;
+        if (side) handleVote(side);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   // Deselecting (click-away, Escape, same dot/row again, filters changing)
   // also stops the selected model's sample — playback is tied to selection.
@@ -283,13 +374,7 @@ export const HumannessIndexPage = () => {
         voteCorrect={reveal?.correct ?? false}
         voteImpact={reveal ? { left: reveal.leftDelta, right: reveal.rightDelta } : null}
         onPlayRound={handlePlayRound}
-        onToggleSide={(side) =>
-          audio.toggleBattleSide(
-            side,
-            side === 'left' ? leftModel : rightModel,
-            side === 'left' ? currentBattle.leftAudio : currentBattle.rightAudio,
-          )
-        }
+        onToggleSide={handleToggleSide}
         onVote={handleVote}
         onNext={handleNextComparison}
       />

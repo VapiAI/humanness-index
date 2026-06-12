@@ -268,8 +268,9 @@ export const useArenaAudio = () => {
   /**
    * Manual playback of one side — lets the listener click back and forth
    * between the voices (and re-listen during the pick phase). Interrupts the
-   * auto-sequence; clicking the side that's already playing stops it. A side
-   * still only counts as heard once its clip finishes.
+   * auto-sequence; toggling the side that's already playing stops it. A side
+   * still only counts as heard once its clip finishes. From idle (keyboard
+   * fast mode) it also opens the round in manual mode — no auto-advance.
    */
   const toggleBattleSide = useCallback(
     (side: BattleSide, model: ScoredModel, audioUrl: string) => {
@@ -281,6 +282,7 @@ export const useArenaAudio = () => {
       playGenRef.current += 1;
       playSourceRef.current = 'battle';
       if (roundTimerRef.current) window.clearTimeout(roundTimerRef.current);
+      setRoundPhase((phase) => (phase === 'idle' ? 'playing' : phase));
       setPlayingId(model.id);
       markSideStarted(side);
       startClip(audioUrl, model, () => {

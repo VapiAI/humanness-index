@@ -50,6 +50,8 @@ type VoteGate = {
   guardVote: (castVote: (captchaToken?: string) => void) => void;
   /** The challenge modal; render it once near the page root. */
   challenge: ReactNode;
+  /** True while the challenge modal is up (page shortcuts should stand down). */
+  challengeOpen: boolean;
 };
 
 export const useVoteGate = (): VoteGate => {
@@ -127,5 +129,5 @@ export const useVoteGate = (): VoteGate => {
     </div>
   ) : null;
 
-  return { guardVote, challenge };
+  return { guardVote, challenge, challengeOpen };
 };
