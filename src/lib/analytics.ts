@@ -47,9 +47,9 @@ export const trackDetailLinkClicked = (props: {
   slug: string;
 }) => capture(HUMANNESS_EVENT.DETAIL_LINK_CLICKED, props);
 
-/** A click on the CTA band ("Run your model" / "Star on GitHub"). */
+/** A click on the CTA band ("Add your model" / "Star on GitHub"). */
 export const trackCtaClicked = (props: {
-  action: 'run-your-model' | 'star-on-github';
+  action: 'add-your-model' | 'star-on-github';
   /** Which page hosts the band: 'index' | 'model' | 'provider'. */
   surface: string;
 }) => capture(HUMANNESS_EVENT.CTA_CLICKED, props);

@@ -4,8 +4,8 @@ import { trackCtaClicked } from '../lib/analytics';
 import { GitHubIcon } from './icons';
 import { GITHUB_URL } from './shell/SiteNav';
 
-const RUN_YOUR_MODEL_MAILTO =
-  'mailto:humannessindex@vapi.ai?subject=Run%20my%20model%20on%20the%20Humanness%20Index';
+const ADD_YOUR_MODEL_MAILTO =
+  'mailto:humannessindex@vapi.ai?subject=Add%20my%20model%20to%20the%20Humanness%20Index';
 
 type CtaBandProps = {
   /** Which page hosts the band (analytics attribution). */
@@ -26,10 +26,10 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
         <div className="cta-actions">
           <a
             className="cta-btn cta-btn-primary"
-            href={RUN_YOUR_MODEL_MAILTO}
-            onClick={() => trackCtaClicked({ action: 'run-your-model', surface })}
+            href={ADD_YOUR_MODEL_MAILTO}
+            onClick={() => trackCtaClicked({ action: 'add-your-model', surface })}
           >
-            Run your model
+            Add your model
           </a>
           <a
             className="cta-btn cta-btn-ghost"
