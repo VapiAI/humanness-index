@@ -1,0 +1,38 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# testing
+/coverage
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel
+
+# env files: examples only, never real values
+.env*
+!.env.example
+!src/pipeline/.env.example
+
+# pipeline: local secrets, clone-id state, licensed audio + benchmark outputs.
+# The clips and source voice masters are licensed recordings (see TRADEMARKS.md)
+# and are never committed.
+src/pipeline/.env
+src/pipeline/voices.local.json
+src/pipeline/results/
+
+# Private registry overlay (SPEC 4.3): embargoed entries live only in the
+# deploy environment. `bun install` generates the empty default.
+src/catalog/overlay.local.ts
+public/marks/local/
+
+# Maintainer-local holding area (never shipped)
+/private/

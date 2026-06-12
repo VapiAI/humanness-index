@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned to the Bun version that owns bun.lockb and that the suite is
+      # verified under (the runner's expect() surface differs across majors).
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.0.3
+
+      # postinstall generates the empty private registry overlay, so a
+      # fresh checkout typechecks, tests, and builds without secrets.
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run check-types
+
+      - name: Test
+        run: bun test
+
+      - name: Build
+        run: bun run build
