@@ -16,6 +16,8 @@ export const ProviderLogo = ({ provider }: { provider: string }) => {
       className="rcard-logo"
       src={`/marks/${mark}`}
       alt={provider}
+      loading="lazy"
+      decoding="async"
       onError={() => setFailed(true)}
     />
   );

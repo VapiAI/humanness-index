@@ -190,8 +190,9 @@ main:focus {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(250, 249, 246, 0.92);
-  backdrop-filter: blur(8px);
+  /* Near-opaque solid instead of backdrop-filter: a full-width sticky blur
+     re-blurs everything beneath it on every scrolled frame. */
+  background: rgba(250, 249, 246, 0.97);
   border-bottom: 1px solid var(--shell-border);
 }
 
@@ -323,6 +324,8 @@ main:focus {
   border-top: 1px solid var(--shell-border);
   background: var(--shell-cream);
   color: var(--shell-ink);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 380px;
 }
 
 .site-footer-inner {

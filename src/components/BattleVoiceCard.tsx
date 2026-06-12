@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from '@phosphor-icons/react';
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import { modelDetailLinkForId } from '../lib/detail';
 import type { ScoredModel } from '../lib/types';
@@ -60,6 +60,9 @@ export const BattleVoiceCard = ({
   onTogglePlay,
 }: BattleVoiceCardProps) => {
   const palette = label === 'A' ? PALETTES.teal : PALETTES.sunset;
+  // Idle cards stay static; the viz only drifts under the pointer (and the
+  // back face owns the playing visual). Keeps idle canvas invalidation at zero.
+  const [hovered, setHovered] = useState(false);
   // Post-vote conversion path: the revealed name links to its model page.
   // Gated on `revealed` so the blind phase DOM stays fully anonymous — no
   // hrefs to peek at before voting.
@@ -108,6 +111,8 @@ export const BattleVoiceCard = ({
         } as CSSProperties
       }
       onClick={handleActivate}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       aria-label={surfaceLabel}
@@ -167,10 +172,14 @@ export const BattleVoiceCard = ({
             </>
           ) : (
             <div className="vcard-art">
-              {/* The flip's back face owns the "playing" visual; the front viz
-                  only drifts while idle (matches the prototype). The corner A/B
-                  chip is the only identity marker — no redundant name label. */}
-              <VoiceViz playing={playing} model={model} animate={!playing} palette={palette} />
+              {/* The corner A/B chip is the only identity marker — no
+                  redundant name label. */}
+              <VoiceViz
+                playing={playing}
+                model={model}
+                animate={hovered && !playing}
+                palette={palette}
+              />
             </div>
           )}
         </div>

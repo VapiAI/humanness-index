@@ -21,6 +21,9 @@
 .hi-detail .detail-section {
   padding-block: clamp(24px, 3vw, 44px);
   scroll-margin-top: 24px;
+  /* Below-fold sections skip layout/paint until scrolled near. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 520px;
 }
 
 .hi-detail .detail-section > h2,

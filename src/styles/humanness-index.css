@@ -70,6 +70,32 @@ and the detail pages share .hi-page, and the section bands carry .band-rails. */
   }
 }
 
+/* Below-fold sections skip layout/paint until scrolled near. The intrinsic
+sizes are rough section-height estimates; `auto` keeps the real size once
+rendered so scrollbar math stays stable. */
+.hi-page .leaderboard-section,
+.hi-page .pieces-section,
+.hi-page .long-tail-section,
+.hi-page .cta-band {
+  content-visibility: auto;
+}
+
+.hi-page .leaderboard-section {
+  contain-intrinsic-size: auto 720px;
+}
+
+.hi-page .pieces-section {
+  contain-intrinsic-size: auto 780px;
+}
+
+.hi-page .long-tail-section {
+  contain-intrinsic-size: auto 1500px;
+}
+
+.hi-page .cta-band {
+  contain-intrinsic-size: auto 420px;
+}
+
 /* "Pieces of humanness" — full-bleed dark band between Top Models and the rankings */
 .hi-page .pieces-section {
   width: 100%;
@@ -848,9 +874,8 @@ is laid out from the start, so the paragraph never reflows. */
   border: 1px solid rgba(26, 26, 46, 0.12);
   border-radius: 999px;
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 4px 14px rgba(26, 26, 46, 0.14);
-  backdrop-filter: blur(6px);
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
