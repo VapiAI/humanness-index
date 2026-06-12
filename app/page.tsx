@@ -16,7 +16,7 @@ const OG_IMAGE = {
   url: '/og/og.jpg',
   width: 1536,
   height: 1024,
-  alt: 'The Humanness Index. How human does your voice AI really sound?',
+  alt: 'The Humanness Index™. How human does your voice AI really sound?',
 };
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     url: absoluteUrl(INDEX_PATH),
-    siteName: 'The Humanness Index',
+    siteName: 'The Humanness Index™',
     type: 'website',
     images: [OG_IMAGE],
   },

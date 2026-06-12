@@ -61,7 +61,7 @@ export const inworld: ProviderTransport = {
       voiceSamples: sampleFiles.map((file) => ({
         audioData: Buffer.from(readFileSync(file)).toString('base64'),
       })),
-      description: 'Humanness Index licensed source voice clone',
+      description: 'Humanness Index™ licensed source voice clone',
       audioProcessingConfig: { removeBackgroundNoise: false },
     };
     let lastError: unknown = null;

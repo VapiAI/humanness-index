@@ -1,4 +1,4 @@
-# The Humanness Index: standalone open-source extraction spec
+# The Humanness Index™: standalone open-source extraction spec
 
 Status: EXECUTED through phase 3 (extraction, infra, production deploy and
 verification all complete; site live). Remaining: phase 4 public flip
@@ -149,7 +149,7 @@ provenance record.
   litigious neighborhoods).
 - Content split, stated in README and TRADEMARKS.md:
   - Code and docs: Apache-2.0.
-  - "The Humanness Index" name and logo: Vapi trademark, not licensed by
+  - "The Humanness Index™" name and logo: Vapi trademark, not licensed by
     the code license. Forks must rename (standard TRADEMARKS.md language).
   - Audio clips and source voices: proprietary, all rights reserved,
     served from our origin for the benchmark UI only. Not redistributable.

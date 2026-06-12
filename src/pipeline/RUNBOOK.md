@@ -1,4 +1,4 @@
-# Humanness Index expansion pipeline: RUNBOOK
+# Humanness Index™ expansion pipeline: RUNBOOK
 
 Everything clip-related lives in this folder and runs through package.json
 scripts (bun). The original private prototype is reference-only: the

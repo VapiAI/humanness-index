@@ -45,7 +45,7 @@ export async function generateMetadata({
       title,
       description,
       url: absoluteUrl(path),
-      siteName: 'The Humanness Index',
+      siteName: 'The Humanness Index™',
       type: 'website',
     },
     twitter: {

@@ -70,7 +70,7 @@ export const ModelDetailPage = ({ entry, snapshot }: ModelDetailPageProps) => {
   };
 
   const breadcrumbs: BreadcrumbItem[] = [
-    { name: 'Humanness Index', path: INDEX_PATH },
+    { name: 'Humanness Index™', path: INDEX_PATH },
     { name: provider.name, path: providerPath(provider) },
     { name: entry.name },
   ];
@@ -85,7 +85,7 @@ export const ModelDetailPage = ({ entry, snapshot }: ModelDetailPageProps) => {
         <Breadcrumbs items={breadcrumbs} />
         <header className="detail-hero">
           <div className="detail-hero-copy">
-            <p className="eyebrow">Humanness Index {'\u00b7'} TTS model</p>
+            <p className="eyebrow">Humanness Index™ {'\u00b7'} TTS model</p>
             <div className="detail-hero-id">
               <span className="detail-hero-logo" aria-hidden="true">
                 <ProviderLogo provider={provider.name} />

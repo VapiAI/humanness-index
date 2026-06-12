@@ -51,7 +51,7 @@ export const ProviderDetailPage = ({ entry, snapshot }: ProviderDetailPageProps)
   );
 
   const breadcrumbs: BreadcrumbItem[] = [
-    { name: 'Humanness Index', path: INDEX_PATH },
+    { name: 'Humanness Index™', path: INDEX_PATH },
     { name: entry.name },
   ];
 
@@ -105,7 +105,7 @@ export const ProviderDetailPage = ({ entry, snapshot }: ProviderDetailPageProps)
         <Breadcrumbs items={breadcrumbs} />
         <header className="detail-hero">
           <div className="detail-hero-copy">
-            <p className="eyebrow">Humanness Index {'\u00b7'} Provider</p>
+            <p className="eyebrow">Humanness Index™ {'\u00b7'} Provider</p>
             <div className="detail-hero-id">
               <span className="detail-hero-logo" aria-hidden="true">
                 <ProviderLogo provider={entry.name} />
@@ -161,9 +161,9 @@ export const ProviderDetailPage = ({ entry, snapshot }: ProviderDetailPageProps)
       <section
         className="detail-section detail-models"
         id="models"
-        aria-label={`${entry.name} models on the Humanness Index`}
+        aria-label={`${entry.name} models on the Humanness Index™`}
       >
-        <h2>{entry.name} models on the Humanness Index</h2>
+        <h2>{entry.name} models on the Humanness Index™</h2>
         {modelsTable(activeModels)}
         {retiredModels.length > 0 && (
           <div className="detail-models-retired">
@@ -173,7 +173,7 @@ export const ProviderDetailPage = ({ entry, snapshot }: ProviderDetailPageProps)
         )}
         <p className="detail-excerpt-foot">
           <Link href={`${INDEX_PATH}#rankings`}>
-            Compare against the full Humanness Index rankings
+            Compare against the full Humanness Index™ rankings
           </Link>
         </p>
       </section>

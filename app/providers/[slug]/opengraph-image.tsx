@@ -12,7 +12,7 @@ import { OG_SIZE, OgCard } from '@/server/ogCard';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
 export const alt =
-  'Provider card from the Humanness Index by Vapi: text to speech models ranked by blind listener votes.';
+  'Provider card from the Humanness Index™ by Vapi: text to speech models ranked by blind listener votes.';
 
 type ImageProps = { params: Promise<{ slug: string }> };
 

@@ -76,7 +76,7 @@ export const StandingsExcerpt = ({ rows, modelId, asOf }: StandingsExcerptProps)
       </div>
       <p className="detail-excerpt-foot">
         <Link href={`${INDEX_PATH}#rankings`}>
-          See the full Humanness Index rankings
+          See the full Humanness Index™ rankings
         </Link>
       </p>
     </section>

@@ -105,7 +105,7 @@ export const modelPageDescription = (
   entry: ModelEntry,
   provider: ProviderEntry,
 ): string =>
-  `How human does ${provider.name} ${entry.name} sound? Blind-test Humanness score, measured latency, languages, pricing, and audio samples on the Humanness Index by Vapi.`;
+  `How human does ${provider.name} ${entry.name} sound? Blind-test Humanness score, measured latency, languages, pricing, and audio samples on the Humanness Index™ by Vapi.`;
 
 export const providerPageTitle = (entry: ProviderEntry): string =>
   `${entry.name} Text to Speech Models: Humanness Rankings | Vapi`;
@@ -114,7 +114,7 @@ export const providerPageDescription = (
   entry: ProviderEntry,
   modelCount: number,
 ): string =>
-  `${entry.name} text to speech on the Humanness Index by Vapi: ${modelCount} ${
+  `${entry.name} text to speech on the Humanness Index™ by Vapi: ${modelCount} ${
     modelCount === 1 ? 'model' : 'models'
   } ranked by blind listener votes, with Humanness scores, measured latency, languages, and pricing.`;
 
@@ -433,7 +433,7 @@ export const indexModelsItemListJsonLd = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Text to speech models on the Humanness Index',
+    name: 'Text to speech models on the Humanness Index™',
     itemListElement: ordered.map((entry, index) => ({
       '@type': 'ListItem',
       position: index + 1,
@@ -450,7 +450,7 @@ export const providerModelsItemListJsonLd = (
 ) => ({
   '@context': 'https://schema.org',
   '@type': 'ItemList',
-  name: `${provider.name} models on the Humanness Index`,
+  name: `${provider.name} models on the Humanness Index™`,
   itemListElement: models.map((model, index) => ({
     '@type': 'ListItem',
     position: index + 1,

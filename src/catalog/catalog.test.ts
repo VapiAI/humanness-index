@@ -942,7 +942,7 @@ describe('data/providers derivation equality', () => {
       model: 'Sonic 3.5',
     });
     expect(fallback).toContain('Cartesia Sonic 3.5');
-    expect(fallback).toContain('Humanness Index');
+    expect(fallback).toContain('Humanness Index™');
   });
 });
 

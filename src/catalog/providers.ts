@@ -37,7 +37,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'About ElevenLabs',
         paragraphs: [
-          'ElevenLabs is the incumbent voice platform, with model families that span ultra low latency conversational agents to maximum expressiveness. Latency and language coverage vary sharply across those families, so every ElevenLabs model on the Humanness Index carries its own figures rather than one provider-wide number.',
+          'ElevenLabs is the incumbent voice platform, with model families that span ultra low latency conversational agents to maximum expressiveness. Latency and language coverage vary sharply across those families, so every ElevenLabs model on the Humanness Index™ carries its own figures rather than one provider-wide number.',
         ],
         sourceUrls: ['https://elevenlabs.io/docs/overview/models'],
       },
@@ -84,7 +84,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'Platform and compliance',
         paragraphs: [
-          'Four Sonic generations sit on the Humanness Index, from the May 2024 debut model to the current Sonic 3.5 flagship. Since Sonic 3 the platform has carried SOC 2 Type II, HIPAA, and PCI Level 1 compliance, aimed at regulated phone work.',
+          'Four Sonic generations sit on the Humanness Index™, from the May 2024 debut model to the current Sonic 3.5 flagship. Since Sonic 3 the platform has carried SOC 2 Type II, HIPAA, and PCI Level 1 compliance, aimed at regulated phone work.',
         ],
         sourceUrls: ['https://docs.cartesia.ai'],
       },
@@ -125,7 +125,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'The Grok voice stack',
         paragraphs: [
-          'Grok TTS offers five expressive voices (Ara, Eve, Leo, Rex, and Sal, with Eve as the default) across 20 languages, with inline speech tags like [laugh], [sigh], and [whisper] for delivery control. REST requests accept up to 15,000 characters, and a WebSocket streaming variant accepts unbounded input. Both variants currently sit at the top of the Humanness Index.',
+          'Grok TTS offers five expressive voices (Ara, Eve, Leo, Rex, and Sal, with Eve as the default) across 20 languages, with inline speech tags like [laugh], [sigh], and [whisper] for delivery control. REST requests accept up to 15,000 characters, and a WebSocket streaming variant accepts unbounded input. Both variants currently sit at the top of the Humanness Index™.',
         ],
         sourceUrls: [
           'https://docs.x.ai/developers/model-capabilities/audio/voice',
@@ -249,7 +249,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'Open weights on the Index',
         paragraphs: [
-          'Orpheus is the open weights entry on the Humanness Index, and it showed that an open model can compete with closed source rivals on prosody and empathy. Teams can self host it or run it through managed providers.',
+          'Orpheus is the open weights entry on the Humanness Index™, and it showed that an open model can compete with closed source rivals on prosody and empathy. Teams can self host it or run it through managed providers.',
         ],
         sourceUrls: ['https://github.com/canopyai/Orpheus-TTS'],
       },

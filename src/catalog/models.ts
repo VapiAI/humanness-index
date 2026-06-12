@@ -94,7 +94,7 @@ const teamReportedTtfb = (value: number, asOf: string): Sourced<number> => ({
 });
 
 const HOW_TESTED = (name: string): FaqEntry => ({
-  question: `How is ${name} tested on the Humanness Index?`,
+  question: `How is ${name} tested on the Humanness Index™?`,
   answer: `Listeners hear ${name} against another model in a blind head to head round, both voices reading the same customer support prompt from the same cloned source voice, and they pick whichever sounds more human. Its Humanness score derives purely from those votes.`,
 });
 
@@ -190,7 +190,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Turbo v2.5 arrived in July 2024 and extended ElevenLabs' low latency tier from English to 32 languages, making Hindi, French, Spanish, Mandarin and more roughly three times faster than before, with English itself about 25 percent faster. ElevenLabs has since positioned Flash v2.5 as its successor. On the Humanness Index, Turbo v2.5 is currently the strongest ElevenLabs model in blind listening tests.",
+          "Turbo v2.5 arrived in July 2024 and extended ElevenLabs' low latency tier from English to 32 languages, making Hindi, French, Spanish, Mandarin and more roughly three times faster than before, with English itself about 25 percent faster. ElevenLabs has since positioned Flash v2.5 as its successor. On the Humanness Index™, Turbo v2.5 is currently the strongest ElevenLabs model in blind listening tests.",
         ],
         sourceUrls: ['https://elevenlabs.io/blog/introducing-turbo-v25'],
       },
@@ -755,7 +755,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          'Grok TTS is the text to speech model behind Grok Voice, the assistant that ships on Grok mobile apps, Tesla vehicles, and Starlink customer support. xAI built the stack in house, from voice activity detection to the audio models themselves, and opened it to developers through the Grok Voice Agent API in December 2025 and a standalone TTS API in April 2026. The API offers five expressive voices across 20 languages, with inline speech tags like [laugh] and [whisper] for fine grained delivery control. On the Humanness Index it is the voice to beat: listeners pick it as the more human option more often than any other model in the field.',
+          'Grok TTS is the text to speech model behind Grok Voice, the assistant that ships on Grok mobile apps, Tesla vehicles, and Starlink customer support. xAI built the stack in house, from voice activity detection to the audio models themselves, and opened it to developers through the Grok Voice Agent API in December 2025 and a standalone TTS API in April 2026. The API offers five expressive voices across 20 languages, with inline speech tags like [laugh] and [whisper] for fine grained delivery control. On the Humanness Index™ it is the voice to beat: listeners pick it as the more human option more often than any other model in the field.',
         ],
         sourceUrls: [
           'https://x.ai/news/grok-voice-agent-api',
@@ -825,7 +825,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Streaming is the WebSocket variant of xAI's Grok TTS, built for real time agents that need audio flowing before the full input has been processed. It accepts unbounded text over a persistent connection and begins returning audio immediately, which makes it the natural fit for live voice applications. It shares the Grok Voice stack and its five expressive voices, and it ranks alongside its REST sibling at the very top of the Humanness Index.",
+          "Streaming is the WebSocket variant of xAI's Grok TTS, built for real time agents that need audio flowing before the full input has been processed. It accepts unbounded text over a persistent connection and begins returning audio immediately, which makes it the natural fit for live voice applications. It shares the Grok Voice stack and its five expressive voices, and it ranks alongside its REST sibling at the very top of the Humanness Index™.",
         ],
         sourceUrls: [
           'https://docs.x.ai/developers/model-capabilities/audio/voice',

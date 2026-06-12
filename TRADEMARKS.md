@@ -8,16 +8,16 @@ The Apache-2.0 code license (see LICENSE) covers the code and nothing else.
 - All source code, configuration, and documentation in this repository:
   Apache-2.0.
 
-## "The Humanness Index" name and logo
+## "The Humanness Index™" name and logo
 
-"The Humanness Index" name, wordmark, and logo are trademarks of Vapi, Inc.
+"The Humanness Index™" name, wordmark, and logo are trademarks of Vapi, Inc.
 They are NOT licensed under Apache-2.0 or any other license in this
 repository.
 
 If you fork or redeploy this code, you must rename your deployment and
-remove the Humanness Index branding. You may state truthfully that your
-project is derived from The Humanness Index, but you may not present your
-deployment as the Humanness Index, and you may not use the name or logo in
+remove the Humanness Index™ branding. You may state truthfully that your
+project is derived from The Humanness Index™, but you may not present your
+deployment as the Humanness Index™, and you may not use the name or logo in
 a way that suggests endorsement by or affiliation with Vapi.
 
 ## Audio clips and source voices

@@ -1,6 +1,6 @@
 # Methodology
 
-The Humanness Index answers one question: how human does a text-to-speech
+The Humanness Index™ answers one question: how human does a text-to-speech
 model sound? Nobody can fully define that feeling, so we do not try to
 score it with a rubric. We play voices blind and let people judge.
 

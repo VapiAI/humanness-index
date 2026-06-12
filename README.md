@@ -1,4 +1,4 @@
-# The Humanness Index
+# The Humanness Index™
 
 The open benchmark for how human voice AI sounds, built and operated by
 [Vapi](https://vapi.ai). Live at
@@ -80,13 +80,13 @@ maintainers run the pipeline per
 ## Licensing
 
 - Code and docs: [Apache-2.0](LICENSE).
-- "The Humanness Index" name and logo: Vapi trademarks, not covered by the
+- "The Humanness Index™" name and logo: Vapi trademarks, not covered by the
   code license. Forks must rename; see [TRADEMARKS.md](TRADEMARKS.md).
 - Audio clips and source voices: licensed talent recordings, all rights
   reserved, served from our origin for the benchmark UI only. Never
   committed to this repository.
 - Vote data and standings (the public leaderboard API): CC BY 4.0 with
-  attribution to "The Humanness Index by Vapi".
+  attribution to "The Humanness Index™ by Vapi".
 - Provider logomarks in `public/marks/` belong to their respective owners
   and are used nominatively; no endorsement is implied.
 

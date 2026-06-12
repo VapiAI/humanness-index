@@ -1,5 +1,5 @@
 /**
- * Null-safe PostHog capture for Humanness Index engagement events. PostHog is
+ * Null-safe PostHog capture for Humanness Index™ engagement events. PostHog is
  * loaded from the global snippet in the root layout; on first paint or when an
  * ad blocker strips it, `window.posthog` is undefined, so we guard every call.
  * Analytics must never break the UX.

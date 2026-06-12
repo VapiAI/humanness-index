@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 /**
- * Live TTFB (time-to-first-audio) benchmark for the Humanness Index models —
+ * Live TTFB (time-to-first-audio) benchmark for the Humanness Index™ models —
  * a full TypeScript port of the original prototype's 50-trial bench.
  *
  * Methodology (identical to the original):

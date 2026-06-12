@@ -34,7 +34,7 @@ const XlinkCard = ({ href, logoProvider, name, sub }: XlinkCardProps) => (
 
 const IndexBackLink = () => (
   <p className="detail-xlink-back">
-    <Link href={INDEX_PATH}>Back to the Humanness Index</Link>
+    <Link href={INDEX_PATH}>Back to the Humanness Index™</Link>
   </p>
 );
 
