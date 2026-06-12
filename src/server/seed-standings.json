@@ -1,0 +1,135 @@
+{
+  "exportedAt": "2026-06-10",
+  "source": "production leaderboard export from the original prototype deployment",
+  "totalUniqueVotes": 721,
+  "models": [
+    {
+      "id": "xai-xai-tts",
+      "elo": 1306.53,
+      "wins": 71,
+      "losses": 24,
+      "ties": 3,
+      "voteCount": 98
+    },
+    {
+      "id": "xai-streaming",
+      "elo": 1295.17,
+      "wins": 58,
+      "losses": 17,
+      "ties": 1,
+      "voteCount": 76
+    },
+    {
+      "id": "cartesia-sonic-35",
+      "elo": 1257.23,
+      "wins": 56,
+      "losses": 32,
+      "ties": 9,
+      "voteCount": 97
+    },
+    {
+      "id": "canopy-orpheus",
+      "elo": 1257.13,
+      "wins": 49,
+      "losses": 27,
+      "ties": 4,
+      "voteCount": 80
+    },
+    {
+      "id": "elevenlabs-turbo-v25",
+      "elo": 1234.22,
+      "wins": 55,
+      "losses": 38,
+      "ties": 5,
+      "voteCount": 98
+    },
+    {
+      "id": "elevenlabs-eleven-v3",
+      "elo": 1231.83,
+      "wins": 55,
+      "losses": 41,
+      "ties": 5,
+      "voteCount": 101
+    },
+    {
+      "id": "elevenlabs-flash-v25",
+      "elo": 1225.44,
+      "wins": 52,
+      "losses": 40,
+      "ties": 8,
+      "voteCount": 100
+    },
+    {
+      "id": "minimax-minimax-tts",
+      "elo": 1222.01,
+      "wins": 48,
+      "losses": 41,
+      "ties": 9,
+      "voteCount": 98
+    },
+    {
+      "id": "elevenlabs-flash-v2",
+      "elo": 1208.12,
+      "wins": 48,
+      "losses": 43,
+      "ties": 6,
+      "voteCount": 97
+    },
+    {
+      "id": "elevenlabs-turbo-v2",
+      "elo": 1201.25,
+      "wins": 46,
+      "losses": 40,
+      "ties": 11,
+      "voteCount": 97
+    },
+    {
+      "id": "inworld-tts-15-max",
+      "elo": 1197.31,
+      "wins": 2,
+      "losses": 3,
+      "ties": 0,
+      "voteCount": 5
+    },
+    {
+      "id": "inworld-tts-2",
+      "elo": 1189.42,
+      "wins": 1,
+      "losses": 4,
+      "ties": 0,
+      "voteCount": 5
+    },
+    {
+      "id": "cartesia-sonic-2",
+      "elo": 1139.56,
+      "wins": 36,
+      "losses": 59,
+      "ties": 2,
+      "voteCount": 97
+    },
+    {
+      "id": "gradium-gradium-tts",
+      "elo": 1098.63,
+      "wins": 20,
+      "losses": 69,
+      "ties": 6,
+      "voteCount": 95
+    },
+    {
+      "id": "cartesia-sonic-3",
+      "elo": 1096.65,
+      "wins": 27,
+      "losses": 61,
+      "ties": 8,
+      "voteCount": 96
+    },
+    {
+      "id": "cartesia-sonic",
+      "elo": 1027.55,
+      "wins": 13,
+      "losses": 82,
+      "ties": 4,
+      "voteCount": 99
+    }
+  ]
+}

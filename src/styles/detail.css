@@ -1,0 +1,869 @@
+/*
+ * Detail-page styles for /providers/[slug] and /models/[slug].
+ *
+ * Scoped under `.hi-detail` following the `.hi-page` scoping pattern: the
+ * page root carries both classes, so tokens.css variables and the shared
+ * humanness-index.css primitives (app-rails, eyebrow, rcard-art well,
+ * ranking-table, cta-band, vapi-btn) apply, and everything detail-specific
+ * lives here without leaking into the index page or the rest of the site.
+ */
+
+/* ------------------------------ Page scaffold ----------------------------- */
+
+.hi-detail .detail-shell,
+.hi-detail .detail-section {
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.hi-detail .detail-section {
+  padding-block: clamp(24px, 3vw, 44px);
+  scroll-margin-top: 24px;
+}
+
+.hi-detail .detail-section > h2,
+.hi-detail .detail-excerpt-head h2 {
+  margin: 0 0 18px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(23px, 2.5vw, 31px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+/* ------------------------------- Breadcrumbs ------------------------------ */
+
+.hi-detail .detail-breadcrumbs {
+  padding-top: clamp(18px, 2.4vw, 30px);
+}
+
+.hi-detail .detail-breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.hi-detail .detail-breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hi-detail .detail-breadcrumbs li + li::before {
+  content: '\203A'; /* › */
+  color: var(--border-strong);
+}
+
+.hi-detail .detail-breadcrumbs a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.hi-detail .detail-breadcrumbs a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hi-detail .detail-breadcrumbs [aria-current='page'] span {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------------------------------- Hero ---------------------------------- */
+
+.hi-detail .detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 400px);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+  padding-block: clamp(28px, 3.6vw, 52px);
+}
+
+.hi-detail .detail-hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.hi-detail .detail-hero-id {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.hi-detail .detail-hero-logo {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(26, 26, 46, 0.1);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 18px -12px rgba(26, 26, 46, 0.3);
+}
+
+.hi-detail .detail-hero-logo .rcard-logo {
+  height: 30px;
+  max-width: 42px;
+}
+
+.hi-detail .detail-hero-logo .rcard-logo-text {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.hi-detail .detail-hero-name h1 {
+  margin: 0;
+  color: #0a0a0a;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 4.4vw, 54px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.hi-detail .detail-hero-provider {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.hi-detail .detail-hero-provider a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.hi-detail .detail-hero-provider a:hover {
+  text-decoration-color: var(--ink);
+}
+
+.hi-detail .detail-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid rgba(224, 112, 26, 0.35);
+  border-radius: 999px;
+  color: #9a4a07;
+  background: rgba(255, 176, 102, 0.16);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.hi-detail .detail-hero-lead {
+  max-width: 56ch;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.72);
+  font-size: 17px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* Hero standings (live island) */
+
+.hi-detail .detail-hero-standings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hi-detail .detail-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.hi-detail .detail-hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 96px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04);
+}
+
+.hi-detail .detail-hero-stat dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hi-detail .detail-hero-stat dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hi-detail .detail-asof {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Rank bubbles strip on the light hero (the shared styles assume dark cards) */
+
+.hi-detail .detail-hero-scale {
+  width: min(100%, 360px);
+}
+
+.hi-detail .detail-hero-scale .rank-bubbles-track::before {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.hi-detail .detail-hero-scale .rank-bubble {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.hi-detail .detail-hero-scale .rank-bubble.is-self {
+  background: var(--mint);
+}
+
+.hi-detail .detail-hero-scale .rank-bubbles-ends {
+  color: var(--muted);
+}
+
+/* Hero right column: sample card / provider medallion card */
+
+.hi-detail .detail-hero-side {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.hi-detail .detail-sample,
+.hi-detail .detail-provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 18px;
+  border: 1px solid rgba(26, 26, 46, 0.08);
+  border-radius: 18px;
+  background:
+    radial-gradient(80% 60% at 10% -4%, rgba(0, 205, 143, 0.1), transparent 58%),
+    #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(26, 26, 46, 0.05),
+    0 14px 32px -18px rgba(26, 26, 46, 0.16),
+    0 36px 72px -36px rgba(26, 26, 46, 0.16);
+}
+
+.hi-detail .detail-sample .rcard-art {
+  height: 256px;
+  margin: 0;
+}
+
+.hi-detail .detail-sample-caption {
+  min-height: 3.9em; /* keeps the card height steady when the prompt swaps in */
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.hi-detail .detail-sample noscript audio {
+  width: 100%;
+}
+
+.hi-detail .detail-provider-medallion {
+  display: grid;
+  place-items: center;
+  height: 132px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.hi-detail .detail-provider-medallion .rcard-logo {
+  height: 48px;
+  max-width: 96px;
+}
+
+.hi-detail .detail-provider-medallion .rcard-logo-text {
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.hi-detail .detail-provider-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.hi-detail .detail-provider-quick div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hi-detail .detail-provider-quick dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hi-detail .detail-provider-quick dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.hi-detail .detail-provider-visit {
+  justify-content: center;
+}
+
+/* ------------------------------- Stats block ------------------------------ */
+
+.hi-detail .detail-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.hi-detail .detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04);
+}
+
+.hi-detail .detail-stat dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hi-detail .detail-stat dd {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.hi-detail .detail-stat-value {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hi-detail .detail-stat-ref {
+  align-self: flex-start;
+  margin-top: -20px;
+  margin-left: auto;
+  font-size: 11px;
+}
+
+.hi-detail .detail-stat-ref a {
+  color: var(--teal-strong);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hi-detail .detail-stat-ref a:hover {
+  text-decoration: underline;
+}
+
+.hi-detail .detail-stat-note {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.hi-detail .detail-stat-sources {
+  max-width: 760px;
+  margin: 16px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.hi-detail .detail-stat-sources li {
+  margin-bottom: 4px;
+}
+
+.hi-detail .detail-stat-sources li:target {
+  color: var(--ink);
+}
+
+.hi-detail .detail-stat-sources a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+.hi-detail .detail-stat-sources a:hover {
+  color: var(--teal-strong);
+}
+
+/* -------------------------------- Copy blocks ----------------------------- */
+
+.hi-detail .detail-copy {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(22px, 2.6vw, 34px);
+}
+
+.hi-detail .detail-copy-block {
+  max-width: 760px;
+}
+
+.hi-detail .detail-copy-block h2 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.1vw, 26px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hi-detail .detail-copy-block p {
+  margin: 0 0 12px;
+  color: #3f4350;
+  font-size: 15.5px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+/* Scoped under .detail-copy-block to outweigh its `p` rule without !important. */
+.hi-detail .detail-copy-block .detail-copy-sources {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.hi-detail .detail-copy-sources a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hi-detail .detail-copy-sources a:hover {
+  color: var(--ink);
+}
+
+/* ------------------------- Standings excerpt / tables ---------------------- */
+
+.hi-detail .detail-excerpt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hi-detail .detail-excerpt-head h2 {
+  margin-bottom: 10px;
+}
+
+.hi-detail .ranking-table {
+  min-width: 620px; /* the detail tables have fewer columns than the index */
+}
+
+.hi-detail .ranking-table td .rt-provider {
+  color: var(--ink);
+}
+
+/* Shared link-out language: table model names + the section foot links. */
+.hi-detail .rt-model a,
+.hi-detail .detail-excerpt-foot a,
+.hi-detail .detail-xlink-back a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.hi-detail .rt-model a:hover,
+.hi-detail .detail-excerpt-foot a:hover,
+.hi-detail .detail-xlink-back a:hover {
+  color: var(--teal-strong);
+  text-decoration-color: var(--teal-strong);
+}
+
+.hi-detail .detail-excerpt-foot {
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+
+.hi-detail .detail-models-retired h3 {
+  margin: 22px 0 10px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+/* ----------------------------------- FAQ ---------------------------------- */
+
+.hi-detail .detail-faq dl {
+  max-width: 760px;
+  margin: 0;
+}
+
+.hi-detail .detail-faq-item {
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+
+.hi-detail .detail-faq-item:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+.hi-detail .detail-faq-item dt {
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hi-detail .detail-faq-item dd {
+  margin: 0;
+  color: #3f4350;
+  font-size: 14.5px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* -------------------------------- Cross-links ----------------------------- */
+
+.hi-detail .detail-xlink-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  gap: 12px;
+}
+
+.hi-detail .detail-xlink-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--ink);
+  background: #fff;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04);
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.hi-detail .detail-xlink-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--mint);
+  box-shadow: 0 10px 22px -14px rgba(26, 26, 46, 0.25);
+}
+
+.hi-detail .detail-xlink-card:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.hi-detail .detail-xlink-logo {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(26, 26, 46, 0.1);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.hi-detail .detail-xlink-logo .rcard-logo {
+  height: 20px;
+  max-width: 26px;
+}
+
+.hi-detail .detail-xlink-logo .rcard-logo-text {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.hi-detail .detail-xlink-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hi-detail .detail-xlink-name {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hi-detail .detail-xlink-sub {
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+/* Link styling shared with .detail-excerpt-foot (see the tables section). */
+.hi-detail .detail-xlink-back {
+  margin: 16px 0 0;
+  font-size: 14px;
+}
+
+/* -------------------------------- Responsive ------------------------------ */
+
+@media (max-width: 920px) {
+  .hi-detail .detail-hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    align-items: stretch;
+  }
+
+  .hi-detail .detail-hero-side {
+    justify-content: stretch;
+  }
+
+  .hi-detail .detail-sample,
+  .hi-detail .detail-provider-card {
+    max-width: 480px;
+  }
+
+  /*
+   * Once the hero stacks, the provider panel reads as a tall, mostly empty
+   * art frame. Re-template it into a compact info card: medallion beside the
+   * quick stats, full-width visit button under both.
+   */
+  .hi-detail .detail-provider-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 14px 18px;
+  }
+
+  .hi-detail .detail-provider-medallion {
+    width: 92px;
+    height: 92px;
+  }
+
+  .hi-detail .detail-provider-medallion .rcard-logo {
+    height: 36px;
+    max-width: 68px;
+  }
+
+  .hi-detail .detail-provider-medallion .rcard-logo-text {
+    font-size: 22px;
+  }
+
+  .hi-detail .detail-provider-quick {
+    gap: 7px;
+  }
+
+  .hi-detail .detail-provider-quick div {
+    padding: 2px 0;
+  }
+
+  .hi-detail .detail-provider-visit {
+    grid-column: 1 / -1;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 680px) {
+  .hi-detail .detail-shell,
+  .hi-detail .detail-section {
+    width: auto;
+    max-width: none;
+    margin-inline: 10px;
+    padding-inline: 14px;
+  }
+
+  .hi-detail .detail-section {
+    padding-block: 26px;
+  }
+
+  .hi-detail .detail-section > h2,
+  .hi-detail .detail-excerpt-head h2 {
+    margin-bottom: 14px;
+  }
+
+  /* Hero rhythm: one deliberate scale from breadcrumb down to the side card. */
+  .hi-detail .detail-breadcrumbs {
+    padding-top: 16px;
+  }
+
+  .hi-detail .detail-hero {
+    gap: 22px;
+    padding-block: 22px 30px;
+  }
+
+  .hi-detail .detail-hero-copy {
+    gap: 12px;
+  }
+
+  .hi-detail .detail-hero-id {
+    gap: 12px;
+  }
+
+  .hi-detail .detail-hero-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+
+  .hi-detail .detail-hero-logo .rcard-logo {
+    height: 26px;
+    max-width: 38px;
+  }
+
+  .hi-detail .detail-hero-logo .rcard-logo-text {
+    font-size: 14px;
+  }
+
+  .hi-detail .detail-hero-name h1 {
+    font-size: clamp(30px, 9vw, 38px);
+  }
+
+  .hi-detail .detail-hero-lead {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .hi-detail .detail-hero-standings {
+    gap: 8px;
+  }
+
+  /*
+   * Stat chips: a tidy 2-up grid with equal heights per row; labels wrap,
+   * values pin to the chip foot so they share a baseline across the row.
+   */
+  .hi-detail .detail-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .hi-detail .detail-hero-stat {
+    min-width: 0;
+    padding: 10px 12px;
+  }
+
+  .hi-detail .detail-hero-stat dt,
+  .hi-detail .detail-hero-stat dd {
+    white-space: normal;
+  }
+
+  .hi-detail .detail-hero-stat dd {
+    margin-top: auto;
+    font-size: 19px;
+    line-height: 1.15;
+  }
+
+  /* Model names never break mid-value ("#5 Turbo / v2.5"); if a value is too
+     long for one line it wraps before the name, keeping the name whole. */
+  .hi-detail .detail-hero-stat dd .detail-hero-stat-model {
+    white-space: nowrap;
+  }
+
+  /* Sample card: shorter art well so the panel reads as a player, not a frame. */
+  .hi-detail .detail-sample {
+    padding: 14px;
+  }
+
+  .hi-detail .detail-sample .rcard-art {
+    height: 200px;
+  }
+
+  .hi-detail .detail-provider-card {
+    padding: 16px;
+    gap: 12px 16px;
+  }
+
+  .hi-detail .detail-provider-medallion {
+    width: 84px;
+    height: 84px;
+  }
+
+  /* Stat cards: scale the new desktop padding down for narrow columns. */
+  .hi-detail .detail-stats-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .hi-detail .detail-stat {
+    gap: 8px;
+    padding: 16px 18px;
+  }
+
+  .hi-detail .detail-stat-value {
+    font-size: 20px;
+  }
+
+  .hi-detail .detail-stat-ref {
+    margin-top: -18px;
+  }
+
+  .hi-detail .ranking-table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Quick-stat labels may wrap rather than crowd the value at tiny widths. */
+  .hi-detail .detail-provider-quick dt {
+    white-space: normal;
+  }
+}

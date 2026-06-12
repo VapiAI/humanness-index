@@ -1,0 +1,2368 @@
+/*
+ * The Humanness Index page styles, ported from the original prototype.
+ *
+ * Every selector is scoped under `.hi-page`; the scoping predates the
+ * standalone site (it kept the stylesheet from leaking into the original
+ * host site) and is harmless to keep. Cascade order matches the original
+ * file, so edit in place rather than reordering blocks.
+ */
+.hi-page {
+  --content-max: 1296px;
+  --gutter: clamp(20px, 5vw, 72px);
+  --pad: clamp(20px, 2.6vw, 40px);
+  position: relative;
+  min-height: 100vh;
+  /* Breathing room below the standalone in-flow navbar (the original host
+     site's zero-height sticky navbar needed 44/56px of clearance here). */
+  padding-top: 28px;
+  overflow-x: clip;
+  color: var(--ink);
+  background:
+    radial-gradient(58% 48% at 6% 0%, rgba(0, 205, 143, 0.08), transparent 60%),
+    radial-gradient(50% 42% at 100% 10%, rgba(45, 107, 255, 0.06), transparent 55%),
+    #fbfdfc;
+}
+
+@media (min-width: 1280px) {
+  .hi-page {
+    padding-top: 36px;
+  }
+}
+
+/* Framed content column — two full-height vertical rules at the gutters (Figma "Vertical Rules") */
+.hi-page .app-rails {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin-inline: auto;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hi-page .app-rails::before,
+.hi-page .app-rails::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.hi-page .app-rails::before {
+  left: 0;
+}
+
+.hi-page .app-rails::after {
+  right: 0;
+}
+
+/* The framed-column rules are a desktop device; at phone widths they hug the
+content edges and read as clutter. Applies to every benchmark page: the index
+and the detail pages share .hi-page, and the section bands carry .band-rails. */
+@media (max-width: 680px) {
+  .hi-page .app-rails,
+  .hi-page .band-rails {
+    display: none;
+  }
+}
+
+/* "Pieces of humanness" — full-bleed dark band between Top Models and the rankings */
+.hi-page .pieces-section {
+  width: 100%;
+  margin-block: clamp(28px, 3.5vw, 44px);
+  padding-block: clamp(48px, 6vw, 76px);
+  position: relative;
+  z-index: 1; /* full-width dark band sits over the framing rules (straight edges, per Figma) */
+  background:
+    radial-gradient(90% 130% at 50% 0%, rgba(0, 205, 143, 0.12), transparent 62%),
+    #0c1512;
+  color: #fff;
+}
+
+.hi-page .pieces-inner {
+  position: relative;
+  z-index: 1;
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.hi-page .pieces-section .eyebrow {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.hi-page .pieces-section .section-heading {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hi-page .pieces-section .section-heading h2 {
+  color: #fff;
+}
+
+.hi-page .pieces-lead {
+  max-width: 430px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.hi-page .pieces-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 40px;
+}
+
+.hi-page .piece-card {
+  padding: 0;
+}
+
+.hi-page .piece-card h3 {
+  margin: 0 0 16px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hi-page .piece-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13.5px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (max-width: 940px) {
+  .hi-page .pieces-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .hi-page .pieces-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hi-page .leaderboard-section,
+.hi-page .long-tail-section {
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  min-width: 0;
+  margin: 0 auto;
+  padding-inline: var(--pad);
+  padding-block: clamp(32px, 4vw, 52px);
+  scroll-margin-top: 24px;
+}
+
+.hi-page .section-heading,
+.hi-page .legend {
+  display: flex;
+  align-items: center;
+}
+
+.hi-page .section-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hi-page .eyebrow {
+  margin: 0 0 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hi-page .vapi-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: #1e1e1e;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 150ms ease;
+}
+
+.hi-page .vapi-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Hero */
+.hi-page .hero-eyebrow {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.8);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hi-page .hero-title {
+  margin: 0;
+  color: #1e1e1e;
+  font-family: var(--font-display);
+  font-size: clamp(38px, 5vw, 66px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+/* Lab hero: left copy + right interactive test card */
+.hi-page .lab-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+  gap: 56px;
+  align-items: center;
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin: 0 auto;
+  padding: 64px var(--pad);
+}
+
+.hi-page .lab-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 400px;
+  text-align: left;
+}
+
+.hi-page .lab-copy .hero-title {
+  font-size: clamp(40px, 4.6vw, 58px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  color: #0a0a0a;
+}
+
+.hi-page .hero-cta {
+  align-self: flex-start;
+  min-height: 40px;
+  margin-top: 4px;
+  padding: 10px 24px;
+  background: #e4e4e7;
+  font-size: 14px;
+}
+
+.hi-page .hero-note {
+  max-width: 380px;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 18px;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.hi-page .lab-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  min-height: 440px;
+  padding: 30px;
+  border: 1px solid rgba(26, 26, 46, 0.08);
+  border-radius: 18px;
+  color: var(--ink);
+  /* The two corner washes echo the voices' identities: teal (A) top-left,
+     sunset (B) bottom-right. */
+  background:
+    radial-gradient(80% 60% at 10% -4%, rgba(0, 205, 143, 0.12), transparent 58%),
+    radial-gradient(70% 60% at 106% 108%, rgba(239, 142, 68, 0.1), transparent 55%),
+    #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(26, 26, 46, 0.05),
+    0 14px 32px -18px rgba(26, 26, 46, 0.16),
+    0 36px 72px -36px rgba(26, 26, 46, 0.16);
+}
+
+.hi-page .lab-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.hi-page .lab-question {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Reserve two lines: the post-vote reveal headline is longer than the
+     question, and the cards below must not shift when it swaps in. */
+  min-height: 2.24em;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(21px, 2.2vw, 27px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+.hi-page .lab-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.hi-page .lab-arena {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-content: center;
+  align-items: center;
+}
+
+.hi-page .lab-vs {
+  display: flex;
+  flex-direction: column;
+  min-width: 52px;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Hairlines fading out above and below the badge. */
+.hi-page .lab-vs::before,
+.hi-page .lab-vs::after {
+  content: '';
+  flex: 1;
+  width: 1px;
+  max-height: 56px;
+  background: linear-gradient(180deg, transparent, var(--border-strong));
+}
+
+.hi-page .lab-vs::after {
+  background: linear-gradient(180deg, var(--border-strong), transparent);
+}
+
+.hi-page .lab-vs-text {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--ink);
+  background: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  font-style: italic;
+  box-shadow: 0 2px 8px -2px rgba(26, 26, 46, 0.14);
+}
+
+.hi-page .lab-tie-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--ink);
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    transform 150ms ease;
+  animation: vcard-choice-in 240ms ease-out;
+}
+
+.hi-page .lab-tie-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--ink);
+  background: var(--cream);
+}
+
+.hi-page .lab-tie-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* alive circular voice visualization */
+.hi-page .voice-viz {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+}
+
+.hi-page .voice-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Voice trading cards */
+.hi-page .vcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: linear-gradient(165deg, #1b1b27, #101018);
+  overflow: hidden;
+  transition:
+    transform 160ms ease,
+    opacity 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.hi-page .vcard-art {
+  position: relative;
+  display: grid;
+  flex: 1;
+  place-items: center;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+/* Head-to-head: active card flips in + glows,
+done badge,
+prompt reading,
+in-place reveal */
+/* Each state keys off the side's own palette (teal for A, sunset for B),
+   so the two identities stay balanced instead of everything glowing mint. */
+.hi-page .vcard.is-playing {
+  border-color: color-mix(in srgb, var(--card-from) 55%, rgba(26, 26, 46, 0.08));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--card-from) 16%, transparent),
+    0 18px 40px -20px color-mix(in srgb, var(--card-to) 45%, rgba(26, 26, 46, 0.3));
+}
+
+.hi-page .vcard.is-done {
+  border-color: color-mix(in srgb, var(--card-from) 36%, rgba(26, 26, 46, 0.08));
+}
+
+.hi-page .vcard.is-clickable {
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.hi-page .vcard.is-clickable:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--card-from) 55%, rgba(26, 26, 46, 0.1));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--card-from) 13%, transparent),
+    0 16px 32px -16px color-mix(in srgb, var(--card-to) 35%, rgba(26, 26, 46, 0.28));
+}
+
+.hi-page .vcard.is-clickable:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--card-from) 75%, var(--ink));
+  outline-offset: 3px;
+}
+
+.hi-page .vcard.is-clickable:active {
+  transform: translateY(-1px);
+}
+
+/* Battle card: 3D flip to a "reading" face with a typewriter of the prompt */
+.hi-page .vcard-battle {
+  perspective: 1200px;
+  overflow: visible; /* must stay visible so preserve-3d isn't flattened */
+}
+
+.hi-page .vcard-battle .vcard-flip {
+  position: relative;
+  height: 240px;
+  transform-style: preserve-3d;
+  transition: transform 540ms cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+
+/* Each face clips to the card's rounded shape without flattening the 3D context */
+.hi-page .vcard-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.hi-page .vcard-battle.is-playing .vcard-flip {
+  transform: rotateY(180deg);
+}
+
+.hi-page .vcard-back {
+  transform: rotateY(180deg);
+  gap: 8px;
+}
+
+.hi-page .vcard-script-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hi-page .vcard-script-label {
+  color: color-mix(in srgb, var(--card-to, var(--teal-strong)) 84%, var(--ink));
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Label stays pinned at top; the text centers in the space below when short,
+scrolls when long */
+.hi-page .vcard-script {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hi-page .vcard-script-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* Each prompt character fades in as the audio sweeps past it; the full text
+is laid out from the start, so the paragraph never reflows. */
+.hi-page .vcard-script-char {
+  opacity: 0;
+  transition: opacity 380ms ease-out;
+}
+
+.hi-page .vcard-script-char.is-on {
+  opacity: 1;
+}
+
+.hi-page .chart-dot-group {
+  transition: opacity 240ms ease;
+}
+
+/* "A" / "B" identity chip pinned to the card's top corner. */
+.hi-page .vcard-side {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  color: #fff;
+  background: linear-gradient(150deg, var(--card-from), var(--card-to));
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 3px 8px -3px color-mix(in srgb, var(--card-to) 65%, transparent);
+}
+
+/* Post-vote reveal: the card unmasks in place — identity, rank, score —
+   inside the same fixed-height face the blind round used. */
+.hi-page .vcard-reveal {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  animation: vcard-choice-in 240ms ease-out;
+}
+
+/* Brand medallion: the provider's mark front and centre, in a white disc
+   haloed with the side's palette. The 84px footprint matches the blind-phase
+   viz circle so the reveal swap doesn't shift the layout. White keeps the
+   (dark/colored) logomarks legible on any card tone. */
+.hi-page .vcard-brand {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border: 1px solid rgba(26, 26, 46, 0.1);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--card-from) 18%, transparent),
+    0 10px 22px -14px color-mix(in srgb, var(--card-to) 55%, rgba(26, 26, 46, 0.3));
+}
+
+/* ProviderLogo ships leaderboard-sized classes; rescale them inside the
+   medallion (descendant override only — the .rcard* rules stay untouched). */
+.hi-page .vcard-brand .rcard-logo {
+  width: auto;
+  height: 36px;
+  max-width: 48px;
+}
+
+.hi-page .vcard-brand .rcard-logo-text {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.hi-page .vcard-reveal-name {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.hi-page .vcard-reveal-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hi-page .vcard-reveal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(26, 26, 46, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12.5px;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(26, 26, 46, 0.05);
+}
+
+.hi-page .vcard-reveal-k {
+  color: #52525b;
+  font-weight: 500;
+}
+
+.hi-page .vcard-reveal-v {
+  color: #09090b;
+  font-weight: 700;
+}
+
+/* Corner flag: "Your pick" on the chosen card (in the side's own gradient),
+   "Ranks higher" on the Index leader. */
+.hi-page .vcard-flag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid rgba(26, 26, 46, 0.12);
+  border-radius: 999px;
+  color: var(--muted);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px -3px rgba(26, 26, 46, 0.25);
+  animation: vcard-choice-in 240ms ease-out;
+}
+
+.hi-page .vcard-flag-pick {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(150deg, var(--card-from), var(--card-to));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 3px 8px -3px color-mix(in srgb, var(--card-to) 65%, transparent);
+}
+
+/* The picked card keeps its side's glow so the choice reads at a glance. */
+.hi-page .vcard.is-pick {
+  border-color: color-mix(in srgb, var(--card-from) 55%, rgba(26, 26, 46, 0.08));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--card-from) 16%, transparent),
+    0 18px 40px -20px color-mix(in srgb, var(--card-to) 45%, rgba(26, 26, 46, 0.3));
+}
+
+@keyframes vcard-choice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Top 10 rank cards */
+.hi-page .rcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: linear-gradient(165deg, #1b1b27, #101018);
+  overflow: hidden;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.hi-page .rcard.tone-light {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: linear-gradient(165deg, #ffffff, #eaeef0);
+}
+
+.hi-page .rcard:hover {
+  border-color: var(--mint);
+}
+
+.hi-page .rcard-rank {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.hi-page .rcard-name {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hi-page .rcard-model {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hi-page .rcard-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 3px 0 2px;
+}
+
+.hi-page .rcard-id-text {
+  min-width: 0;
+}
+
+.hi-page .rcard-logo {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: 26px;
+  max-width: 40px;
+  object-fit: contain;
+}
+
+.hi-page .rcard-logo-text {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.hi-page .rcard.tone-light .rcard-logo-text {
+  color: var(--ink);
+}
+
+.hi-page .rcard-art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 6px 0 10px;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.06), transparent 70%),
+    #0c1512;
+}
+
+.hi-page .rcard-art-viz {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding: 16px 14px 56px;
+}
+
+/* The whole art well is the hit area; a floating pill is the visible affordance */
+.hi-page .rcard-art-listen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hi-page .rcard-art-listen:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: -2px;
+}
+
+.hi-page .rcard-listen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 6px;
+  border: 1px solid rgba(26, 26, 46, 0.12);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 14px rgba(26, 26, 46, 0.14);
+  backdrop-filter: blur(6px);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    transform 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.hi-page .rcard-listen-dot {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #ffffff;
+  background: var(--mint);
+}
+
+.hi-page .rcard-art-listen .button-icon {
+  display: block;
+  width: 11px;
+  height: 11px;
+}
+
+.hi-page .rcard-art-listen:hover .rcard-listen-chip {
+  transform: translateY(-1px);
+  border-color: rgba(26, 26, 46, 0.3);
+  box-shadow: 0 6px 18px rgba(26, 26, 46, 0.2);
+}
+
+.hi-page .rcard-art-listen:active .rcard-listen-chip {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Playing: pill flips dark with a Stop glyph, mint ring hugs the art well */
+.hi-page .rcard .rcard-art.is-playing,
+.hi-page .rcard.tone-light .rcard-art.is-playing {
+  border-color: var(--mint);
+  box-shadow: inset 0 0 0 1px var(--mint);
+}
+
+.hi-page .rcard-art.is-playing .rcard-listen-chip {
+  border-color: var(--ink);
+  color: var(--cream);
+  background: var(--ink);
+}
+
+.hi-page .rcard-art.is-playing .rcard-listen-chip:hover {
+  border-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hi-page .rcard-art.is-playing .rcard-listen-dot {
+    animation: rcard-listen-pulse 1.8s ease-out infinite;
+  }
+}
+
+@keyframes rcard-listen-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 205, 143, 0.45);
+  }
+
+  70%,
+  100% {
+    box-shadow: 0 0 0 8px rgba(0, 205, 143, 0);
+  }
+}
+
+.hi-page .rank-bubbles {
+  margin: 12px 0 2px;
+}
+
+.hi-page .rank-bubbles-track {
+  position: relative;
+  height: 24px;
+}
+
+.hi-page .rank-bubbles-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hi-page .rank-bubble {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.28);
+  transform: translate(-50%, -50%);
+}
+
+.hi-page .rank-bubble.is-self {
+  width: 13px;
+  height: 13px;
+  z-index: 1;
+  background: var(--mint);
+  opacity: 1;
+}
+
+.hi-page .rank-bubbles-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px; /* keep LOWER/HIGHER apart when the card is narrow */
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hi-page .rcard-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap; /* value drops below the label instead of colliding on narrow cards */
+  gap: 2px 10px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.hi-page .rcard-score-label {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hi-page .rcard-score-value {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.hi-page .rcard-stats {
+  display: grid;
+  /* two columns with a sane floor; stats stack instead of cramping on narrow cards */
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.hi-page .rcard-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hi-page .rcard-stats dt {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hi-page .rcard-stats dd {
+  margin: 0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap; /* "~200 ms" stays on one line */
+}
+
+.hi-page .rcard.tone-light .rcard-rank,
+.hi-page .rcard.tone-light .rcard-model,
+.hi-page .rcard.tone-light .rcard-score-label,
+.hi-page .rcard.tone-light .rcard-stats dt,
+.hi-page .rcard.tone-light .rank-bubbles-ends {
+  color: var(--muted);
+}
+
+.hi-page .rcard.tone-light .rank-bubbles-track::before {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.hi-page .rcard.tone-light .rank-bubble {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.hi-page .rcard.tone-light .rank-bubble.is-self {
+  background: var(--mint);
+}
+
+.hi-page .rcard.tone-light .rcard-name,
+.hi-page .rcard.tone-light .rcard-score-value,
+.hi-page .rcard.tone-light .rcard-stats dd {
+  color: var(--ink);
+}
+
+.hi-page .rcard.tone-light .rcard-art {
+  border: 1px solid #e6e6e6;
+  background: #fefefe;
+}
+
+/* Featured #1 card — double-width hero (2 cols,
+single row) */
+.hi-page .rcard-featured {
+  grid-column: span 2;
+  overflow: visible; /* don't clip the full-width copy */
+}
+
+.hi-page .fcard-top {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.hi-page .fcard-graphic {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hi-page .fcard-art {
+  flex: 1; /* graphic fills the left column — no empty space below the waveform */
+  margin: 0;
+}
+
+.hi-page .fcard-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 0;
+}
+
+.hi-page .fcard-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hi-page .fcard-stat dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hi-page .fcard-stat dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.hi-page .fcard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hi-page .fcard-blurb {
+  margin: 16px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.hi-page .rcard.tone-light .fcard-blurb {
+  border-top-color: rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .hi-page .fcard-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hi-page .vcard.tone-light {
+  border-color: rgba(26, 26, 46, 0.1);
+  /* A whisper of the side's own hue bleeds in from the top. */
+  background:
+    radial-gradient(
+      120% 85% at 50% -20%,
+      color-mix(in srgb, var(--card-from, var(--teal)) 10%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(170deg, #ffffff, #f2f5f4);
+  box-shadow:
+    0 1px 2px rgba(26, 26, 46, 0.04),
+    0 10px 22px -18px rgba(26, 26, 46, 0.18);
+}
+
+.hi-page .vcard.tone-light .vcard-art {
+  background: none;
+}
+
+.hi-page .lab-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.hi-page .lab-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Vote buttons wear their side's color so the choice maps back to the cards. */
+.hi-page .lab-pick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  color: #0a332c;
+  background: linear-gradient(180deg, #3ddbb6, #14b8a6);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 8px 18px -10px rgba(13, 148, 136, 0.65);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    filter 150ms ease;
+  animation: vcard-choice-in 240ms ease-out;
+}
+
+.hi-page .lab-pick-btn.lab-pick-b {
+  color: #44230b;
+  background: linear-gradient(180deg, #ffb066, #f08c3e);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 8px 18px -10px rgba(224, 112, 26, 0.65);
+}
+
+.hi-page .lab-pick-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 12px 22px -10px rgba(13, 148, 136, 0.7);
+}
+
+.hi-page .lab-pick-btn.lab-pick-b:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 12px 22px -10px rgba(224, 112, 26, 0.7);
+}
+
+.hi-page .lab-pick-btn:active {
+  transform: translateY(0);
+}
+
+.hi-page .lab-pick-btn:focus-visible,
+.hi-page .lab-tie-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* Shown during playback but not yet votable (both voices haven't started). */
+.hi-page .lab-pick-btn:disabled,
+.hi-page .lab-tie-btn:disabled {
+  cursor: default;
+  opacity: 0.45;
+  filter: grayscale(0.4);
+  box-shadow: none;
+  animation: none;
+}
+
+.hi-page .lab-pick-btn:disabled:hover,
+.hi-page .lab-tie-btn:disabled:hover {
+  transform: none;
+  filter: grayscale(0.4);
+  box-shadow: none;
+}
+
+.hi-page .lab-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, #34344e, var(--ink) 62%);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 10px 22px -12px rgba(26, 26, 46, 0.55);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+
+.hi-page .lab-primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 14px 26px -12px rgba(26, 26, 46, 0.6);
+}
+
+.hi-page .lab-primary:active {
+  transform: translateY(0);
+}
+
+.hi-page .lab-primary:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
+}
+
+.hi-page .lab-primary:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+@media (max-width: 860px) {
+  .hi-page .lab-hero {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 40px 0;
+  }
+
+  .hi-page .lab-copy {
+    max-width: none;
+  }
+
+  .hi-page .lab-card {
+    min-height: 0;
+  }
+}
+
+.hi-page input:focus-visible,
+.hi-page select:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.hi-page .button-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.hi-page .section-heading {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hi-page .section-heading h2,
+.hi-page .rankings-header h2 {
+  font-size: clamp(26px, 2.8vw, 36px);
+  line-height: 1.12;
+}
+
+.hi-page .top-card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.hi-page .legend {
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hi-page .legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hi-page .legend-line {
+  width: 24px;
+  height: 2px;
+  border-top: 2px dashed var(--mint, #00cd8f);
+}
+
+.hi-page .legend-gradient {
+  width: 24px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mint, #00cd8f), var(--ocean, #2d6bff));
+}
+
+.hi-page .chart-axis-label {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.hi-page .rankings-visual-panel {
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.hi-page .ranking-chart-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hi-page .ranking-chart-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.hi-page .ranking-chart-shell {
+  position: relative;
+  overflow: visible;
+  background: #fff;
+}
+
+.hi-page .chart-hover-card {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 202px;
+  padding: 12px;
+  transform: translate(-50%, calc(-100% - 14px));
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  background: var(--cream, #fefefe);
+  box-shadow: 0 14px 30px -16px rgba(26, 26, 46, 0.28);
+  pointer-events: none;
+}
+
+.hi-page .chart-hover-card[data-below='true'] {
+  transform: translate(-50%, 14px);
+}
+
+.hi-page .chc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.hi-page .chc-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 32px;
+  overflow: hidden;
+}
+
+.hi-page .chc-logo img,
+.hi-page .chc-logo .rcard-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hi-page .chc-logo .rcard-logo-text {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.hi-page .chc-id {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hi-page .chc-name {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.hi-page .chc-model {
+  color: var(--ink);
+  opacity: 0.7;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.hi-page .chc-rank {
+  flex: 0 0 auto;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.hi-page .chc-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.hi-page .chc-key {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hi-page .chc-val {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.hi-page .chc-val-hl {
+  color: var(--mint, #00cd8f);
+  font-size: 16px;
+  letter-spacing: -0.05em;
+}
+
+.hi-page .rt-model {
+  color: #52525b;
+  font-weight: 400;
+}
+
+/* vapi.ai-style CTA band + footer (shell) */
+.hi-page .cta-band {
+  position: relative;
+  width: 100%;
+  margin-top: clamp(28px, 3.5vw, 48px);
+  padding-block: clamp(72px, 8vw, 112px);
+  background-color: #0a1f14;
+  background-image: url('/textures/footer-texture.jpg');
+  background-size: cover;
+  background-position: left center;
+  background-repeat: no-repeat;
+  text-align: left;
+  overflow: hidden;
+}
+
+.hi-page .band-rails {
+  position: absolute;
+  inset: 0;
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin-inline: auto;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hi-page .band-rails::before,
+.hi-page .band-rails::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.hi-page .band-rails::before {
+  left: 0;
+}
+
+.hi-page .band-rails::after {
+  right: 0;
+}
+
+.hi-page .cta-inner {
+  position: relative;
+  z-index: 1;
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.hi-page .cta-title {
+  margin: 0;
+  max-width: 640px;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 4.4vw, 58px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.hi-page .cta-sub {
+  margin: 14px 0 0;
+  max-width: 520px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.hi-page .cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+/* Standalone CTA buttons (the host site's button component did not move). */
+.hi-page .cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.hi-page .cta-btn:active {
+  transform: translateY(1px);
+}
+
+.hi-page .cta-btn-primary {
+  background: var(--teal);
+  color: #07130d;
+}
+
+.hi-page .cta-btn-primary:hover,
+.hi-page .cta-btn-primary:focus-visible {
+  background: #2ddca6;
+}
+
+.hi-page .cta-btn-ghost {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  color: #fff;
+}
+
+.hi-page .cta-btn-ghost:hover,
+.hi-page .cta-btn-ghost:focus-visible {
+  border-color: #fff;
+}
+
+.hi-page .rankings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+}
+
+.hi-page .rankings-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hi-page .rankings-stat {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hi-page .rankings-stat strong {
+  font-weight: 700;
+}
+
+.hi-page .rankings-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  background: #e6e6e6;
+}
+
+.hi-page .ranking-chart-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hi-page .ranking-chart-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hi-page .ranking-chart-clear {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mint, #00cd8f);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hi-page .ranking-chart-clear:hover {
+  text-decoration: underline;
+}
+
+.hi-page .ranking-chart-shell svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.hi-page .ranking-chart-shell text {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.hi-page .chart-avg-line {
+  stroke: var(--mint, #00cd8f);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+
+.hi-page .chart-avg-label {
+  fill: var(--mint, #00cd8f);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hi-page .chart-end-label {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.55;
+}
+
+.hi-page .chart-point {
+  cursor: pointer;
+  fill: var(--mint);
+  transition:
+    opacity 150ms ease,
+    r 150ms ease,
+    stroke-width 150ms ease;
+}
+
+.hi-page .chart-point:hover,
+.hi-page .chart-point:focus-visible {
+  opacity: 1;
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.hi-page .chart-point:focus,
+.hi-page .chart-point:focus-visible {
+  outline: none;
+}
+
+.hi-page .rankings-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.hi-page .rankings-search {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 4px 12px;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  background: var(--cream, #fefefe);
+}
+
+.hi-page .rankings-search svg {
+  flex: 0 0 auto;
+  color: #71717a;
+}
+
+.hi-page .rankings-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.hi-page .rankings-search input::placeholder {
+  color: #71717a;
+}
+
+.hi-page .rankings-search input:focus {
+  outline: none;
+}
+
+.hi-page .rankings-select {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 4px 0 8px;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.hi-page .rankings-select-label {
+  color: var(--ink);
+  opacity: 0.6;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hi-page .rankings-select select {
+  height: 100%;
+  min-height: 0;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.hi-page .rankings-select select:focus {
+  outline: none;
+}
+
+.hi-page .rankings-select svg {
+  flex: 0 0 auto;
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.hi-page input,
+.hi-page select {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: #fff;
+  font: inherit;
+}
+
+.hi-page .ranking-table-wrap {
+  margin-top: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.hi-page .ranking-table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+}
+
+.hi-page .ranking-table th,
+.hi-page .ranking-table td {
+  padding: 16px 7px;
+  border-bottom: 1px solid #e6e6e6;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.hi-page .ranking-table th:first-child,
+.hi-page .ranking-table td:first-child {
+  padding-left: 20px;
+}
+
+.hi-page .ranking-table th:last-child,
+.hi-page .ranking-table td:last-child {
+  padding-right: 20px;
+}
+
+/* Dim via color (not opacity) so the (i) tooltip bubbles inside stay solid. */
+.hi-page .ranking-table th {
+  color: rgba(17, 16, 19, 0.6);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Sortable column headers: plain-text look, caret marks the active column. */
+.hi-page .rt-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.hi-page .rt-sort:hover {
+  color: var(--ink);
+}
+
+.hi-page .rt-sort.is-active {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.hi-page .rt-sort:focus-visible {
+  outline: 2px solid var(--teal-strong, #00a371);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.hi-page .rt-sort-arrow {
+  display: inline-flex;
+  color: var(--teal-strong, #00a371);
+}
+
+/* Header (i) glyph + hover/focus definition bubble. */
+.hi-page .rt-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  color: rgba(17, 16, 19, 0.4);
+  vertical-align: -2px;
+  cursor: help;
+}
+
+.hi-page .rt-info:hover,
+.hi-page .rt-info:focus-visible {
+  color: rgba(17, 16, 19, 0.8);
+}
+
+/* Opens downward: the table wrap is a scroll container, so an upward bubble
+would clip at its top edge. */
+.hi-page .rt-info-tip {
+  position: absolute;
+  top: calc(100% + 9px);
+  left: 50%;
+  z-index: 6;
+  width: 240px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.94);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  transform: translateX(-50%);
+  box-shadow: 0 12px 28px -12px rgba(26, 26, 46, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.hi-page .rt-info:hover .rt-info-tip,
+.hi-page .rt-info:focus-visible .rt-info-tip {
+  opacity: 1;
+}
+
+.hi-page .ranking-table td {
+  color: #52525b;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.hi-page .ranking-table .rt-num {
+  text-align: right;
+}
+
+.hi-page .ranking-table th.rt-listen,
+.hi-page .ranking-table td.rt-listen {
+  width: 100px;
+  text-align: right;
+}
+
+.hi-page .ranking-table .rt-rank {
+  white-space: nowrap;
+}
+
+/* Provider cell: brand mark in a rounded-square chip ahead of the name. */
+.hi-page .rt-provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.hi-page .rt-provider-chip {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(26, 26, 46, 0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.hi-page .rt-provider-chip .rcard-logo {
+  width: auto;
+  height: 16px;
+  max-width: 18px;
+}
+
+.hi-page .rt-provider-chip .rcard-logo-text {
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.hi-page .ranking-table tbody tr {
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.hi-page .ranking-table tbody tr.selected-row {
+  background: #e6f6f4;
+}
+
+.hi-page .ranking-table tbody tr:hover:not(.selected-row) {
+  background: rgba(0, 205, 143, 0.06);
+}
+
+.hi-page .ranking-table tbody tr.is-dimmed {
+  opacity: 0.4;
+}
+
+.hi-page .ranking-table tbody tr.is-dimmed:hover {
+  opacity: 0.65;
+}
+
+.hi-page .rt-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.hi-page .rt-play:hover {
+  opacity: 0.85;
+}
+
+.hi-page .ranking-showall {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 16px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f1f3;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hi-page .ranking-showall:hover {
+  background: #e7e7ea;
+}
+
+/* Unmeasured-models footnote under the distribution chart. */
+.hi-page .chart-foot {
+  margin: 8px 4px 0;
+  color: #71717a;
+  font-size: 12px;
+}
+
+/* Submission footnote under the rankings table. */
+.hi-page .ranking-foot {
+  margin: 20px 0 0;
+  color: #71717a;
+  font-size: 13px;
+}
+
+.hi-page .ranking-foot a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hi-page .ranking-foot a:hover {
+  color: var(--teal-strong, #00a371);
+}
+
+@media (max-width: 1180px) {
+  .hi-page .top-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 3 columns get too narrow below ~980px — drop to 2 before the cards cramp */
+@media (max-width: 980px) {
+  .hi-page .top-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .hi-page .leaderboard-section,
+  .hi-page .long-tail-section {
+    width: auto;
+    max-width: none;
+    margin-inline: 10px;
+    padding: 14px;
+  }
+
+  .hi-page .top-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* keep the featured card inside the single column (span 2 would force an
+     implicit track and squeeze every other card) */
+  .hi-page .rcard-featured {
+    grid-column: 1 / -1;
+  }
+
+  .hi-page .section-heading,
+  .hi-page .ranking-chart-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hi-page .rankings-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .hi-page .ranking-chart-heading {
+    max-width: 100%;
+  }
+
+  .hi-page .ranking-chart-heading h3 {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ==========================================================================
+   Mobile pass — the prototype was desktop-first; these rules adapt the
+   remaining dense surfaces (deep-dive header, distribution chart, standings
+   table, head-to-head picker) for small screens.
+   ========================================================================== */
+
+@media (max-width: 680px) {
+  /* Deep-dive header: title above a wrapping counts strip. */
+  .hi-page .rankings-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .hi-page .rankings-stats {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  /* Keep the chart readable: fix its drawn width and pan horizontally
+     instead of scaling the 1440px viewBox down to a sliver. */
+  .hi-page .ranking-chart-shell {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hi-page .ranking-chart-shell svg {
+    min-width: 760px;
+  }
+
+  /* Tighter standings table so less side-scrolling is needed. */
+  .hi-page .ranking-table {
+    min-width: 680px;
+  }
+
+  .hi-page .ranking-table th,
+  .hi-page .ranking-table td {
+    padding: 12px 7px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hi-page .lab-card {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  /* Head-to-head: stack the voices so each card keeps a full-width face
+     (the side-by-side layout left ~110px per card on phones). */
+  .hi-page .lab-arena {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Stacked layout: the divider runs horizontally between the cards. */
+  .hi-page .lab-vs {
+    flex-direction: row;
+    min-width: 0;
+    padding: 2px 0;
+  }
+
+  .hi-page .lab-vs::before,
+  .hi-page .lab-vs::after {
+    width: auto;
+    height: 1px;
+    max-height: none;
+    background: linear-gradient(90deg, transparent, var(--border-strong));
+  }
+
+  .hi-page .lab-vs::after {
+    background: linear-gradient(90deg, var(--border-strong), transparent);
+  }
+
+  .hi-page .lab-vs-text {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  /* The listening hint wraps to two lines at phone widths; reserve them so
+     the one-line reveal hint doesn't shift the cards. */
+  .hi-page .lab-hint {
+    min-height: 2.7em;
+  }
+
+  /* Pick controls share the row edge-to-edge. */
+  .hi-page .lab-pick {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .hi-page .lab-pick-btn,
+  .hi-page .lab-tie-btn {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 0 10px;
+    font-size: 15px;
+  }
+}
+
+/* The widget animates a lot — collapse it to state changes only when asked. */
+@media (prefers-reduced-motion: reduce) {
+  .hi-page .vcard,
+  .hi-page .vcard.is-clickable,
+  .hi-page .vcard-battle .vcard-flip,
+  .hi-page .vcard-script-char,
+  .hi-page .vcard-reveal,
+  .hi-page .vcard-flag,
+  .hi-page .lab-primary,
+  .hi-page .lab-pick-btn,
+  .hi-page .lab-tie-btn {
+    transition: none;
+    animation: none;
+  }
+
+  .hi-page .vcard.is-clickable:hover,
+  .hi-page .vcard.is-clickable:active,
+  .hi-page .lab-primary:hover,
+  .hi-page .lab-primary:active,
+  .hi-page .lab-pick-btn:hover,
+  .hi-page .lab-pick-btn:active,
+  .hi-page .lab-tie-btn:hover {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Detail-page link-outs (Phase 3): discrete links inside the leaderboard
+   cards, the rankings table, and the battle reveal. Each inherits the
+   identity styling of the element it wraps and adds a subtle underline and
+   arrow affordance on hover/focus, so the surrounding play/select surfaces
+   read exactly as before.
+   -------------------------------------------------------------------------- */
+
+/* Card identity block (RankCard + FeaturedCard) -> model page. */
+.hi-page .rcard-link {
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The arrow is always laid out (opacity-only reveal: no hover shift). */
+.hi-page .rcard-link .rcard-model::after {
+  content: ' \2197';
+  display: inline-block;
+  font-size: 0.85em;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.hi-page .rcard-link:hover .rcard-model,
+.hi-page .rcard-link:focus-visible .rcard-model {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.hi-page .rcard-link:hover .rcard-model::after,
+.hi-page .rcard-link:focus-visible .rcard-model::after {
+  opacity: 0.7;
+}
+
+/* Rankings table: model cell -> model page, provider cell -> provider page. */
+.hi-page .rt-model-link,
+.hi-page .rt-provider-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hi-page .rt-model-link:hover,
+.hi-page .rt-model-link:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.hi-page .rt-provider-link:hover .rt-provider-name,
+.hi-page .rt-provider-link:focus-visible .rt-provider-name {
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+/* Battle reveal name -> model page. The revealed card is no longer a play
+   surface, so this link keeps a resting underline as its visible affordance
+   (same language as the detail pages' provider links). */
+.hi-page .vcard-reveal-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.hi-page .vcard-reveal-link::after {
+  content: ' \2197';
+  display: inline-block;
+  font-size: 0.85em;
+  opacity: 0.55;
+}
+
+.hi-page .vcard-reveal-link:hover,
+.hi-page .vcard-reveal-link:focus-visible {
+  text-decoration-color: var(--ink);
+}
+
+.hi-page .rcard-link:focus-visible,
+.hi-page .rt-model-link:focus-visible,
+.hi-page .rt-provider-link:focus-visible,
+.hi-page .vcard-reveal-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

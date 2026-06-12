@@ -1,0 +1,79 @@
+/*
+ * CAPTCHA vote-gate modal (see ../hooks/useVoteGate). Scoped to .hi-gate-*
+ * classes; rendered inside .hi-page so the design tokens from tokens.css
+ * resolve (with raw fallbacks just in case).
+ */
+
+.hi-gate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(26, 26, 46, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.hi-gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 26px 20px;
+  background: var(--cream, #faf9f6);
+  border: 1px solid var(--border, #dde2df);
+  border-radius: 16px;
+  box-shadow: 0 18px 44px rgba(26, 26, 46, 0.22);
+  text-align: center;
+}
+
+.hi-gate-title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: var(--ink, #1a1a2e);
+}
+
+.hi-gate-note {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted, #687083);
+}
+
+/* Reserve the widget's footprint so the card doesn't jump as it loads. */
+.hi-gate-widget {
+  min-height: 65px;
+  margin-top: 4px;
+}
+
+.hi-gate-error {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--coral, #ef4444);
+}
+
+.hi-gate-cancel {
+  margin-top: 2px;
+  padding: 8px 14px;
+  border: 0;
+  background: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted, #687083);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.15s ease;
+}
+
+.hi-gate-cancel:hover,
+.hi-gate-cancel:focus-visible {
+  color: var(--ink, #1a1a2e);
+}
