@@ -1711,6 +1711,7 @@ single row) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   padding: 12px 22px;
   border-radius: 999px;
   font-size: 15px;

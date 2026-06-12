@@ -1,8 +1,9 @@
 'use client';
 
 import { trackCtaClicked } from '../lib/analytics';
+import { GitHubIcon } from './icons';
+import { GITHUB_URL } from './shell/SiteNav';
 
-const GITHUB_URL = 'https://github.com/VapiAI/humanness-index';
 const RUN_YOUR_MODEL_MAILTO =
   'mailto:humannessindex@vapi.ai?subject=Run%20my%20model%20on%20the%20Humanness%20Index';
 
@@ -37,6 +38,7 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
             rel="noopener noreferrer"
             target="_blank"
           >
+            <GitHubIcon />
             Star on GitHub
           </a>
         </div>
