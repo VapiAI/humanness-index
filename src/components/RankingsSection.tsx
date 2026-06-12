@@ -2,7 +2,7 @@
 
 import { useEffect, type FocusEvent } from 'react';
 
-import { CaretDown, CaretUp, Info, MagnifyingGlass } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, Info, MagnifyingGlass, Users } from '@phosphor-icons/react';
 
 import { voiceStats } from '../data/providers';
 import { modelDetailLinkForId, providerDetailLinkForName } from '../lib/detail';
@@ -150,7 +150,10 @@ export const RankingsSection = ({
       <div className="rankings-header">
         <h2>Humanness Deep Dive</h2>
         <div className="rankings-stats">
-          <span className="rankings-stat">{sortedModels.length} Models</span>
+          <span className="rankings-stat">
+            {sortedModels.length} Models
+            <InfoTip tip="Every listed model offers voice cloning, so each battle can play the same cloned source voice through both sides. Models without cloning can't be compared head to head and are left out; new ones join as cloning access lands." />
+          </span>
           <i className="rankings-divider" />
           <span className="rankings-stat">{providerCount} providers</span>
           <i className="rankings-divider" />
@@ -225,6 +228,7 @@ export const RankingsSection = ({
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'votes')}>
                 <SortHeader label="Positive Votes" sortKey="votes" sort={sort} onSortChange={onSortChange} />
+                <InfoTip tip="How many listeners picked this voice as the more human one in blind battles." />
               </th>
               <th className="rt-listen">Listen</th>
             </tr>
@@ -280,7 +284,10 @@ export const RankingsSection = ({
                   <td className="rt-num">{humannessScore(model, sortedModels)}</td>
                   <td className="rt-num">{stats.latency}</td>
                   <td className="rt-num">{stats.price}</td>
-                  <td className="rt-num">{model.wins.toLocaleString()}</td>
+                  <td className="rt-num rt-votes">
+                    <Users size={13} weight="bold" aria-hidden="true" />
+                    {model.wins.toLocaleString()}
+                  </td>
                   <td className="rt-listen">
                     <button
                       className="rt-play"

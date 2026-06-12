@@ -2,6 +2,8 @@
 
 import { useMemo, type CSSProperties } from 'react';
 
+import { Users } from '@phosphor-icons/react';
+
 import { modelBlurb, voiceStats } from '../data/providers';
 import { humannessScore } from '../lib/scoring';
 import { voiceStyle } from '../lib/voiceViz';
@@ -55,6 +57,13 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
             <div className="fcard-stat">
               <dt>Languages</dt>
               <dd>{stats.langs}</dd>
+            </div>
+            <div className="fcard-stat">
+              <dt>Votes</dt>
+              <dd className="rcard-votes">
+                <Users size={14} weight="bold" aria-hidden="true" />
+                {model.wins.toLocaleString()}
+              </dd>
             </div>
           </dl>
         </div>

@@ -90,6 +90,9 @@ type RoundReveal = {
   left: ScoredModel;
   right: ScoredModel;
   sorted: ScoredModel[];
+  /** Pairwise Elo shifts this vote produced (left/right, signed). */
+  leftDelta: number;
+  rightDelta: number;
 };
 
 export const HumannessIndexPage = () => {
@@ -164,7 +167,7 @@ export const HumannessIndexPage = () => {
     voteGate.guardVote((captchaToken) => {
       // Judge the pick against pre-vote standings, then apply it.
       const correct = voteMatchesCrowd(leftModel.elo, rightModel.elo, winner);
-      arena.applyVote({
+      const { leftDelta, rightDelta } = arena.applyVote({
         leftModel,
         rightModel,
         winner,
@@ -177,7 +180,15 @@ export const HumannessIndexPage = () => {
         rightModelId: rightModel.id,
         correct,
       });
-      setReveal({ winner, correct, left: leftModel, right: rightModel, sorted: sortedModels });
+      setReveal({
+        winner,
+        correct,
+        left: leftModel,
+        right: rightModel,
+        sorted: sortedModels,
+        leftDelta,
+        rightDelta,
+      });
     });
   };
 
@@ -270,6 +281,7 @@ export const HumannessIndexPage = () => {
         roundResult={reveal?.winner ?? null}
         canVote={audio.bothStarted}
         voteCorrect={reveal?.correct ?? false}
+        voteImpact={reveal ? { left: reveal.leftDelta, right: reveal.rightDelta } : null}
         onPlayRound={handlePlayRound}
         onToggleSide={(side) =>
           audio.toggleBattleSide(

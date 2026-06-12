@@ -350,6 +350,27 @@ rendered so scrollbar math stays stable. */
   line-height: 1.35;
 }
 
+/* Post-vote impact line: the signed Elo shift the listener's vote produced. */
+.hi-page .lab-impact {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.hi-page .lab-impact strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hi-page .lab-impact .is-up {
+  color: #0a9d6c;
+}
+
+.hi-page .lab-impact .is-down {
+  color: #c2553a;
+}
+
 .hi-page .lab-arena {
   display: grid;
   flex: 1;
@@ -1052,6 +1073,33 @@ is laid out from the start, so the paragraph never reflows. */
   white-space: nowrap; /* "~200 ms" stays on one line */
 }
 
+/* People-icon vote count shared by the cards and the rankings table. */
+.hi-page .rcard-votes,
+.hi-page .rt-votes {
+  font-variant-numeric: tabular-nums;
+}
+
+.hi-page .rcard-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hi-page .rcard-votes svg {
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.hi-page .rt-votes {
+  white-space: nowrap;
+}
+
+.hi-page .rt-votes svg {
+  margin-right: 5px;
+  vertical-align: -2px;
+  opacity: 0.45;
+}
+
 .hi-page .rcard.tone-light .rcard-rank,
 .hi-page .rcard.tone-light .rcard-model,
 .hi-page .rcard.tone-light .rcard-score-label,
@@ -1318,6 +1366,44 @@ single row) */
 .hi-page .lab-primary:disabled {
   cursor: default;
   opacity: 0.7;
+}
+
+/* Post-reveal control pair: Next Pair + jump to the leaderboard. */
+.hi-page .lab-after {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.hi-page .lab-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid rgba(26, 26, 46, 0.18);
+  border-radius: 999px;
+  color: var(--ink);
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.hi-page .lab-ghost:hover {
+  border-color: var(--teal);
+  transform: translateY(-1px);
+}
+
+.hi-page .lab-ghost:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
 }
 
 @media (max-width: 860px) {

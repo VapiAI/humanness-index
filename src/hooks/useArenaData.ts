@@ -102,7 +102,8 @@ export const useArenaData = () => {
 
   /**
    * Record a head-to-head outcome: optimistic pairwise Elo locally, POSTed to
-   * the backend, whose authoritative standings reconcile on response.
+   * the backend, whose authoritative standings reconcile on response. Returns
+   * the pairwise Elo deltas so the reveal can show the vote's impact.
    */
   const applyVote = useCallback(
     ({
@@ -118,7 +119,7 @@ export const useArenaData = () => {
       voteToken: string | null;
       /** Solved Turnstile token on gated (every 10th) votes. */
       captchaToken?: string;
-    }) => {
+    }): { leftDelta: number; rightDelta: number } => {
       hasVotedRef.current = true;
 
       const expectedLeft = eloExpectation(leftModel.elo, rightModel.elo);
@@ -162,6 +163,8 @@ export const useArenaData = () => {
       void fetchBattle().then((fetched) => {
         upcomingBattleRef.current = fetched;
       });
+
+      return { leftDelta, rightDelta };
     },
     [fetchBattle],
   );
