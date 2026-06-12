@@ -14,8 +14,8 @@ a benchmark whose credibility depends on it.
 - One public repo containing the full benchmark: page, detail pages, vote
   backend, Elo engine, model registry, and the clip/benchmark pipeline.
   Anyone can read exactly how scores are produced.
-- Hosted on its own domain (placeholder below: `humannessindex.com`; final
-  name is an open question) with `vapi.ai/humanness-index` 301-ing to it.
+- Hosted at `humannessindex.vapi.ai` with `vapi.ai/humanness-index`
+  301-ing to it.
 - Community participation without compromising methodology: model
   suggestions and code contributions are open; clip generation and
   registration stay maintainer-gated because they require our licensed
@@ -161,7 +161,7 @@ New Vercel project `humanness-index` on this repo.
 
 | Concern | Plan |
 | --- | --- |
-| Domain | `humannessindex.com` placeholder; user decision. Apex + www, Vercel-managed DNS |
+| Domain | `humannessindex.vapi.ai` (confirmed): a CNAME in the existing vapi.ai zone pointing at the new Vercel project; no apex purchase. Staying under vapi.ai keeps the brand family and passes site reputation to the subdomain |
 | Blob store | NEW store for the public project. One-time copy of the 1,700+ clips from the landing store (pipeline `uploadClips` already skip-if-exists; point it at the new token and re-upload from hashes manifest). `HUMANNESS_AUDIO_ORIGIN` points at the new store |
 | Vote store | NEW event store seeded from the production export at cutover (same seeding path the module already uses). Votes accrued on vapi.ai up to cutover are preserved in the seed |
 | Env vars | `HUMANNESS_BATTLE_TOKEN_SECRET` (new secret), `BLOB_READ_WRITE_TOKEN` (new store), `HUMANNESS_AUDIO_ORIGIN`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` (new site registration, REQUIRED in production since the repo is public and the vote endpoint is documented), optional PostHog key |
@@ -213,7 +213,7 @@ of this work.
 
 ## 11. Open questions
 
-1. Domain name (everything above uses a placeholder).
+1. ~~Domain name~~ Resolved: `humannessindex.vapi.ai`.
 2. License confirmation: Apache-2.0 proposed over MIT for the patent grant.
 3. Analytics: keep PostHog (own key) or none at launch?
 4. Does viz-lab ship publicly (it is a useful design-transparency artifact)
