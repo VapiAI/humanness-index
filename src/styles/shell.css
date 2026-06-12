@@ -1,0 +1,307 @@
+/*
+ * Standalone shell: base reset + the site's own nav/footer chrome.
+ *
+ * The module stylesheets (src/styles/*.css) were authored against the host
+ * site's Tailwind preflight; the subset they rely on (border-box sizing,
+ * zeroed margins, inherited link color, unstyled buttons) is reproduced
+ * here so the extracted pages render identically without Tailwind.
+ */
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+}
+
+body {
+  margin: 0;
+  line-height: inherit;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  background: #faf9f6;
+  color: #1a1a2e;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+figure,
+dl,
+dd {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+ol,
+ul,
+menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+small {
+  font-size: 80%;
+}
+
+table {
+  text-indent: 0;
+  border-color: inherit;
+  border-collapse: collapse;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+button,
+[type='button'],
+[type='submit'] {
+  appearance: button;
+  background-color: transparent;
+  background-image: none;
+  cursor: pointer;
+}
+
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  vertical-align: middle;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+[hidden] {
+  display: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ------------------------------ Shell tokens ------------------------------ */
+
+:root {
+  --shell-ink: #1a1a2e;
+  --shell-cream: #faf9f6;
+  --shell-teal: #00cd8f;
+  --shell-muted: #687083;
+  --shell-border: #dde2df;
+  --shell-content-max: 1296px;
+  --shell-gutter: clamp(20px, 5vw, 72px);
+  --shell-pad: clamp(20px, 2.6vw, 40px);
+  --shell-font-display:
+    var(--font-instrument-sans),
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+}
+
+.skip-nav {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  padding: 10px 14px;
+  background: var(--shell-ink);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: top 0.15s ease;
+}
+
+.skip-nav:focus-visible {
+  top: 8px;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* -------------------------------- Site nav -------------------------------- */
+
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(250, 249, 246, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--shell-border);
+}
+
+.site-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(var(--shell-content-max), calc(100% - var(--shell-gutter) * 2));
+  margin-inline: auto;
+  padding: 14px var(--shell-pad);
+}
+
+.site-nav-wordmark {
+  font-family: var(--shell-font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--shell-ink);
+  white-space: nowrap;
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--shell-ink);
+}
+
+.site-nav-links a {
+  opacity: 0.78;
+  transition: opacity 0.15s ease;
+}
+
+.site-nav-links a:hover,
+.site-nav-links a:focus-visible {
+  opacity: 1;
+}
+
+.site-nav-vapi {
+  padding: 7px 14px;
+  border: 1px solid var(--shell-border);
+  border-radius: 999px;
+  background: #fff;
+  opacity: 1 !important;
+}
+
+.site-nav-vapi:hover,
+.site-nav-vapi:focus-visible {
+  border-color: var(--shell-teal);
+}
+
+/* ------------------------------- Site footer ------------------------------ */
+
+.site-footer {
+  border-top: 1px solid var(--shell-border);
+  background: var(--shell-cream);
+  color: var(--shell-ink);
+}
+
+.site-footer-inner {
+  display: grid;
+  gap: 20px;
+  width: min(var(--shell-content-max), calc(100% - var(--shell-gutter) * 2));
+  margin-inline: auto;
+  padding: 40px var(--shell-pad) 48px;
+}
+
+.site-footer-brand {
+  display: grid;
+  gap: 6px;
+}
+
+.site-footer-wordmark {
+  font-family: var(--shell-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.site-footer-tagline {
+  color: var(--shell-muted);
+  font-size: 14px;
+  max-width: 460px;
+  line-height: 1.5;
+}
+
+.site-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.site-footer-links a {
+  opacity: 0.78;
+  transition: opacity 0.15s ease;
+}
+
+.site-footer-links a:hover,
+.site-footer-links a:focus-visible {
+  opacity: 1;
+}
+
+.site-footer-legal {
+  color: var(--shell-muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+  max-width: 760px;
+}
