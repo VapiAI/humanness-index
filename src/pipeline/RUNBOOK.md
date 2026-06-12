@@ -143,7 +143,7 @@ dropped in; the originals supersede them.)
   `/v1/audio/speech` path 403s (re-probe: `results/probe-xai-http.ts`).
 - **Blob store**: `audio/{hash}.mp3`, public access, `addRandomSuffix:
   false`. Uploads are idempotent (skip-if-exists); the token's store id must
-  be the arena audio origin (xnhllixrudpkjkvi...).
+  be the arena audio origin (bkvlbh5qphzaen1w...).
 
 ## TTFB results provenance
 

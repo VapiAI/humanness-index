@@ -8,7 +8,7 @@ import type { FallbackClip } from './types';
  * builtins.
  */
 export const ARENA_AUDIO_ORIGIN =
-  'https://xnhllixrudpkjkvi.public.blob.vercel-storage.com';
+  'https://bkvlbh5qphzaen1w.public.blob.vercel-storage.com';
 
 /** Absolute URL for a pinned fallback clip. */
 export const arenaClipUrl = (clip: Pick<FallbackClip, 'path'>): string =>
