@@ -1534,8 +1534,8 @@ single row) */
   padding: 12px;
   transform: translate(-50%, calc(-100% - 14px));
   border: 1px solid #e6e6e6;
-  border-radius: 4px;
-  background: var(--cream, #fefefe);
+  border-radius: 8px;
+  background: #fff;
   box-shadow: 0 14px 30px -16px rgba(26, 26, 46, 0.28);
   pointer-events: none;
 }
