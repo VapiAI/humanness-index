@@ -1,6 +1,13 @@
 export const PlayIcon = () => (
   <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <polygon points="8 4 20 12 8 20" fill="currentColor" />
+    {/* Stroke with round joins gives the triangle softly rounded corners. */}
+    <path
+      d="M9 6 18 12 9 18 Z"
+      fill="currentColor"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 

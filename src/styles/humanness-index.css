@@ -837,9 +837,9 @@ rendered so scrollbar math stays stable. */
 .hi-page .rcard-art-cue svg {
   width: 44px;
   height: 44px;
-  transform: scale(0.7);
+  transform: scale(0.94);
   filter: drop-shadow(0 2px 12px rgba(12, 21, 18, 0.65));
-  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 180ms ease;
 }
 
 .hi-page .rcard-art:hover .rcard-art-viz {
