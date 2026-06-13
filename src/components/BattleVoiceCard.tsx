@@ -63,9 +63,9 @@ export const BattleVoiceCard = ({
   onStart,
   onTogglePlay,
 }: BattleVoiceCardProps) => {
-  // The A/B story uses the two brand accents straight from the site palette:
-  // mint (#00cd8f, the --teal/--mint token) versus sunset.
-  const palette = label === 'A' ? PALETTES.mint : PALETTES.sunset;
+  // Blind A/B uses two cool brand accents (fixed per side, so they never leak
+  // the model's real palette): teal for A, violet for B.
+  const palette = label === 'A' ? PALETTES.teal : PALETTES.violet;
   // Post-vote conversion path: the revealed name links to its model page.
   // Gated on `revealed` so the blind phase DOM stays fully anonymous — no
   // hrefs to peek at before voting.
