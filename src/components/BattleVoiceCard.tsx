@@ -63,7 +63,9 @@ export const BattleVoiceCard = ({
   onStart,
   onTogglePlay,
 }: BattleVoiceCardProps) => {
-  const palette = label === 'A' ? PALETTES.teal : PALETTES.sunset;
+  // The A/B story uses the two brand accents straight from the site palette:
+  // mint (#00cd8f, the --teal/--mint token) versus sunset.
+  const palette = label === 'A' ? PALETTES.mint : PALETTES.sunset;
   // Post-vote conversion path: the revealed name links to its model page.
   // Gated on `revealed` so the blind phase DOM stays fully anonymous — no
   // hrefs to peek at before voting.
