@@ -838,124 +838,84 @@ is laid out from the start, so the paragraph never reflows. */
   color: var(--ink);
 }
 
+/* The whole art well is one button: the orb is the play/stop control. */
 .hi-page .rcard-art {
   position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   margin: 6px 0 10px;
+  padding: 0;
+  border: 0;
   border-radius: 8px;
+  cursor: pointer;
   background:
     radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.06), transparent 70%),
     #0c1512;
+  transition: box-shadow 200ms ease;
 }
 
 .hi-page .rcard-art-viz {
   display: grid;
   flex: 1;
   place-items: center;
-  padding: 16px 14px 56px;
+  padding: 18px;
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* The whole art well is the hit area; a floating pill is the visible affordance */
-.hi-page .rcard-art-listen {
+/* Play/stop glyph: springs in on hover/focus (no persistent pill). */
+.hi-page .rcard-art-cue {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 12px;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  font: inherit;
-  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
 }
 
-.hi-page .rcard-art-listen:focus-visible {
-  outline: 2px solid var(--teal);
+.hi-page .rcard-art-cue svg {
+  width: 46px;
+  height: 46px;
+  transform: scale(0.7);
+  filter: drop-shadow(0 6px 16px rgba(12, 21, 18, 0.55));
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hi-page .rcard-art:hover .rcard-art-viz {
+  transform: scale(1.06);
+}
+
+.hi-page .rcard-art:hover .rcard-art-cue,
+.hi-page .rcard-art:focus-visible .rcard-art-cue {
+  opacity: 1;
+}
+
+.hi-page .rcard-art:hover .rcard-art-cue svg,
+.hi-page .rcard-art:focus-visible .rcard-art-cue svg {
+  transform: scale(1);
+}
+
+.hi-page .rcard-art:focus-visible {
+  outline: 2px solid var(--mint);
   outline-offset: -2px;
 }
 
-.hi-page .rcard-listen-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 14px 5px 6px;
-  border: 1px solid rgba(26, 26, 46, 0.12);
-  border-radius: 999px;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 4px 14px rgba(26, 26, 46, 0.14);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  transition:
-    transform 150ms ease,
-    color 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease,
-    box-shadow 150ms ease;
-}
-
-.hi-page .rcard-listen-dot {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  color: #ffffff;
-  background: var(--mint);
-}
-
-.hi-page .rcard-art-listen .button-icon {
-  display: block;
-  width: 11px;
-  height: 11px;
-}
-
-.hi-page .rcard-art-listen:hover .rcard-listen-chip {
-  transform: translateY(-1px);
-  border-color: rgba(26, 26, 46, 0.3);
-  box-shadow: 0 6px 18px rgba(26, 26, 46, 0.2);
-}
-
-.hi-page .rcard-art-listen:active .rcard-listen-chip {
-  transform: translateY(0) scale(0.97);
-}
-
-/* Playing: pill flips dark with a Stop glyph, mint ring hugs the art well */
+/* Playing: a mint ring hugs the well; the pulsing orb carries the motion. */
 .hi-page .rcard .rcard-art.is-playing,
 .hi-page .rcard.tone-light .rcard-art.is-playing {
-  border-color: var(--mint);
-  box-shadow: inset 0 0 0 1px var(--mint);
+  box-shadow: inset 0 0 0 2px var(--mint);
 }
 
-.hi-page .rcard-art.is-playing .rcard-listen-chip {
-  border-color: var(--ink);
-  color: var(--cream);
-  background: var(--ink);
-}
-
-.hi-page .rcard-art.is-playing .rcard-listen-chip:hover {
-  border-color: var(--ink);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .hi-page .rcard-art.is-playing .rcard-listen-dot {
-    animation: rcard-listen-pulse 1.8s ease-out infinite;
-  }
-}
-
-@keyframes rcard-listen-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 205, 143, 0.45);
+@media (prefers-reduced-motion: reduce) {
+  .hi-page .rcard-art-viz,
+  .hi-page .rcard-art-cue,
+  .hi-page .rcard-art-cue svg {
+    transition: none;
   }
 
-  70%,
-  100% {
-    box-shadow: 0 0 0 8px rgba(0, 205, 143, 0);
+  .hi-page .rcard-art:hover .rcard-art-viz {
+    transform: none;
   }
 }
 

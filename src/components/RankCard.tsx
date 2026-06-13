@@ -10,7 +10,7 @@ import { humannessScore } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
 import { voiceStyle } from '../lib/voiceViz';
 import { DetailPageLink } from './DetailPageLink';
-import { PlayIcon, StopIcon } from './icons';
+import { RankPauseIcon, RankPlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { RankScale } from './RankScale';
 import { VoiceViz } from './VoiceViz';
@@ -78,28 +78,30 @@ export const useCardNavigation = (model: ScoredModel) => {
   };
 };
 
-/** The art well shared by RankCard and FeaturedCard: voice viz + floating Listen pill. */
+/**
+ * The art well shared by RankCard, FeaturedCard, and the detail SamplePlayer:
+ * the whole orb is the play/stop button (no separate pill). On hover the orb
+ * springs up and a play/stop glyph fades in; while playing the mint ring marks
+ * the state and the pulsing orb carries the motion.
+ */
 export const RankCardArt = ({ model, playing, animate, onPlay, featured = false }: RankCardArtProps) => (
-  <div className={`rcard-art${featured ? ' fcard-art' : ''}${playing ? ' is-playing' : ''}`}>
-    <div className="rcard-art-viz">
+  <button
+    type="button"
+    className={`rcard-art${featured ? ' fcard-art' : ''}${playing ? ' is-playing' : ''}`}
+    onClick={onPlay}
+    aria-label={
+      playing
+        ? `Stop ${model.provider} ${model.model} sample`
+        : `Listen to ${model.provider} ${model.model} sample`
+    }
+  >
+    <span className="rcard-art-viz">
       <VoiceViz playing={playing} model={model} size={168} animate={animate} />
-    </div>
-    <button
-      className="rcard-art-listen"
-      type="button"
-      onClick={onPlay}
-      aria-label={
-        playing
-          ? `Stop ${model.provider} ${model.model} sample`
-          : `Listen to ${model.provider} ${model.model} sample`
-      }
-    >
-      <span className="rcard-listen-chip">
-        <span className="rcard-listen-dot">{playing ? <StopIcon /> : <PlayIcon />}</span>
-        <span className="rcard-listen-label">{playing ? 'Stop' : 'Listen'}</span>
-      </span>
-    </button>
-  </div>
+    </span>
+    <span className="rcard-art-cue" aria-hidden="true">
+      {playing ? <RankPauseIcon /> : <RankPlayIcon />}
+    </span>
+  </button>
 );
 
 /** A Top-10 leaderboard card: rank, identity, visualizer + listen, score, stats. */
