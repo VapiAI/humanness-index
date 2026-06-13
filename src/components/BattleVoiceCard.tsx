@@ -1,12 +1,13 @@
 'use client';
 
 import { Check } from '@phosphor-icons/react';
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import { modelDetailLinkForId } from '../lib/detail';
 import type { ScoredModel } from '../lib/types';
 import { PALETTES } from '../lib/voiceViz';
 import { DetailPageLink } from './DetailPageLink';
+import { PauseIcon, PlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { VoiceViz } from './VoiceViz';
 
@@ -15,8 +16,6 @@ type BattleVoiceCardProps = {
   label: 'A' | 'B';
   playing?: boolean;
   played?: boolean;
-  prompt: string;
-  progress?: number;
   /** Post-vote: unmask the voice in place (identity, rank, score). */
   revealed?: boolean;
   /** This side is the listener's pick (never set on a tie vote). */
@@ -36,24 +35,21 @@ type BattleVoiceCardProps = {
 };
 
 /**
- * One side of the blind head-to-head. The orb stays in place the whole time:
- * it pulses with the live clip amplitude while this voice plays, and the
- * prompt fades in as a caption beneath it (no jarring flip).
+ * One side of the blind head-to-head. The orb stays in place the whole time
+ * and pulses with the live clip amplitude while this voice plays; on hover a
+ * play/pause glyph fades in over it (same as the leaderboard cards).
  *
  * The surface is listen-only: idle → starts the round; afterwards every click
  * switches playback to this voice (clicking the speaking card stops it), with
  * unlimited back-and-forth. Voting lives in the explicit pick buttons below
  * the arena — a card click never casts a vote. After the vote the card stays
  * in place and reveals its real identity (provider, rank, Humanness).
- * Mirrors the Figma's two-sided color story: Voice A teal, Voice B orange.
  */
 export const BattleVoiceCard = ({
   model,
   label,
   playing = false,
   played = false,
-  prompt,
-  progress = 0,
   revealed = false,
   isPick = false,
   isLeader = false,
@@ -90,18 +86,6 @@ export const BattleVoiceCard = ({
   ]
     .filter(Boolean)
     .join(' ');
-
-  // The whole prompt is laid out invisibly up front (so nothing reflows), and
-  // each character fades in as the audio progress sweeps past it.
-  const typedLen = playing && prompt ? Math.round(progress * prompt.length) : 0;
-  const promptChars = useMemo(() => Array.from(prompt), [prompt]);
-  const scriptRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const node = scriptRef.current;
-    if (!node || prompt.length === 0) return;
-    // Track the fade's leading edge through any overflow.
-    node.scrollTop = (node.scrollHeight - node.clientHeight) * (typedLen / prompt.length);
-  }, [typedLen, prompt.length]);
 
   return (
     <div
@@ -189,25 +173,9 @@ export const BattleVoiceCard = ({
                   marker during the blind phase. */}
               <VoiceViz playing={playing} model={model} animate={playing} palette={palette} />
             </div>
-            {/* Prompt fades in beneath the orb while playing (the words sweep
-                in as the audio progresses), instead of flipping the card. */}
-            <div className="vcard-caption" ref={scriptRef} aria-hidden={!playing}>
-              <p className="vcard-caption-text">
-                <span className="sr-only">{prompt}</span>
-                <span aria-hidden="true">
-                  {promptChars.map((char, index) => (
-                    <span
-                      key={`ch-${index}`}
-                      className={
-                        index < typedLen ? 'vcard-caption-char is-on' : 'vcard-caption-char'
-                      }
-                    >
-                      {char}
-                    </span>
-                  ))}
-                </span>
-              </p>
-            </div>
+            <span className="rcard-art-cue" aria-hidden="true">
+              {playing ? <PauseIcon /> : <PlayIcon />}
+            </span>
           </>
         )}
       </div>

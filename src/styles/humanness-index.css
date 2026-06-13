@@ -473,21 +473,11 @@ rendered so scrollbar math stays stable. */
   display: grid;
   place-items: center;
   overflow: hidden;
+  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Head-to-head: active card flips in + glows,
-done badge,
-prompt reading,
-in-place reveal */
-/* Each state keys off the side's own palette (teal for A, sunset for B),
-   so the two identities stay balanced instead of everything glowing mint. */
-.hi-page .vcard.is-playing {
-  border-color: color-mix(in srgb, var(--card-from) 55%, rgba(26, 26, 46, 0.08));
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--card-from) 16%, transparent),
-    0 18px 40px -20px color-mix(in srgb, var(--card-to) 45%, rgba(26, 26, 46, 0.3));
-}
-
+/* Heard sides keep a faint border; a playing card carries no outline — the
+   pulsing orb is the only indicator. */
 .hi-page .vcard.is-done {
   border-color: color-mix(in srgb, var(--card-from) 36%, rgba(26, 26, 46, 0.08));
 }
@@ -500,12 +490,15 @@ in-place reveal */
     box-shadow 160ms ease;
 }
 
+/* Subtle lift, soft neutral shadow — no colored glow ring. */
 .hi-page .vcard.is-clickable:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--card-from) 55%, rgba(26, 26, 46, 0.1));
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--card-from) 13%, transparent),
-    0 16px 32px -16px color-mix(in srgb, var(--card-to) 35%, rgba(26, 26, 46, 0.28));
+  transform: translateY(-1px);
+  border-color: rgba(26, 26, 46, 0.16);
+  box-shadow: 0 10px 24px -18px rgba(26, 26, 46, 0.3);
+}
+
+.hi-page .vcard.is-clickable:hover .vcard-art {
+  transform: scale(1.03);
 }
 
 .hi-page .vcard.is-clickable:focus-visible {
@@ -514,10 +507,10 @@ in-place reveal */
 }
 
 .hi-page .vcard.is-clickable:active {
-  transform: translateY(-1px);
+  transform: translateY(0);
 }
 
-/* Battle card: the orb holds its place; the prompt fades in beneath it. */
+/* Battle card: the orb holds its place; a play/pause glyph fades in on hover. */
 .hi-page .vcard-battle {
   overflow: hidden;
 }
@@ -529,48 +522,14 @@ in-place reveal */
   height: 240px;
 }
 
-/* Prompt caption: an overlay anchored to the card's base, so the orb never
-resizes or shifts when it appears. Fades in while the side plays. */
-.hi-page .vcard-caption {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  max-height: 52%;
-  padding: 34px 14px 14px;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 260ms ease;
-  background: linear-gradient(
-    to top,
-    color-mix(in srgb, #ffffff 90%, var(--card-from)) 56%,
-    transparent
-  );
-}
-
-.hi-page .vcard-battle.is-playing .vcard-caption {
+.hi-page .vcard-battle.is-clickable:hover .rcard-art-cue,
+.hi-page .vcard-battle.is-clickable:focus-visible .rcard-art-cue {
   opacity: 1;
 }
 
-.hi-page .vcard-caption-text {
-  margin: 0;
-  color: var(--ink);
-  font-size: 13.5px;
-  line-height: 1.45;
-  text-align: center;
-}
-
-/* Each prompt character fades in as the audio sweeps past it; the full text
-is laid out from the start, so the paragraph never reflows. */
-.hi-page .vcard-caption-char {
-  opacity: 0;
-  transition: opacity 380ms ease-out;
-}
-
-.hi-page .vcard-caption-char.is-on {
-  opacity: 1;
+.hi-page .vcard-battle.is-clickable:hover .rcard-art-cue svg,
+.hi-page .vcard-battle.is-clickable:focus-visible .rcard-art-cue svg {
+  transform: scale(1);
 }
 
 .hi-page .chart-dot-group {
@@ -2338,8 +2297,7 @@ would clip at its top edge. */
 @media (prefers-reduced-motion: reduce) {
   .hi-page .vcard,
   .hi-page .vcard.is-clickable,
-  .hi-page .vcard-caption,
-  .hi-page .vcard-caption-char,
+  .hi-page .vcard-art,
   .hi-page .vcard-reveal,
   .hi-page .vcard-flag,
   .hi-page .lab-primary,
@@ -2351,6 +2309,7 @@ would clip at its top edge. */
 
   .hi-page .vcard.is-clickable:hover,
   .hi-page .vcard.is-clickable:active,
+  .hi-page .vcard.is-clickable:hover .vcard-art,
   .hi-page .lab-primary:hover,
   .hi-page .lab-primary:active,
   .hi-page .lab-pick-btn:hover,

@@ -3,26 +3,18 @@
 import { ArrowDown, ArrowsCounterClockwise, Check } from '@phosphor-icons/react';
 
 import { humannessScore, resultHeading } from '../lib/scoring';
-import type {
-  BattleSide,
-  HeroBattle,
-  RoundPhase,
-  ScoredModel,
-  VoteChoice,
-} from '../lib/types';
+import type { BattleSide, RoundPhase, ScoredModel, VoteChoice } from '../lib/types';
 import { BattleVoiceCard } from './BattleVoiceCard';
 import { PlayIcon } from './icons';
 import { METHODOLOGY_URL } from './shell/SiteNav';
 
 type HeroSectionProps = {
-  battle: HeroBattle;
   leftModel: ScoredModel;
   rightModel: ScoredModel;
   sortedModels: ScoredModel[];
   roundPhase: RoundPhase;
   playedSides: Record<BattleSide, boolean>;
   playingId: string | null;
-  promptProgress: number;
   revealed: boolean;
   roundResult: VoteChoice | null;
   /** Both voices have started playing — voting is enabled. */
@@ -45,14 +37,12 @@ type HeroSectionProps = {
  * layout change.
  */
 export const HeroSection = ({
-  battle,
   leftModel,
   rightModel,
   sortedModels,
   roundPhase,
   playedSides,
   playingId,
-  promptProgress,
   revealed,
   roundResult,
   canVote,
@@ -116,8 +106,6 @@ export const HeroSection = ({
             model={leftModel}
             playing={playingId === leftModel.id}
             played={playedSides.left}
-            prompt={battle.prompt}
-            progress={promptProgress}
             revealed={revealed}
             isPick={pickedSide === 'left'}
             isLeader={leaderSide === 'left'}
@@ -137,8 +125,6 @@ export const HeroSection = ({
             model={rightModel}
             playing={playingId === rightModel.id}
             played={playedSides.right}
-            prompt={battle.prompt}
-            progress={promptProgress}
             revealed={revealed}
             isPick={pickedSide === 'right'}
             isLeader={leaderSide === 'right'}

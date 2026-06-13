@@ -371,14 +371,12 @@ export const HumannessIndexPage = () => {
       {/* While the reveal is up, the hero reads from the pre-vote snapshot so
           the leader/rank copy describes the matchup the listener judged. */}
       <HeroSection
-        battle={currentBattle}
         leftModel={reveal?.left ?? leftModel}
         rightModel={reveal?.right ?? rightModel}
         sortedModels={reveal?.sorted ?? sortedModels}
         roundPhase={audio.roundPhase}
         playedSides={audio.playedSides}
         playingId={audio.playingId}
-        promptProgress={audio.promptProgress}
         revealed={revealed}
         roundResult={reveal?.winner ?? null}
         canVote={audio.bothStarted}

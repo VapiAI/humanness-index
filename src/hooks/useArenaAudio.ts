@@ -27,7 +27,6 @@ const NO_SIDES_PLAYED: Record<BattleSide, boolean> = {
  */
 export const useArenaAudio = () => {
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [promptProgress, setPromptProgress] = useState(0);
   const [roundPhase, setRoundPhase] = useState<RoundPhase>('idle');
   const [playedSides, setPlayedSides] = useState(NO_SIDES_PLAYED);
   // Sides whose clip has *started* at least once — gates when voting unlocks
@@ -148,7 +147,6 @@ export const useArenaAudio = () => {
   const startClip = useCallback(
     (url: string | undefined, model: ScoredModel, onEnded?: () => void) => {
       stopClip();
-      setPromptProgress(0);
       const gen = playGenRef.current;
       let done = false;
       const finish = () => {
@@ -164,30 +162,19 @@ export const useArenaAudio = () => {
         audio.crossOrigin = 'anonymous';
         audio.src = url;
         attachAudioAnalyser(audio);
-        audio.ontimeupdate = () => {
-          if (audio.duration) {
-            setPromptProgress(Math.min(1, audio.currentTime / audio.duration));
-          }
-        };
-        audio.onended = () => {
-          setPromptProgress(1);
-          finish();
-        };
+        audio.onended = finish;
         audio.onerror = () => {
-          setPromptProgress(1);
           speak(model);
           window.setTimeout(finish, PLAY_MS);
         };
         audioElementRef.current = audio;
         audio.play().catch(() => {
-          setPromptProgress(1);
           speak(model);
           window.setTimeout(finish, PLAY_MS);
         });
         window.setTimeout(finish, 20000); // backstop in case 'ended' never fires
         return;
       }
-      setPromptProgress(1);
       speak(model);
       window.setTimeout(finish, PLAY_MS);
     },
@@ -322,7 +309,6 @@ export const useArenaAudio = () => {
 
   return {
     playingId,
-    promptProgress,
     roundPhase,
     playedSides,
     /** True once both voices have begun playing — gates voting. */
