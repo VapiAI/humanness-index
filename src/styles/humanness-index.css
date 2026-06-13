@@ -1131,7 +1131,9 @@ single row) */
   align-items: center;
   justify-content: center;
   gap: 12px;
-  min-height: 56px;
+  /* Matches the head block's height so the arena sits centered between them
+     (equal space above and below the battle cards). */
+  min-height: 85px;
 }
 
 /* Keyboard fast-mode hint: pointer-and-keyboard devices only. */
