@@ -350,26 +350,6 @@ rendered so scrollbar math stays stable. */
   line-height: 1.35;
 }
 
-/* Post-vote impact line: the signed Elo shift the listener's vote produced. */
-.hi-page .lab-impact {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.hi-page .lab-impact strong {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.hi-page .lab-impact .is-up {
-  color: #0a9d6c;
-}
-
-.hi-page .lab-impact .is-down {
-  color: #c2553a;
-}
 
 .hi-page .lab-arena {
   display: grid;
@@ -718,6 +698,29 @@ is laid out from the start, so the paragraph never reflows. */
 .hi-page .vcard-reveal-v {
   color: #09090b;
   font-weight: 700;
+}
+
+/* The vote's signed Elo shift, tinted by direction. */
+.hi-page .vcard-delta.is-up {
+  border-color: rgba(10, 157, 108, 0.35);
+  background: rgba(10, 157, 108, 0.08);
+}
+
+.hi-page .vcard-delta.is-down {
+  border-color: rgba(194, 85, 58, 0.32);
+  background: rgba(194, 85, 58, 0.07);
+}
+
+.hi-page .vcard-delta .vcard-reveal-v {
+  font-variant-numeric: tabular-nums;
+}
+
+.hi-page .vcard-delta.is-up .vcard-reveal-v {
+  color: #0a9d6c;
+}
+
+.hi-page .vcard-delta.is-down .vcard-reveal-v {
+  color: #c2553a;
 }
 
 /* Corner flag: "Your pick" on the chosen card (in the side's own gradient),

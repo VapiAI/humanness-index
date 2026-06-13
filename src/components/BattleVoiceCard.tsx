@@ -27,6 +27,8 @@ type BattleVoiceCardProps = {
   rank?: number;
   /** Humanness score (0–100), shown once revealed. */
   humanness?: number;
+  /** Signed Elo shift the listener's vote gave this side, shown once revealed. */
+  eloDelta?: number | null;
   /** Idle only: the first card click starts the round. */
   onStart?: () => void;
   /** Play this side (or stop it if it's already speaking). */
@@ -56,6 +58,7 @@ export const BattleVoiceCard = ({
   isLeader = false,
   rank,
   humanness,
+  eloDelta = null,
   onStart,
   onTogglePlay,
 }: BattleVoiceCardProps) => {
@@ -162,6 +165,17 @@ export const BattleVoiceCard = ({
                     <span className="vcard-reveal-k">Humanness</span>
                     <span className="vcard-reveal-v">{humanness}</span>
                   </span>
+                  {eloDelta !== null && (
+                    <span
+                      className={`vcard-reveal-chip vcard-delta ${eloDelta >= 0 ? 'is-up' : 'is-down'}`}
+                      title="How your vote moved this voice's Elo score"
+                    >
+                      <span className="vcard-reveal-k">Your vote</span>
+                      <span className="vcard-reveal-v">
+                        {eloDelta >= 0 ? `+${eloDelta}` : eloDelta}
+                      </span>
+                    </span>
+                  )}
                 </div>
               </div>
             </>

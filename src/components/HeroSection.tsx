@@ -80,7 +80,6 @@ export const HeroSection = ({
     ? "Here's who you were listening to."
     : 'Listen to both blind samples, then cast your vote.';
 
-  const signed = (delta: number) => (delta >= 0 ? `+${delta}` : `${delta}`);
   const handleSeeLeaderboard = () => {
     document.getElementById('leaderboard')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -109,19 +108,6 @@ export const HeroSection = ({
         <header className="lab-head">
           <h2 className="lab-question">{headingText}</h2>
           <p className="lab-hint">{hintText}</p>
-          {revealed && voteImpact && (
-            <p className="lab-impact">
-              Your vote moved the scores: A{' '}
-              <strong className={voteImpact.left >= 0 ? 'is-up' : 'is-down'}>
-                {signed(voteImpact.left)}
-              </strong>{' '}
-              · B{' '}
-              <strong className={voteImpact.right >= 0 ? 'is-up' : 'is-down'}>
-                {signed(voteImpact.right)}
-              </strong>{' '}
-              Elo
-            </p>
-          )}
         </header>
 
         <div className="lab-arena">
@@ -137,6 +123,7 @@ export const HeroSection = ({
             isLeader={leaderSide === 'left'}
             rank={rankOf(leftModel)}
             humanness={humannessScore(leftModel, sortedModels)}
+            eloDelta={voteImpact?.left ?? null}
             onStart={roundPhase === 'idle' ? onPlayRound : undefined}
             onTogglePlay={() => onToggleSide('left')}
           />
@@ -157,6 +144,7 @@ export const HeroSection = ({
             isLeader={leaderSide === 'right'}
             rank={rankOf(rightModel)}
             humanness={humannessScore(rightModel, sortedModels)}
+            eloDelta={voteImpact?.right ?? null}
             onStart={roundPhase === 'idle' ? onPlayRound : undefined}
             onTogglePlay={() => onToggleSide('right')}
           />
