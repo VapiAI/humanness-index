@@ -473,7 +473,6 @@ rendered so scrollbar math stays stable. */
   display: grid;
   place-items: center;
   overflow: hidden;
-  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Heard sides keep a faint border; a playing card carries no outline — the
@@ -495,10 +494,6 @@ rendered so scrollbar math stays stable. */
   transform: translateY(-1px);
   border-color: rgba(26, 26, 46, 0.16);
   box-shadow: 0 10px 24px -18px rgba(26, 26, 46, 0.3);
-}
-
-.hi-page .vcard.is-clickable:hover .vcard-art {
-  transform: scale(1.03);
 }
 
 .hi-page .vcard.is-clickable:focus-visible {
@@ -819,7 +814,6 @@ rendered so scrollbar math stays stable. */
   flex: 1;
   place-items: center;
   padding: 18px;
-  transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Bare white play/pause glyph centered on the orb; springs in on hover/focus. */
@@ -842,10 +836,6 @@ rendered so scrollbar math stays stable. */
   transition: transform 180ms ease;
 }
 
-.hi-page .rcard-art:hover .rcard-art-viz {
-  transform: scale(1.06);
-}
-
 .hi-page .rcard-art:hover .rcard-art-cue,
 .hi-page .rcard-art:focus-visible .rcard-art-cue {
   opacity: 1;
@@ -864,14 +854,9 @@ rendered so scrollbar math stays stable. */
 /* Playing state carries no outline; the pulsing orb is the only indicator. */
 
 @media (prefers-reduced-motion: reduce) {
-  .hi-page .rcard-art-viz,
   .hi-page .rcard-art-cue,
   .hi-page .rcard-art-cue svg {
     transition: none;
-  }
-
-  .hi-page .rcard-art:hover .rcard-art-viz {
-    transform: none;
   }
 }
 
@@ -2299,7 +2284,6 @@ would clip at its top edge. */
 @media (prefers-reduced-motion: reduce) {
   .hi-page .vcard,
   .hi-page .vcard.is-clickable,
-  .hi-page .vcard-art,
   .hi-page .vcard-reveal,
   .hi-page .vcard-flag,
   .hi-page .lab-primary,
@@ -2311,7 +2295,6 @@ would clip at its top edge. */
 
   .hi-page .vcard.is-clickable:hover,
   .hi-page .vcard.is-clickable:active,
-  .hi-page .vcard.is-clickable:hover .vcard-art,
   .hi-page .lab-primary:hover,
   .hi-page .lab-primary:active,
   .hi-page .lab-pick-btn:hover,
