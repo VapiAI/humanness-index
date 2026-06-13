@@ -337,8 +337,15 @@ export const HumannessIndexPage = () => {
       else audio.playModelSample(model);
       return;
     }
+    // Play the new selection when nothing is playing, or when the current
+    // sound is the previous selection (so dot→dot and row→row switch over).
+    // A leaderboard card's Listen sets no selection, so it's never hijacked.
+    const switchingSelection =
+      audio.playingId !== null && audio.playingId === focusedModelId;
     focusRankModel(model);
-    if (audio.playingId === null) audio.playModelSample(model);
+    if (audio.playingId === null || switchingSelection) {
+      audio.playModelSample(model);
+    }
   };
 
   // Listen button: toggles playback without dropping the row selection on

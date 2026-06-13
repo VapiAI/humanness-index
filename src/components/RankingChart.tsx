@@ -209,28 +209,11 @@ const EloDistributionChart = ({
           Above Average
         </text>
 
-        {/* Reading aid: the winning corner (more human, faster) at a glance. */}
-        <g className="chart-better" aria-hidden="true">
-          <text x={right - 8} y={top + 16} textAnchor="end">
-            Better
-          </text>
-          <path
-            d={`M ${right - 44} ${top + 26} L ${right - 12} ${top + 22}`}
-            markerEnd="url(#chart-better-arrow)"
-          />
-          <defs>
-            <marker
-              id="chart-better-arrow"
-              markerWidth="7"
-              markerHeight="7"
-              refX="5"
-              refY="3.5"
-              orient="auto"
-            >
-              <path d="M 0 0 L 7 3.5 L 0 7 Z" fill="currentColor" stroke="none" />
-            </marker>
-          </defs>
-        </g>
+        {/* Labels the winning corner (more human, faster); the green quadrant
+            wash already carries the direction, so no arrow needed. */}
+        <text className="chart-better" x={right - 8} y={top + 16} textAnchor="end" aria-hidden="true">
+          Better
+        </text>
         <line
           className="chart-avg-line"
           x1={left}
