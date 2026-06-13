@@ -329,10 +329,12 @@ rendered so scrollbar math stays stable. */
 
 .hi-page .lab-question {
   display: flex;
-  align-items: center;
-  justify-content: center;
   /* Reserve two lines: the post-vote reveal headline is longer than the
-     question, and the cards below must not shift when it swaps in. */
+     question, and the cards below must not shift when it swaps in. The text
+     hugs the bottom so the spare line opens above the title, not between it
+     and the hint. */
+  align-items: flex-end;
+  justify-content: center;
   min-height: 2.24em;
   margin: 0;
   color: var(--ink);
