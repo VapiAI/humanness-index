@@ -215,7 +215,10 @@ export const RankingsSection = ({
               <th aria-sort={ariaSortFor(sort, 'provider')}>
                 <SortHeader label="Provider" sortKey="provider" sort={sort} onSortChange={onSortChange} />
               </th>
-              <th>Model</th>
+              <th>
+                Model
+                <InfoTip tip="Only models that support voice cloning are listed: every battle plays the same cloned source voice through both sides, so the comparison is fair and head to head." />
+              </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'humanness')}>
                 <SortHeader label="Humanness" sortKey="humanness" sort={sort} onSortChange={onSortChange} />
                 <InfoTip tip="Based on each model's Elo rating from blind votes, normalized so the top voice scores 100 and the bottom scores 0." />
