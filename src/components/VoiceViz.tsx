@@ -29,7 +29,14 @@ export const VoiceViz = ({
   // Smoothed amplitude (fast attack, gentle release) and the morph clock value.
   const levelRef = useRef(0);
   const frameRef = useRef(0);
+  // Read inside the rAF loop without re-subscribing, so stopping doesn't tear
+  // the loop down mid-fade.
+  const playingRef = useRef(playing);
+  playingRef.current = playing;
   const [onScreen, setOnScreen] = useState(true);
+  // Stays true through the release tail after playback stops, so the amplitude
+  // eases out instead of snapping to calm the instant audio stops.
+  const [active, setActive] = useState(false);
 
   // Key the memos on stable identity fields so vote-driven updates don't restart it.
   const { provider, voiceProfile } = model;
@@ -52,13 +59,19 @@ export const VoiceViz = ({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxRef.current = ctx;
     ctx.clearRect(0, 0, size, size);
-    drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint);
+    drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint);
   }, [palette, fingerprint, size]);
+
+  // Begin animating when playback starts; the loop keeps running through the
+  // fade-out afterwards and ends itself once the level has decayed.
+  useEffect(() => {
+    if (playing && animate) setActive(true);
+  }, [playing, animate]);
 
   // Visibility tracking only matters while animating; static orbs skip it.
   useEffect(() => {
     const canvas = ref.current;
-    if (!animate || !canvas || typeof IntersectionObserver === 'undefined') {
+    if (!active || !canvas || typeof IntersectionObserver === 'undefined') {
       return undefined;
     }
     const io = new IntersectionObserver(
@@ -67,13 +80,12 @@ export const VoiceViz = ({
     );
     io.observe(canvas);
     return () => io.disconnect();
-  }, [animate]);
+  }, [active]);
 
   useEffect(() => {
     const ctx = ctxRef.current;
-    // Not animating: reset to the calm baseline (frame 0) and stop, so the next
-    // playback starts its morph from zero rather than skipping ahead.
-    if (!animate || !onScreen) {
+    // Idle: reset to the calm baseline (frame 0) and stop.
+    if (!active || !onScreen) {
       if (ctx) {
         levelRef.current = 0;
         frameRef.current = 0;
@@ -84,16 +96,20 @@ export const VoiceViz = ({
     }
     return subscribeViz(() => {
       if (!ctx) return;
-      const target = playing ? sampleAudioLevel() : 0;
+      const target = playingRef.current ? sampleAudioLevel() : 0;
       const cur = levelRef.current;
-      // Fast attack, gentle release: the orb pops on syllables, settles smoothly.
-      levelRef.current = cur + (target - cur) * (target > cur ? 0.4 : 0.12);
-      // Advance this orb's own clock, continuing smoothly from the baseline.
+      // Gentle attack on start, slower release on stop — both ease smoothly.
+      levelRef.current = cur + (target - cur) * (target > cur ? 0.3 : 0.1);
       frameRef.current += 1;
       ctx.clearRect(0, 0, size, size);
       drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint);
+      // Once stopped and faded out, end the release tail and settle calm.
+      if (!playingRef.current && levelRef.current < 0.01) {
+        levelRef.current = 0;
+        setActive(false);
+      }
     });
-  }, [animate, onScreen, playing, palette, fingerprint, size]);
+  }, [active, onScreen, palette, fingerprint, size]);
 
   return (
     <span className="voice-viz" aria-hidden="true">
