@@ -286,6 +286,9 @@
 .hi-detail .detail-sample .rcard-art {
   height: 256px;
   margin: 0;
+  /* Light well to match the leaderboard cards (the base art well is dark). */
+  border: 1px solid #e6e6e6;
+  background: #fefefe;
 }
 
 .hi-detail .detail-sample-caption {
