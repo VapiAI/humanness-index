@@ -1076,31 +1076,19 @@ is laid out from the start, so the paragraph never reflows. */
   white-space: nowrap; /* "~200 ms" stays on one line */
 }
 
-/* People-icon vote count shared by the cards and the rankings table. */
-.hi-page .rcard-votes,
-.hi-page .rt-votes {
-  font-variant-numeric: tabular-nums;
-}
-
-.hi-page .rcard-votes {
+/* People-icon vote count shared by the cards and the rankings table. The
+icon sits flush left of the number; it fills out (1 → 3 people) with votes. */
+.hi-page .votes-count {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-.hi-page .rcard-votes svg {
-  flex-shrink: 0;
-  opacity: 0.55;
-}
-
-.hi-page .rt-votes {
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.hi-page .rt-votes svg {
-  margin-right: 5px;
-  vertical-align: -2px;
-  opacity: 0.45;
+.hi-page .votes-count svg {
+  flex-shrink: 0;
+  opacity: 0.55;
 }
 
 .hi-page .rcard.tone-light .rcard-rank,

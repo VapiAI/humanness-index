@@ -2,7 +2,7 @@
 
 import { useEffect, type FocusEvent } from 'react';
 
-import { CaretDown, CaretUp, Info, MagnifyingGlass, Users } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, Info, MagnifyingGlass } from '@phosphor-icons/react';
 
 import { voiceStats } from '../data/providers';
 import { modelDetailLinkForId, providerDetailLinkForName } from '../lib/detail';
@@ -12,6 +12,7 @@ import { DetailPageLink } from './DetailPageLink';
 import { RankPauseIcon, RankPlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { RankingVisualizationPanel } from './RankingChart';
+import { VotesCount } from './VotesCount';
 
 /** Hover/focus (i) bubble for table-header definitions. */
 const InfoTip = ({ tip }: { tip: string }) => (
@@ -144,6 +145,7 @@ export const RankingsSection = ({
   const tableHighlightId = focusedModelId ?? sortedModels[0]?.id;
   const providerCount = new Set(sortedModels.map((m) => m.provider)).size;
   const topScore = sortedModels.length ? humannessScore(sortedModels[0], sortedModels) : 0;
+  const allWins = sortedModels.map((m) => m.wins);
 
   return (
     <section className="long-tail-section" id="rankings" onBlur={handleSectionBlur}>
@@ -285,8 +287,7 @@ export const RankingsSection = ({
                   <td className="rt-num">{stats.latency}</td>
                   <td className="rt-num">{stats.price}</td>
                   <td className="rt-num rt-votes">
-                    <Users size={13} weight="bold" aria-hidden="true" />
-                    {model.wins.toLocaleString()}
+                    <VotesCount wins={model.wins} allWins={allWins} size={13} />
                   </td>
                   <td className="rt-listen">
                     <button

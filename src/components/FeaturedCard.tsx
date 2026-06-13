@@ -2,13 +2,12 @@
 
 import { useMemo, type CSSProperties } from 'react';
 
-import { Users } from '@phosphor-icons/react';
-
 import { modelBlurb, voiceStats } from '../data/providers';
 import { humannessScore } from '../lib/scoring';
 import { voiceStyle } from '../lib/voiceViz';
 import { RankCardArt, RankCardIdentity, type RankCardProps } from './RankCard';
 import { RankScale } from './RankScale';
+import { VotesCount } from './VotesCount';
 
 /** The #1 card — double-width hero with Vapi's editorial blurb on the leader. */
 export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCardProps) => {
@@ -60,9 +59,8 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
             </div>
             <div className="fcard-stat">
               <dt>Votes</dt>
-              <dd className="rcard-votes">
-                <Users size={14} weight="bold" aria-hidden="true" />
-                {model.wins.toLocaleString()}
+              <dd>
+                <VotesCount wins={model.wins} allWins={allModels.map((m) => m.wins)} />
               </dd>
             </div>
           </dl>
