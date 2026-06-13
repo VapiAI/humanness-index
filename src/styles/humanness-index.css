@@ -303,7 +303,7 @@ rendered so scrollbar math stays stable. */
   gap: 20px;
   overflow: hidden;
   min-height: 440px;
-  padding: 30px;
+  padding: 20px 30px;
   border: 1px solid rgba(26, 26, 46, 0.08);
   border-radius: 18px;
   color: var(--ink);
@@ -329,13 +329,12 @@ rendered so scrollbar math stays stable. */
 
 .hi-page .lab-question {
   display: flex;
-  /* Reserve two lines: the post-vote reveal headline is longer than the
-     question, and the cards below must not shift when it swaps in. The text
-     hugs the bottom so the spare line opens above the title, not between it
-     and the hint. */
+  /* A little reserved headroom (the post-vote reveal headline is longer than
+     the question); the text hugs the bottom so the small spare opens above the
+     title, keeping it tight to the hint below. */
   align-items: flex-end;
   justify-content: center;
-  min-height: 2.24em;
+  min-height: 1.55em;
   margin: 0;
   color: var(--ink);
   font-family: var(--font-display);
@@ -1116,9 +1115,8 @@ single row) */
   align-items: center;
   justify-content: center;
   gap: 12px;
-  /* Matches the head block's height so the arena sits centered between them
-     (equal space above and below the battle cards). */
-  min-height: 85px;
+  /* Roughly matches the head block so the arena stays close to centered. */
+  min-height: 68px;
 }
 
 /* Keyboard fast-mode hint: pointer-and-keyboard devices only. */
