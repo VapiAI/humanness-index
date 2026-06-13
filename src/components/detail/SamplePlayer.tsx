@@ -81,7 +81,7 @@ export const SamplePlayer = ({ model, fallbackUrl }: SamplePlayerProps) => {
 
   return (
     <div className="detail-sample">
-      <RankCardArt model={model} playing={playing} animate onPlay={handleToggle} />
+      <RankCardArt model={model} playing={playing} animate={playing} onPlay={handleToggle} />
       <p className="detail-sample-caption">{caption}</p>
       <noscript>
         <audio controls preload="none" src={fallbackUrl} />

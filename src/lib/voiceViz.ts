@@ -181,18 +181,18 @@ export const drawOrb = (
   ctx.restore();
 };
 
-// One shared ~60fps clock drives the playing orbs (idle orbs are static), so
+// One shared ~60fps clock ticks the playing orbs (idle orbs are static), so
 // amplitude motion stays smooth with a single rAF loop instead of one per card.
-const vizSubscribers = new Set<(frame: number) => void>();
+// Each subscriber advances its OWN frame counter, so a newly-playing orb starts
+// from its calm baseline instead of jumping to a shared clock's position.
+const vizSubscribers = new Set<() => void>();
 let vizRunning = false;
 let vizLast = 0;
-let vizFrame = 0;
 
 const vizLoop = (now: number) => {
   if (now - vizLast >= 16) {
     vizLast = now;
-    vizFrame += 1;
-    vizSubscribers.forEach((fn) => fn(vizFrame));
+    vizSubscribers.forEach((fn) => fn());
   }
   if (vizSubscribers.size) {
     window.requestAnimationFrame(vizLoop);
@@ -201,7 +201,7 @@ const vizLoop = (now: number) => {
   }
 };
 
-export const subscribeViz = (fn: (frame: number) => void) => {
+export const subscribeViz = (fn: () => void) => {
   vizSubscribers.add(fn);
   if (!vizRunning) {
     vizRunning = true;

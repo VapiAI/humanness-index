@@ -71,24 +71,27 @@ export const VoiceViz = ({
 
   useEffect(() => {
     const ctx = ctxRef.current;
-    // Not animating: settle to a calm frame and stop.
+    // Not animating: reset to the calm baseline (frame 0) and stop, so the next
+    // playback starts its morph from zero rather than skipping ahead.
     if (!animate || !onScreen) {
       if (ctx) {
         levelRef.current = 0;
+        frameRef.current = 0;
         ctx.clearRect(0, 0, size, size);
-        drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint);
+        drawOrb(ctx, 0, size, palette, 0, fingerprint);
       }
       return undefined;
     }
-    return subscribeViz((frame) => {
+    return subscribeViz(() => {
       if (!ctx) return;
       const target = playing ? sampleAudioLevel() : 0;
       const cur = levelRef.current;
       // Fast attack, gentle release: the orb pops on syllables, settles smoothly.
       levelRef.current = cur + (target - cur) * (target > cur ? 0.4 : 0.12);
-      frameRef.current = frame;
+      // Advance this orb's own clock, continuing smoothly from the baseline.
+      frameRef.current += 1;
       ctx.clearRect(0, 0, size, size);
-      drawOrb(ctx, frame, size, palette, levelRef.current, fingerprint);
+      drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint);
     });
   }, [animate, onScreen, playing, palette, fingerprint, size]);
 
