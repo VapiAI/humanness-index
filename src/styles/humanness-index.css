@@ -1055,8 +1055,8 @@ is laid out from the start, so the paragraph never reflows. */
 
 .hi-page .rcard-stats {
   display: grid;
-  /* two columns with a sane floor; stats stack instead of cramping on narrow cards */
-  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  /* one row: the values are short, so three tight columns always fit */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin: 10px 0 0;
 }
