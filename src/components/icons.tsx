@@ -17,13 +17,6 @@ export const StopIcon = () => (
   </svg>
 );
 
-export const PauseIcon = () => (
-  <svg className="button-icon" viewBox="0 0 24 24" aria-hidden="true">
-    <rect x="7" y="5" width="3.6" height="14" rx="1.4" fill="currentColor" />
-    <rect x="13.4" y="5" width="3.6" height="14" rx="1.4" fill="currentColor" />
-  </svg>
-);
-
 export const RankPlayIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <circle cx="12" cy="12" r="12" fill="#00cd8f" />

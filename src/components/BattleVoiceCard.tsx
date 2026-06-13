@@ -6,8 +6,8 @@ import type { CSSProperties } from 'react';
 import { modelDetailLinkForId } from '../lib/detail';
 import type { ScoredModel } from '../lib/types';
 import { PALETTES } from '../lib/voiceViz';
+import { CueGlyph } from './CueGlyph';
 import { DetailPageLink } from './DetailPageLink';
-import { PauseIcon, PlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { VoiceViz } from './VoiceViz';
 
@@ -174,7 +174,7 @@ export const BattleVoiceCard = ({
               <VoiceViz playing={playing} model={model} animate={playing} palette={palette} />
             </div>
             <span className="rcard-art-cue" aria-hidden="true">
-              {playing ? <PauseIcon /> : <PlayIcon />}
+              <CueGlyph paused={playing} />
             </span>
           </>
         )}
