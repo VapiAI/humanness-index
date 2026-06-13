@@ -10,7 +10,7 @@ import { humannessScore } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
 import { voiceStyle } from '../lib/voiceViz';
 import { DetailPageLink } from './DetailPageLink';
-import { RankPauseIcon, RankPlayIcon } from './icons';
+import { PauseIcon, PlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { RankScale } from './RankScale';
 import { VoiceViz } from './VoiceViz';
@@ -99,7 +99,7 @@ export const RankCardArt = ({ model, playing, animate, onPlay, featured = false 
       <VoiceViz playing={playing} model={model} size={168} animate={animate} />
     </span>
     <span className="rcard-art-cue" aria-hidden="true">
-      {playing ? <RankPauseIcon /> : <RankPlayIcon />}
+      {playing ? <PauseIcon /> : <PlayIcon />}
     </span>
   </button>
 );
