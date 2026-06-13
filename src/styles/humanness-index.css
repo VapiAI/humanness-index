@@ -2262,6 +2262,12 @@ would clip at its top edge. */
     grid-template-columns: 1fr;
   }
 
+  /* Single-column stacking makes seven cards a wall; phones get the podium
+     (the full field stays in the rankings table below). */
+  .hi-page .top-card-grid > article:nth-child(n + 4) {
+    display: none;
+  }
+
   /* keep the featured card inside the single column (span 2 would force an
      implicit track and squeeze every other card) */
   .hi-page .rcard-featured {
