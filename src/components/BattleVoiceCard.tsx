@@ -36,8 +36,9 @@ type BattleVoiceCardProps = {
 };
 
 /**
- * One side of the blind head-to-head. While its voice plays, the card flips
- * to a "reading" face that typewrites the prompt in sync with the audio.
+ * One side of the blind head-to-head. The orb stays in place the whole time:
+ * it pulses with the live clip amplitude while this voice plays, and the
+ * prompt fades in as a caption beneath it (no jarring flip).
  *
  * The surface is listen-only: idle → starts the round; afterwards every click
  * switches playback to this voice (clicking the speaking card stops it), with
@@ -125,90 +126,88 @@ export const BattleVoiceCard = ({
           : undefined
       }
     >
-      <div className="vcard-flip">
-        <div className="vcard-face vcard-front">
-          <span className="vcard-side" aria-hidden="true">
-            {label}
-          </span>
-          {revealed ? (
-            <>
-              {/* Corner flag: the listener's pick wins the slot; otherwise
-                  point out the side the Index ranks higher. */}
-              {isPick ? (
-                <span className="vcard-flag vcard-flag-pick">
-                  <Check size={12} weight="bold" /> Your pick
-                </span>
-              ) : (
-                isLeader && <span className="vcard-flag">Ranks higher</span>
-              )}
-              <div className="vcard-reveal">
-                {/* The provider's mark is the unmasking moment — it takes the
-                    viz circle's spot as the revealed card's anchor. */}
-                <div className="vcard-brand">
-                  <ProviderLogo provider={model.provider} />
-                </div>
-                <p className="vcard-reveal-name">
-                  {revealLink ? (
-                    <DetailPageLink className="vcard-reveal-link" kind="model" link={revealLink}>
-                      {`${model.provider} ${model.model}`}
-                    </DetailPageLink>
-                  ) : (
-                    `${model.provider} ${model.model}`
-                  )}
-                </p>
-                <div className="vcard-reveal-stats">
-                  <span className="vcard-reveal-chip">
-                    <span className="vcard-reveal-k">Rank</span>
-                    <span className="vcard-reveal-v">#{rank}</span>
-                  </span>
-                  <span className="vcard-reveal-chip">
-                    <span className="vcard-reveal-k">Humanness</span>
-                    <span className="vcard-reveal-v">{humanness}</span>
-                  </span>
-                  {eloDelta !== null && (
-                    <span
-                      className={`vcard-reveal-chip vcard-delta ${eloDelta >= 0 ? 'is-up' : 'is-down'}`}
-                      title="How your vote just moved this voice's Elo rating, the score behind the rankings"
-                    >
-                      <span className="vcard-reveal-k">Your vote</span>
-                      <span className="vcard-reveal-v">
-                        {eloDelta >= 0 ? `+${eloDelta}` : eloDelta} Elo
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="vcard-art">
-              {/* Static while idle (the flip's back face owns the playing
-                  visual). The corner A/B chip is the only identity marker. */}
-              <VoiceViz playing={playing} model={model} animate={false} palette={palette} />
-            </div>
-          )}
-        </div>
-        <div className="vcard-face vcard-back" aria-hidden={!playing}>
-          <div className="vcard-script-head">
-            <span className="vcard-script-label">Reading Aloud</span>
-          </div>
-          <div className="vcard-script" ref={scriptRef}>
-            <p className="vcard-script-text">
-              <span className="sr-only">{prompt}</span>
-              <span aria-hidden="true">
-                {promptChars.map((char, index) => (
-                  <span
-                    key={`ch-${index}`}
-                    className={
-                      index < typedLen ? 'vcard-script-char is-on' : 'vcard-script-char'
-                    }
-                  >
-                    {char}
-                  </span>
-                ))}
+      <div className="vcard-stage">
+        <span className="vcard-side" aria-hidden="true">
+          {label}
+        </span>
+        {revealed ? (
+          <>
+            {/* Corner flag: the listener's pick wins the slot; otherwise
+                point out the side the Index ranks higher. */}
+            {isPick ? (
+              <span className="vcard-flag vcard-flag-pick">
+                <Check size={12} weight="bold" /> Your pick
               </span>
-            </p>
-          </div>
-        </div>
+            ) : (
+              isLeader && <span className="vcard-flag">Ranks higher</span>
+            )}
+            <div className="vcard-reveal">
+              {/* The provider's mark is the unmasking moment — it takes the
+                  orb's spot as the revealed card's anchor. */}
+              <div className="vcard-brand">
+                <ProviderLogo provider={model.provider} />
+              </div>
+              <p className="vcard-reveal-name">
+                {revealLink ? (
+                  <DetailPageLink className="vcard-reveal-link" kind="model" link={revealLink}>
+                    {`${model.provider} ${model.model}`}
+                  </DetailPageLink>
+                ) : (
+                  `${model.provider} ${model.model}`
+                )}
+              </p>
+              <div className="vcard-reveal-stats">
+                <span className="vcard-reveal-chip">
+                  <span className="vcard-reveal-k">Rank</span>
+                  <span className="vcard-reveal-v">#{rank}</span>
+                </span>
+                <span className="vcard-reveal-chip">
+                  <span className="vcard-reveal-k">Humanness</span>
+                  <span className="vcard-reveal-v">{humanness}</span>
+                </span>
+                {eloDelta !== null && (
+                  <span
+                    className={`vcard-reveal-chip vcard-delta ${eloDelta >= 0 ? 'is-up' : 'is-down'}`}
+                    title="How your vote just moved this voice's Elo rating, the score behind the rankings"
+                  >
+                    <span className="vcard-reveal-k">Your vote</span>
+                    <span className="vcard-reveal-v">
+                      {eloDelta >= 0 ? `+${eloDelta}` : eloDelta} Elo
+                    </span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="vcard-art">
+              {/* The orb stays put and pulses with the live amplitude while
+                  this side plays. The corner A/B chip is the only identity
+                  marker during the blind phase. */}
+              <VoiceViz playing={playing} model={model} animate={playing} palette={palette} />
+            </div>
+            {/* Prompt fades in beneath the orb while playing (the words sweep
+                in as the audio progresses), instead of flipping the card. */}
+            <div className="vcard-caption" ref={scriptRef} aria-hidden={!playing}>
+              <p className="vcard-caption-text">
+                <span className="sr-only">{prompt}</span>
+                <span aria-hidden="true">
+                  {promptChars.map((char, index) => (
+                    <span
+                      key={`ch-${index}`}
+                      className={
+                        index < typedLen ? 'vcard-caption-char is-on' : 'vcard-caption-char'
+                      }
+                    >
+                      {char}
+                    </span>
+                  ))}
+                </span>
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

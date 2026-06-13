@@ -468,12 +468,11 @@ rendered so scrollbar math stays stable. */
 }
 
 .hi-page .vcard-art {
-  position: relative;
+  position: absolute;
+  inset: 0;
   display: grid;
-  flex: 1;
   place-items: center;
   overflow: hidden;
-  margin: 6px 0;
 }
 
 /* Head-to-head: active card flips in + glows,
@@ -518,78 +517,59 @@ in-place reveal */
   transform: translateY(-1px);
 }
 
-/* Battle card: 3D flip to a "reading" face with a typewriter of the prompt */
+/* Battle card: the orb holds its place; the prompt fades in beneath it. */
 .hi-page .vcard-battle {
-  perspective: 1200px;
-  overflow: visible; /* must stay visible so preserve-3d isn't flattened */
+  overflow: hidden;
 }
 
-.hi-page .vcard-battle .vcard-flip {
+.hi-page .vcard-battle .vcard-stage {
   position: relative;
+  display: flex;
+  flex-direction: column;
   height: 240px;
-  transform-style: preserve-3d;
-  transition: transform 540ms cubic-bezier(0.45, 0.05, 0.2, 1);
 }
 
-/* Each face clips to the card's rounded shape without flattening the 3D context */
-.hi-page .vcard-face {
+/* Prompt caption: an overlay anchored to the card's base, so the orb never
+resizes or shifts when it appears. Fades in while the side plays. */
+.hi-page .vcard-caption {
   position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  border-radius: 10px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  max-height: 52%;
+  padding: 34px 14px 14px;
   overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, #ffffff 90%, var(--card-from)) 56%,
+    transparent
+  );
 }
 
-.hi-page .vcard-battle.is-playing .vcard-flip {
-  transform: rotateY(180deg);
+.hi-page .vcard-battle.is-playing .vcard-caption {
+  opacity: 1;
 }
 
-.hi-page .vcard-back {
-  transform: rotateY(180deg);
-  gap: 8px;
-}
-
-.hi-page .vcard-script-head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.hi-page .vcard-script-label {
-  color: color-mix(in srgb, var(--card-to, var(--teal-strong)) 84%, var(--ink));
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* Label stays pinned at top; the text centers in the space below when short,
-scrolls when long */
-.hi-page .vcard-script {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.hi-page .vcard-script-text {
+.hi-page .vcard-caption-text {
   margin: 0;
   color: var(--ink);
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.45;
-  text-align: left;
+  text-align: center;
 }
 
 /* Each prompt character fades in as the audio sweeps past it; the full text
 is laid out from the start, so the paragraph never reflows. */
-.hi-page .vcard-script-char {
+.hi-page .vcard-caption-char {
   opacity: 0;
   transition: opacity 380ms ease-out;
 }
 
-.hi-page .vcard-script-char.is-on {
+.hi-page .vcard-caption-char.is-on {
   opacity: 1;
 }
 
@@ -2401,8 +2381,8 @@ would clip at its top edge. */
 @media (prefers-reduced-motion: reduce) {
   .hi-page .vcard,
   .hi-page .vcard.is-clickable,
-  .hi-page .vcard-battle .vcard-flip,
-  .hi-page .vcard-script-char,
+  .hi-page .vcard-caption,
+  .hi-page .vcard-caption-char,
   .hi-page .vcard-reveal,
   .hi-page .vcard-flag,
   .hi-page .lab-primary,
