@@ -1,23 +1,10 @@
 import Link from 'next/link';
 
 import { GitHubIcon } from '../icons';
+import { NavOrb } from './NavOrb';
 
 export const GITHUB_URL = 'https://github.com/VapiAI/humanness-index';
 export const METHODOLOGY_URL = `${GITHUB_URL}/blob/main/docs/METHODOLOGY.md`;
-
-/** The waveform brand mark, an inline copy of app/icon.svg. */
-const NavMark = () => (
-  <svg className="site-nav-mark" viewBox="0 0 64 64" aria-hidden="true">
-    <rect width="64" height="64" rx="14" fill="#0c1512" />
-    <g stroke="#00cd8f" strokeWidth="3.4" strokeLinecap="round">
-      <line x1="14" y1="27" x2="14" y2="37" />
-      <line x1="23" y1="21" x2="23" y2="43" />
-      <line x1="32" y1="14" x2="32" y2="50" />
-      <line x1="41" y1="21" x2="41" y2="43" />
-      <line x1="50" y1="27" x2="50" y2="37" />
-    </g>
-  </svg>
-);
 
 /** The standalone site's slim top bar: wordmark, GitHub, Vapi attribution. */
 export const SiteNav = () => {
@@ -28,7 +15,7 @@ export const SiteNav = () => {
       </a>
       <div className="site-nav-inner">
         <Link className="site-nav-wordmark" href="/">
-          <NavMark />
+          <NavOrb />
           <span>
             The Humanness Index
             <span className="site-nav-tm">™</span>

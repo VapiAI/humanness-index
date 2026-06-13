@@ -226,11 +226,10 @@ main:focus {
   opacity: 0.8;
 }
 
-.site-nav-mark {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
+.site-nav-orb {
+  display: block;
   flex-shrink: 0;
+  margin: -2px 0;
 }
 
 .site-nav-tm {
@@ -297,12 +296,6 @@ main:focus {
   .site-nav-wordmark {
     font-size: 15px;
     gap: 8px;
-  }
-
-  .site-nav-mark {
-    width: 23px;
-    height: 23px;
-    border-radius: 6px;
   }
 
   .site-nav-vapi-prefix {
