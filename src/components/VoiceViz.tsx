@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { vizForModel } from '../lib/burstFills';
+import { sampleAudioLevel } from '../lib/audioLevel';
 import type { Palette, ScoredModel } from '../lib/types';
-import { subscribeViz, voiceFingerprint, voiceStyle } from '../lib/voiceViz';
+import { drawOrb, subscribeViz, voiceFingerprint, voiceStyle } from '../lib/voiceViz';
 
 const VIZ_SIZE = 132;
 
@@ -16,7 +16,7 @@ type VoiceVizProps = {
   palette?: Palette;
 };
 
-/** A model's animated canvas "voice fingerprint" visualization. */
+/** A model's gradient "voice orb" — calm at rest, pulsing with the live clip amplitude. */
 export const VoiceViz = ({
   playing,
   model,
@@ -25,21 +25,22 @@ export const VoiceViz = ({
   palette: paletteOverride,
 }: VoiceVizProps) => {
   const ref = useRef<HTMLCanvasElement | null>(null);
-  const tRef = useRef(0);
-  const drawRef = useRef<(step: number) => void>(() => {});
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  // Smoothed amplitude (fast attack, gentle release) and the morph clock value.
+  const levelRef = useRef(0);
+  const frameRef = useRef(0);
   const [onScreen, setOnScreen] = useState(true);
-  // Key the memos on the stable identity fields so vote-driven model updates
-  // don't restart the canvas.
+
+  // Key the memos on stable identity fields so vote-driven updates don't restart it.
   const { provider, voiceProfile } = model;
   const { palette: basePalette } = useMemo(
     () => voiceStyle({ provider, voiceProfile }),
     [provider, voiceProfile],
   );
   const palette = paletteOverride ?? basePalette;
-  const viz = useMemo(() => vizForModel({ provider }), [provider]);
   const fingerprint = useMemo(() => voiceFingerprint({ voiceProfile }), [voiceProfile]);
 
-  // Canvas setup + one static frame; re-runs only when the art itself changes.
+  // Canvas setup + one calm frame; re-runs only when the art itself changes.
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
@@ -49,21 +50,12 @@ export const VoiceViz = ({
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctxRef.current = ctx;
+    ctx.clearRect(0, 0, size, size);
+    drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint);
+  }, [palette, fingerprint, size]);
 
-    drawRef.current = (step: number) => {
-      tRef.current += step;
-      ctx.clearRect(0, 0, size, size);
-      try {
-        viz.draw(ctx, tRef.current, size, palette, fingerprint);
-      } catch {
-        // Skip a bad frame rather than crash.
-      }
-    };
-    drawRef.current(0);
-  }, [viz, palette, fingerprint, size]);
-
-  // Visibility tracking only matters while animating; static canvases skip
-  // the observer (and the redraws its flips used to trigger during scroll).
+  // Visibility tracking only matters while animating; static orbs skip it.
   useEffect(() => {
     const canvas = ref.current;
     if (!animate || !canvas || typeof IntersectionObserver === 'undefined') {
@@ -78,10 +70,27 @@ export const VoiceViz = ({
   }, [animate]);
 
   useEffect(() => {
-    if (!animate || !onScreen) return undefined;
-    const step = playing ? 1 : 0.28; // subtle drift at rest, full speed while playing
-    return subscribeViz(() => drawRef.current(step));
-  }, [playing, animate, onScreen]);
+    const ctx = ctxRef.current;
+    // Not animating: settle to a calm frame and stop.
+    if (!animate || !onScreen) {
+      if (ctx) {
+        levelRef.current = 0;
+        ctx.clearRect(0, 0, size, size);
+        drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint);
+      }
+      return undefined;
+    }
+    return subscribeViz((frame) => {
+      if (!ctx) return;
+      const target = playing ? sampleAudioLevel() : 0;
+      const cur = levelRef.current;
+      // Fast attack, gentle release: the orb pops on syllables, settles smoothly.
+      levelRef.current = cur + (target - cur) * (target > cur ? 0.4 : 0.12);
+      frameRef.current = frame;
+      ctx.clearRect(0, 0, size, size);
+      drawOrb(ctx, frame, size, palette, levelRef.current, fingerprint);
+    });
+  }, [animate, onScreen, playing, palette, fingerprint, size]);
 
   return (
     <span className="voice-viz" aria-hidden="true">

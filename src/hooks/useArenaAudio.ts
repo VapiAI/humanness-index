@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { attachAudioAnalyser, releaseAudioAnalyser } from '../lib/audioLevel';
 import { GAP_MS, MODEL_SAMPLE_CLIPS, PLAY_MS, SAMPLE_PHRASE } from '../data/battles';
 import { trackSamplePlayed } from '../lib/analytics';
 import { getSample } from '../lib/api';
@@ -139,6 +140,7 @@ export const useArenaAudio = () => {
       audio.onerror = null;
       audioElementRef.current = null;
     }
+    releaseAudioAnalyser();
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }, []);
 
@@ -155,7 +157,13 @@ export const useArenaAudio = () => {
         onEnded?.();
       };
       if (url) {
-        const audio = new Audio(url);
+        // crossOrigin must be set before src so the fetch is a CORS request,
+        // letting the shared analyser read samples for the orb (the clip origin
+        // sends Access-Control-Allow-Origin: *).
+        const audio = new Audio();
+        audio.crossOrigin = 'anonymous';
+        audio.src = url;
+        attachAudioAnalyser(audio);
         audio.ontimeupdate = () => {
           if (audio.duration) {
             setPromptProgress(Math.min(1, audio.currentTime / audio.duration));
