@@ -168,6 +168,22 @@ const EloDistributionChart = ({
       >
         <rect x="0" y="0" width={width} height={height} rx="8" fill="#ffffff" />
 
+        {/* The winning quadrant (above-average humanness, faster than the
+            average) gets a soft green wash: up and to the right is better. */}
+        <defs>
+          <linearGradient id="chart-better-zone" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stopColor="rgba(0, 205, 143, 0.02)" />
+            <stop offset="100%" stopColor="rgba(0, 205, 143, 0.11)" />
+          </linearGradient>
+        </defs>
+        <rect
+          x={xFor(avgHum)}
+          y={top}
+          width={right - xFor(avgHum)}
+          height={yForMs(avgLatMs) - top}
+          fill="url(#chart-better-zone)"
+        />
+
         {xAxisTicks.map((tick) => (
           <g key={`x${tick}`}>
             <line x1={xFor(tick)} x2={xFor(tick)} y1={top} y2={bottom} stroke="#eef2f7" />
@@ -192,6 +208,29 @@ const EloDistributionChart = ({
         <text className="chart-avg-label" x={xFor(avgHum) + 6} y={top + 11}>
           Above Average
         </text>
+
+        {/* Reading aid: the winning corner (more human, faster) at a glance. */}
+        <g className="chart-better" aria-hidden="true">
+          <text x={right - 8} y={top + 16} textAnchor="end">
+            Better
+          </text>
+          <path
+            d={`M ${right - 44} ${top + 26} L ${right - 12} ${top + 22}`}
+            markerEnd="url(#chart-better-arrow)"
+          />
+          <defs>
+            <marker
+              id="chart-better-arrow"
+              markerWidth="7"
+              markerHeight="7"
+              refX="5"
+              refY="3.5"
+              orient="auto"
+            >
+              <path d="M 0 0 L 7 3.5 L 0 7 Z" fill="currentColor" stroke="none" />
+            </marker>
+          </defs>
+        </g>
         <line
           className="chart-avg-line"
           x1={left}

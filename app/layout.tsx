@@ -18,7 +18,7 @@ const instrumentSans = Instrument_Sans({
 });
 
 export const viewport: Viewport = {
-  themeColor: '#faf9f6',
+  themeColor: '#fbfdfc',
 };
 
 export const metadata: Metadata = {

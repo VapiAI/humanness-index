@@ -191,8 +191,10 @@ main:focus {
   top: 0;
   z-index: 50;
   /* Near-opaque solid instead of backdrop-filter: a full-width sticky blur
-     re-blurs everything beneath it on every scrolled frame. */
-  background: rgba(250, 249, 246, 0.97);
+     re-blurs everything beneath it on every scrolled frame. The color is the
+     page root's base (#fbfdfc), not the body cream, so the bar doesn't read
+     as a tinted stripe against the content. */
+  background: rgba(251, 253, 252, 0.97);
   border-bottom: 1px solid var(--shell-border);
 }
 

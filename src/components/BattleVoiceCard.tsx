@@ -168,11 +168,11 @@ export const BattleVoiceCard = ({
                   {eloDelta !== null && (
                     <span
                       className={`vcard-reveal-chip vcard-delta ${eloDelta >= 0 ? 'is-up' : 'is-down'}`}
-                      title="How your vote moved this voice's Elo score"
+                      title="How your vote just moved this voice's Elo rating, the score behind the rankings"
                     >
                       <span className="vcard-reveal-k">Your vote</span>
                       <span className="vcard-reveal-v">
-                        {eloDelta >= 0 ? `+${eloDelta}` : eloDelta}
+                        {eloDelta >= 0 ? `+${eloDelta}` : eloDelta} Elo
                       </span>
                     </span>
                   )}

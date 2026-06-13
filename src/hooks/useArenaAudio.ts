@@ -186,6 +186,10 @@ export const useArenaAudio = () => {
     [speak, stopClip],
   );
 
+  // Each model's sample clip is pinned for the session: replaying a model
+  // gives the same clip, not a fresh random draw on every click.
+  const sampleUrlsRef = useRef<Record<string, string>>({});
+
   const playModelSample = useCallback(
     (model: ScoredModel) => {
       playGenRef.current += 1; // fresh playback token; invalidates pending callbacks
@@ -194,14 +198,17 @@ export const useArenaAudio = () => {
       setPlayingId(model.id);
       trackSamplePlayed(model.id);
       void (async () => {
-        // A random hosted clip from the live API; static clip as fallback.
-        let url = MODEL_SAMPLE_CLIPS[model.id];
-        try {
-          url = (await getSample(model.id)).audioUrl;
-        } catch {
-          // Keep the fallback clip.
+        // The pinned clip, else a random one from the API (static fallback).
+        let url = sampleUrlsRef.current[model.id] ?? MODEL_SAMPLE_CLIPS[model.id];
+        if (!sampleUrlsRef.current[model.id]) {
+          try {
+            url = (await getSample(model.id)).audioUrl;
+          } catch {
+            // Keep the fallback clip.
+          }
         }
         if (gen !== playGenRef.current) return; // stopped while fetching
+        if (url) sampleUrlsRef.current[model.id] = url;
         startClip(url, model, () => setPlayingId(null));
       })();
     },
