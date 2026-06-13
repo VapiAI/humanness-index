@@ -9,7 +9,7 @@ type LeaderboardSectionProps = {
   onTogglePlay: (model: ScoredModel) => void;
 };
 
-/** "Most Human Models" — the featured #1 card plus the rest of the top ten. */
+/** "Most Human Models" — two rows: the featured #1 card plus the next six. */
 export const LeaderboardSection = ({
   topModels,
   allModels,

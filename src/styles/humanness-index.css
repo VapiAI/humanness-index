@@ -81,7 +81,7 @@ rendered so scrollbar math stays stable. */
 }
 
 .hi-page .leaderboard-section {
-  contain-intrinsic-size: auto 720px;
+  contain-intrinsic-size: auto 560px;
 }
 
 .hi-page .pieces-section {

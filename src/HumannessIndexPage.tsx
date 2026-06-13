@@ -126,7 +126,8 @@ export const HumannessIndexPage = () => {
     () => [ALL_PROVIDERS, ...new Set(models.map((row) => row.provider))],
     [models],
   );
-  const topModels = sortedModels.slice(0, 11);
+  // Two grid rows: the double-width #1 card plus six rank cards.
+  const topModels = sortedModels.slice(0, 7);
 
   const leftModel =
     models.find((model) => model.id === currentBattle.leftModelId) ?? sortedModels[0];
