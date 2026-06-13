@@ -286,6 +286,7 @@ const EloDistributionChart = ({
                 cy={cy}
                 r={hoveredThis ? DOT_RADIUS + 2 : DOT_RADIUS}
                 style={{ fill: dotFill }}
+                fillOpacity={0.85}
                 stroke={hoveredThis ? '#1a1a2e' : '#ffffff'}
                 strokeWidth={hoveredThis ? 2.5 : 1.5}
                 tabIndex={0}
