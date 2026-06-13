@@ -8,42 +8,50 @@ import type { ArenaRow, Palette, VoiceFingerprint } from './types';
 const TAU = Math.PI * 2;
 
 /**
- * Each palette is a TIGHT single-hue ramp (brand color → lighter → deeper).
- * Keeping all three stops in one hue means the gradients stay vibrant instead
- * of muddying through the desaturated grey you get blending distant hues.
+ * The allowed orb colors, all drawn from the site palette: a cohesive
+ * green → teal → blue → violet cool arc (the same family as the rankings
+ * chart's mint→ocean rank gradient) plus the one warm sunset accent. Each is
+ * a TIGHT single-hue ramp (brand color → lighter → deeper) so the gradients
+ * stay vibrant instead of muddying through grey. No off-brand pink/yellow/lime.
  */
 export const PALETTES = {
-  mint: { name: 'Mint', from: '#00cd8f', mid: '#5ef0c4', to: '#00a06f' },
+  mint: { name: 'Mint', from: '#00cd8f', mid: '#5fe9bf', to: '#00a06f' },
+  emerald: { name: 'Emerald', from: '#10b981', mid: '#5fd6a6', to: '#0a8a60' },
   teal: { name: 'Teal', from: '#14b8a6', mid: '#5eead4', to: '#0d9488' },
+  cyan: { name: 'Cyan', from: '#06b6c9', mid: '#66dceb', to: '#0a8294' },
+  sky: { name: 'Sky', from: '#3b9bff', mid: '#8ec2ff', to: '#2477e0' },
   ocean: { name: 'Ocean', from: '#2d6bff', mid: '#74a0ff', to: '#1b46cc' },
-  sunset: { name: 'Sunset', from: '#ff9633', mid: '#ffc176', to: '#e0701a' },
-  meadow: { name: 'Meadow', from: '#86d916', mid: '#c4f25c', to: '#5f9e0a' },
-  coral: { name: 'Coral', from: '#fb5f7f', mid: '#ffa0b4', to: '#ec2f52' },
-  violet: { name: 'Violet', from: '#8b5cf6', mid: '#c4b5fd', to: '#6d28d9' },
-  gold: { name: 'Gold', from: '#e8b00f', mid: '#ffd95e', to: '#b07d08' },
+  indigo: { name: 'Indigo', from: '#5b6cf0', mid: '#98a2f7', to: '#3f49c8' },
+  violet: { name: 'Violet', from: '#8b6cf0', mid: '#c0b0f8', to: '#6a45cf' },
+  sunset: { name: 'Sunset', from: '#ef8e44', mid: '#ffc28a', to: '#d96f1f' },
 } satisfies Record<string, Palette>;
 
 const PALETTE_LIST: Palette[] = [
   PALETTES.mint,
+  PALETTES.emerald,
+  PALETTES.teal,
+  PALETTES.cyan,
+  PALETTES.sky,
   PALETTES.ocean,
-  PALETTES.sunset,
-  PALETTES.meadow,
-  PALETTES.coral,
+  PALETTES.indigo,
   PALETTES.violet,
-  PALETTES.gold,
+  PALETTES.sunset,
 ];
 
-// Each brand gets ONE signature color ramp, so all of a provider's models read
-// as the same family. (The blind battle cards override this with the
-// teal-vs-sunset A/B story — that's intentional.)
+// Each brand gets ONE signature ramp from the cool arc (sunset is the lone
+// warm, reserved for Gradium), so the leaderboard reads as one family rather
+// than a rainbow. (The blind battle cards override this with the teal-vs-sunset
+// A/B story — that's intentional.)
 const PROVIDER_PALETTE: Record<string, Palette> = {
-  xAI: PALETTES.violet,
-  ElevenLabs: PALETTES.coral,
-  Cartesia: PALETTES.teal,
-  MiniMax: PALETTES.gold,
-  Gradium: PALETTES.sunset,
-  'Canopy Labs': PALETTES.meadow,
   Inworld: PALETTES.mint,
+  'Canopy Labs': PALETTES.emerald,
+  Cartesia: PALETTES.teal,
+  Neuphonic: PALETTES.cyan,
+  'Smallest.ai': PALETTES.sky,
+  ElevenLabs: PALETTES.ocean,
+  MiniMax: PALETTES.indigo,
+  xAI: PALETTES.violet,
+  Gradium: PALETTES.sunset,
 };
 
 const paletteForProvider = (provider: string): Palette => {
