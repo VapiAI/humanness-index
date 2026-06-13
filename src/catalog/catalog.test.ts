@@ -895,7 +895,7 @@ describe('data/providers derivation equality', () => {
       ElevenLabs: 'elevenlabs.svg',
       Cartesia: 'cartesia.png',
       xAI: 'xai.svg',
-      MiniMax: 'minimax.png',
+      MiniMax: 'minimax.svg',
       Gradium: 'gradium.svg',
       'Canopy Labs': 'canopy.svg',
       Inworld: 'inworld.png',

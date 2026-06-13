@@ -138,7 +138,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
     slug: 'minimax',
     name: 'MiniMax',
     websiteUrl: 'https://www.minimax.io',
-    mark: 'minimax.png',
+    mark: 'minimax.svg',
     monogram: 'MM',
     stats: {
       languages: {

@@ -802,6 +802,11 @@ is laid out from the start, so the paragraph never reflows. */
   border-color: var(--mint);
 }
 
+/* Listed models: the whole tile clicks through to the detail page. */
+.hi-page .rcard.is-linked {
+  cursor: pointer;
+}
+
 .hi-page .rcard-rank {
   color: rgba(255, 255, 255, 0.6);
   font-size: 13px;

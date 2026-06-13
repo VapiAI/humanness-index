@@ -327,15 +327,18 @@ export const HumannessIndexPage = () => {
     setShowAll(rank > 10);
   };
 
-  // Shared dot/row selection: selecting a model focuses it and plays its
-  // sample; selecting it again deselects and stops.
+  // Shared dot/row selection. Selecting auto-plays the sample only when
+  // nothing else is on: a click must never cut off audio mid-listen. While
+  // something is playing, the first click just selects and a second click
+  // deliberately takes over playback; clicking the playing selection stops it.
   const selectRankModel = (model: ScoredModel) => {
     if (focusedModelId === model.id) {
-      clearRankFocus();
+      if (audio.playingId === model.id) clearRankFocus();
+      else audio.playModelSample(model);
       return;
     }
     focusRankModel(model);
-    audio.playModelSample(model);
+    if (audio.playingId === null) audio.playModelSample(model);
   };
 
   // Listen button: toggles playback without dropping the row selection on

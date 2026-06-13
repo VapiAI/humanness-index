@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMemo, type CSSProperties, type MouseEvent } from 'react';
 
 import { voiceStats } from '../data/providers';
+import { trackDetailLinkClicked } from '../lib/analytics';
 import { modelDetailLinkForId } from '../lib/detail';
 import { humannessScore } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
@@ -58,6 +60,24 @@ export const RankCardIdentity = ({ model }: { model: ScoredModel }) => {
   );
 };
 
+/**
+ * Whole-tile navigation to the model's detail page (the cards already carry a
+ * hover state). The name link inside stays the crawlable path; this hook adds
+ * the bigger click target. Clicks on interactive children (Listen, links) are
+ * theirs alone. Returns undefined for unlisted models, leaving the tile inert.
+ */
+export const useCardNavigation = (model: ScoredModel) => {
+  const router = useRouter();
+  const detailLink = modelDetailLinkForId(model.id);
+  if (!detailLink) return undefined;
+  return (event: MouseEvent<HTMLElement>) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('button, a')) return;
+    trackDetailLinkClicked({ kind: 'model', slug: detailLink.slug });
+    router.push(detailLink.path);
+  };
+};
+
 /** The art well shared by RankCard and FeaturedCard: voice viz + floating Listen pill. */
 export const RankCardArt = ({ model, playing, animate, onPlay, featured = false }: RankCardArtProps) => (
   <div className={`rcard-art${featured ? ' fcard-art' : ''}${playing ? ' is-playing' : ''}`}>
@@ -85,6 +105,7 @@ export const RankCardArt = ({ model, playing, animate, onPlay, featured = false 
 /** A Top-10 leaderboard card: rank, identity, visualizer + listen, score, stats. */
 export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardProps) => {
   const stats = voiceStats(model);
+  const handleCardClick = useCardNavigation(model);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
     () => voiceStyle({ provider, voiceProfile }),
@@ -93,7 +114,8 @@ export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardPr
 
   return (
     <article
-      className="rcard tone-light"
+      className={`rcard tone-light${handleCardClick ? ' is-linked' : ''}`}
+      onClick={handleCardClick}
       style={
         {
           '--card-from': palette.from,

@@ -5,13 +5,19 @@ import { useMemo, type CSSProperties } from 'react';
 import { modelBlurb, voiceStats } from '../data/providers';
 import { humannessScore } from '../lib/scoring';
 import { voiceStyle } from '../lib/voiceViz';
-import { RankCardArt, RankCardIdentity, type RankCardProps } from './RankCard';
+import {
+  RankCardArt,
+  RankCardIdentity,
+  useCardNavigation,
+  type RankCardProps,
+} from './RankCard';
 import { RankScale } from './RankScale';
 import { VotesCount } from './VotesCount';
 
 /** The #1 card — double-width hero with Vapi's editorial blurb on the leader. */
 export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCardProps) => {
   const stats = voiceStats(model);
+  const handleCardClick = useCardNavigation(model);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
     () => voiceStyle({ provider, voiceProfile }),
@@ -20,7 +26,8 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
 
   return (
     <article
-      className="rcard rcard-featured tone-light"
+      className={`rcard rcard-featured tone-light${handleCardClick ? ' is-linked' : ''}`}
+      onClick={handleCardClick}
       style={
         {
           '--card-from': palette.from,

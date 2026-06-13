@@ -1,5 +1,7 @@
 'use client';
 
+import { EnvelopeSimple } from '@phosphor-icons/react';
+
 import { trackCtaClicked } from '../lib/analytics';
 import { GitHubIcon } from './icons';
 import { GITHUB_URL } from './shell/SiteNav';
@@ -24,11 +26,13 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
           or ask us to put your voice in the arena.
         </p>
         <div className="cta-actions">
+          {/* A mailto, not a form — the envelope sets that expectation. */}
           <a
             className="cta-btn cta-btn-primary"
             href={ADD_YOUR_MODEL_MAILTO}
             onClick={() => trackCtaClicked({ action: 'add-your-model', surface })}
           >
+            <EnvelopeSimple size={17} weight="bold" aria-hidden="true" />
             Add your model
           </a>
           <a
