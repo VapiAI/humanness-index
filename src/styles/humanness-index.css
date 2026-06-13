@@ -902,11 +902,7 @@ is laid out from the start, so the paragraph never reflows. */
   outline-offset: -2px;
 }
 
-/* Playing: a mint ring hugs the well; the pulsing orb carries the motion. */
-.hi-page .rcard .rcard-art.is-playing,
-.hi-page .rcard.tone-light .rcard-art.is-playing {
-  box-shadow: inset 0 0 0 2px var(--mint);
-}
+/* Playing state carries no outline; the pulsing orb is the only indicator. */
 
 @media (prefers-reduced-motion: reduce) {
   .hi-page .rcard-art-viz,
