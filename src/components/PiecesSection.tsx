@@ -28,15 +28,6 @@ const PIECES: Array<{ title: string; body: ReactNode }> = [
       </>
     ),
   },
-  {
-    title: 'Latency',
-    body: (
-      <>
-        How quickly a voice starts to respond. Once a reply lags past a beat, the
-        conversation stops feeling&nbsp;live.
-      </>
-    ),
-  },
 ];
 
 /** The full-bleed dark "what we listen for" band between Top Models and the rankings. */
@@ -54,11 +45,10 @@ export const PiecesSection = () => (
           <h2>What makes a human voice</h2>
         </div>
         <p className="pieces-lead">
-          Listen to a synthetic voice and you can usually name what gave it away. These
-          four tells come up the most. Nobody can fully define that feeling, so we play
-          voices blind and let people judge. Both sides of every battle speak with the
-          same cloned source voice, so votes compare the models, not the voices. Every
-          score on this page comes from those&nbsp;votes.
+          Humanness isn&apos;t a checklist. It&apos;s whether the whole thing convinces you
+          there&apos;s a person on the other end, which is why we test it blind instead of
+          scoring features. Still, when a voice gives itself away, it&apos;s usually one
+          of&nbsp;these.
         </p>
       </div>
       <div className="pieces-grid">
@@ -68,6 +58,17 @@ export const PiecesSection = () => (
             <p>{piece.body}</p>
           </article>
         ))}
+      </div>
+      <div className="pieces-callout section-callout section-callout-dark">
+        <h3 className="section-callout-title">
+          Why we only look at models that support cloning.
+        </h3>
+        <p className="section-callout-body">
+          A model can sound human on its own demo voice and robotic on yours. Comparing
+          vendors&apos; hand-picked clips is apples to oranges. So we clone the same
+          conversational voice onto every model and compare only that. Models that
+          can&apos;t clone a voice can&apos;t be tested fairly, so they&apos;re not listed.
+        </p>
       </div>
     </div>
   </section>

@@ -8,8 +8,8 @@ export const SiteFooter = () => {
         <div className="site-footer-brand">
           <p className="site-footer-wordmark">The Humanness Index™</p>
           <p className="site-footer-tagline">
-            The open benchmark for how human voice AI sounds. Built and
-            operated by Vapi.
+            The open benchmark for how human voice AI sounds, built by Vapi to
+            push the industry toward voices that pass as human.
           </p>
         </div>
         <nav aria-label="Footer" className="site-footer-links">

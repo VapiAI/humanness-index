@@ -227,6 +227,11 @@ export const RankingsSection = ({
           </span>
         </div>
       </div>
+      <p className="rankings-intro">
+        Humanness is each model&apos;s Elo from blind votes, normalized so a real human is
+        100. Latency is measured time-to-first-audio. The best voices sit top-right: as
+        human as a person, with none of the&nbsp;lag.
+      </p>
       <div className="rankings-toolbar">
         <div className="rankings-search">
           <MagnifyingGlass size={16} />
@@ -261,6 +266,15 @@ export const RankingsSection = ({
         onFocusModel={onSelectModel}
         onClearFocus={onClearFocus}
       />
+
+      <div className="chart-callout section-callout section-callout-light">
+        <h3 className="section-callout-title">Why latency matters</h3>
+        <p className="section-callout-body">
+          Humanness can&apos;t come at the cost of latency. A voice that lags breaks the
+          conversation, and the bar for real-time is brutal. The ideal model is top-right
+          of the chart: human-level, and instant.
+        </p>
+      </div>
 
       <div className="ranking-table-wrap">
         <table className="ranking-table">

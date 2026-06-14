@@ -1,0 +1,36 @@
+/** Three-step explainer strip directly under the hero: the biggest confusion-killer. */
+const STEPS = [
+  {
+    n: 1,
+    title: 'Same voice, every model',
+    desc: "We clone one natural, conversational voice onto each TTS model, so you're judging the model, not its demo reel.",
+  },
+  {
+    n: 2,
+    title: 'You listen blind',
+    desc: 'Two voices, same line, no labels. Pick the one that sounds more human.',
+  },
+  {
+    n: 3,
+    title: 'A real human sets the bar',
+    desc: 'Votes become an Elo score, normalized so a human scores 100. The closer a model gets, the more human it sounds.',
+  },
+];
+
+export const HowItWorks = () => (
+  <section className="how-it-works" aria-label="How it works">
+    <ol className="hiw-grid">
+      {STEPS.map((step) => (
+        <li className="hiw-step" key={step.n}>
+          <span className="hiw-num" aria-hidden="true">
+            {step.n}
+          </span>
+          <div className="hiw-text">
+            <h3 className="hiw-title">{step.title}</h3>
+            <p className="hiw-desc">{step.desc}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+);

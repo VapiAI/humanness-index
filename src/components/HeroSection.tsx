@@ -100,7 +100,7 @@ export const HeroSection = ({
     : 'Which voice sounds more human?';
   const hintText = revealed
     ? "Here's who you were listening to."
-    : 'Same voice, different models. Pick the one that sounds more human.';
+    : 'Same voice, different models.';
 
   const handleSeeLeaderboard = () => {
     // Jump to the Humanness Deep Dive (dot distribution chart + full rankings
@@ -114,8 +114,9 @@ export const HeroSection = ({
         <p className="hero-eyebrow">The Humanness Index™</p>
         <h1 className="hero-title">How human does your voice AI really sound?</h1>
         <p className="hero-note">
-          Humanness is how much a voice feels like a real person. Listen to blind pairs,
-          pick the more human one, and help rank the models against a real human baseline.
+          In conversation, the only thing that matters is whether the voice feels like a
+          real person. We clone one voice onto every model and play them blind against a
+          real human, so the score reflects the model, not the clip.
         </p>
         {/* Until a formal whitepaper ships, the methodology doc is the source. */}
         <a

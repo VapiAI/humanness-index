@@ -22,8 +22,8 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
       <div className="cta-inner">
         <h2 className="cta-title">How human does your model really sound?</h2>
         <p className="cta-sub">
-          The benchmark is open source. Suggest a model, read the methodology,
-          or ask us to put your voice in the arena.
+          We built this to push voice AI toward sounding human. Add your model,
+          read the methodology, or get your voice in the arena.
         </p>
         <div className="cta-actions">
           {/* A mailto, not a form — the envelope sets that expectation. */}

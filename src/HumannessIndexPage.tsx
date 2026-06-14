@@ -7,9 +7,11 @@ import './styles/humanness-index.css';
 
 import { CtaBand } from './components/CtaBand';
 import { HeroSection } from './components/HeroSection';
+import { HowItWorks } from './components/HowItWorks';
 import { LeaderboardSection } from './components/LeaderboardSection';
 import { PiecesSection } from './components/PiecesSection';
 import { RankingsSection } from './components/RankingsSection';
+import { WhyThisExists } from './components/WhyThisExists';
 import { useArenaAudio } from './hooks/useArenaAudio';
 import { useArenaData } from './hooks/useArenaData';
 import { useVoteGate } from './hooks/useVoteGate';
@@ -421,6 +423,8 @@ export const HumannessIndexPage = () => {
         onNext={handleNextComparison}
       />
 
+      <HowItWorks />
+
       <LeaderboardSection
         topModels={topModels}
         allModels={sortedModels}
@@ -451,6 +455,8 @@ export const HumannessIndexPage = () => {
         onClearFocus={clearRankFocus}
         onTogglePlay={toggleRankSample}
       />
+
+      <WhyThisExists />
 
       <CtaBand />
     </div>

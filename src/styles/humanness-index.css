@@ -140,7 +140,7 @@ rendered so scrollbar math stays stable. */
 
 .hi-page .pieces-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 32px;
   margin-top: 40px;
 }
@@ -2527,4 +2527,194 @@ would clip at its top edge. */
   border-radius: 4px;
   outline: 2px solid var(--ink);
   outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Page-copy overhaul: how-it-works strip, callouts, manifesto (June 2026)
+   ========================================================================== */
+
+/* Three-step "how it works" strip, tucked directly under the hero. */
+.hi-page .how-it-works {
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin: 0 auto;
+  padding-inline: var(--pad);
+  /* Pull up into the hero's bottom padding so it reads as part of the hero. */
+  margin-top: clamp(-28px, -2.4vw, -4px);
+}
+
+.hi-page .hiw-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hi-page .hiw-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(26, 26, 46, 0.04),
+    0 18px 40px -30px rgba(26, 26, 46, 0.3);
+}
+
+.hi-page .hiw-num {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mint, #00cd8f) 16%, #fff);
+  color: var(--teal-strong, #00a371);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hi-page .hiw-title {
+  margin: 1px 0 4px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.hi-page .hiw-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* Full-width "why" callout, edge to edge within its section: the negative
+   inline margin breaks it out of the section's padding so the band reaches the
+   side rails, while its own inline padding keeps the text aligned with the
+   section content. Dark/light variants keep the two callouts consistent on
+   their respective backgrounds. */
+.hi-page .section-callout {
+  box-sizing: border-box;
+  margin-inline: calc(-1 * var(--pad));
+  padding: clamp(18px, 2.2vw, 26px) var(--pad);
+  border-block: 1px solid transparent;
+}
+
+.hi-page .section-callout-title {
+  margin: 0 0 6px;
+  font-size: clamp(16px, 1.6vw, 18px);
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.hi-page .section-callout-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* On the dark Pieces band. */
+.hi-page .section-callout-dark {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hi-page .section-callout-dark .section-callout-title {
+  color: #fff;
+}
+
+.hi-page .section-callout-dark .section-callout-body {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+/* On the light Deep Dive section. */
+.hi-page .section-callout-light {
+  border-color: color-mix(in srgb, var(--ink) 12%, transparent);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+
+.hi-page .section-callout-light .section-callout-title {
+  color: var(--ink);
+}
+
+.hi-page .section-callout-light .section-callout-body {
+  color: var(--muted);
+}
+
+/* Vertical spacing within each host section. */
+.hi-page .pieces-callout {
+  margin-top: 36px;
+}
+
+/* Deep Dive orienting intro + latency callout near the chart. */
+.hi-page .rankings-intro {
+  max-width: 78ch;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.hi-page .chart-callout {
+  margin-top: 18px;
+}
+
+/* "Why this exists" manifesto above the CTA band. */
+.hi-page .why-exists {
+  width: min(var(--content-max), calc(100% - var(--gutter) * 2));
+  margin: 0 auto;
+  padding-inline: var(--pad);
+  padding-block: clamp(28px, 4vw, 48px);
+}
+
+.hi-page .why-exists-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hi-page .why-exists-eyebrow {
+  margin: 0 0 12px;
+  color: var(--teal-strong, #00a371);
+  font-family: var(--font-eyebrow);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hi-page .why-exists-body {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+@media (max-width: 860px) {
+  .hi-page .hiw-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .hi-page .how-it-works,
+  .hi-page .why-exists {
+    width: auto;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 20px;
+  }
 }
