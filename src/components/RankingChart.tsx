@@ -60,6 +60,10 @@ export const RankingVisualizationPanel = ({
       onFocusModel={onFocusModel}
       onClearFocus={onClearFocus}
     />
+    <p className="chart-foot">
+      <strong>Why latency matters.</strong>{' '}
+      A voice that lags breaks the conversation, no matter how human it sounds.
+    </p>
   </div>
 );
 

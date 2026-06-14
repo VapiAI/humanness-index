@@ -265,13 +265,6 @@ export const RankingsSection = ({
         onClearFocus={onClearFocus}
       />
 
-      <div className="chart-callout section-callout section-callout-light">
-        <p className="chart-callout-text">
-          <strong>Why latency matters.</strong>{' '}
-          A voice that lags breaks the conversation, no matter how human it sounds.
-        </p>
-      </div>
-
       <div className="ranking-table-wrap">
         <table className="ranking-table">
           <thead>

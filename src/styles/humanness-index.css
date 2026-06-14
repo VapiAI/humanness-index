@@ -2186,11 +2186,20 @@ would clip at its top edge. */
   background: #e7e7ea;
 }
 
-/* Unmeasured-models footnote under the distribution chart. */
+/* Latency footnote: a quiet caption directly beneath the distribution chart,
+   inside the visual panel and separated by a hairline like the chart heading. */
 .hi-page .chart-foot {
-  margin: 8px 4px 0;
+  margin: 0;
+  padding: 11px 16px 13px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
   color: #71717a;
   font-size: 12px;
+  line-height: 1.5;
+}
+
+.hi-page .chart-foot strong {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* Submission footnote under the rankings table. */
@@ -2698,18 +2707,12 @@ would clip at its top edge. */
   color: rgba(255, 255, 255, 0.74);
 }
 
-/* On the light Deep Dive section. */
-.hi-page .section-callout-light {
-  border-color: color-mix(in srgb, var(--ink) 12%, transparent);
-  background: color-mix(in srgb, var(--ink) 3%, transparent);
-}
-
 /* Vertical spacing within each host section. */
 .hi-page .pieces-callout {
   margin-top: 36px;
 }
 
-/* Deep Dive orienting intro + latency callout near the chart. */
+/* Deep Dive orienting intro above the chart. */
 .hi-page .rankings-intro {
   max-width: 78ch;
   margin: 10px 0 0;
@@ -2717,25 +2720,6 @@ would clip at its top edge. */
   font-size: 14px;
   line-height: 1.55;
   text-wrap: pretty;
-}
-
-.hi-page .chart-callout {
-  margin-top: 18px;
-}
-
-/* The latency callout is a single body-size paragraph with an inline bold
-   lead-in (no separate heading), unlike the cloning callout. */
-.hi-page .chart-callout-text {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-
-.hi-page .chart-callout-text strong {
-  color: var(--ink);
-  font-weight: 700;
 }
 
 /* "Why this exists" manifesto above the CTA band. */
