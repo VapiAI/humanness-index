@@ -718,23 +718,43 @@ rendered so scrollbar math stays stable. */
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  border-radius: 16px;
   background: linear-gradient(165deg, #1b1b27, #101018);
   overflow: hidden;
   transition:
-    border-color 160ms ease,
-    background 160ms ease;
+    transform 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 }
 
+/* The cards share the How-it-works surface language: a faint white-to-cream
+   gradient, a hairline border, an inner top highlight, and a layered contact +
+   diffuse shadow, with a tasteful lift on hover. */
 .hi-page .rcard.tone-light {
-  border-color: rgba(0, 0, 0, 0.1);
-  background: linear-gradient(165deg, #ffffff, #eaeef0);
+  border-color: color-mix(in srgb, var(--ink) 9%, transparent);
+  background: linear-gradient(
+    180deg,
+    #ffffff,
+    color-mix(in srgb, var(--cream, #faf9f6) 60%, #ffffff)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 2px rgba(26, 26, 46, 0.05),
+    0 18px 38px -26px rgba(26, 26, 46, 0.22);
 }
 
 .hi-page .rcard:hover {
-  border-color: var(--mint);
+  transform: translateY(-4px);
+}
+
+.hi-page .rcard.tone-light:hover {
+  border-color: color-mix(in srgb, var(--mint, #00cd8f) 50%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(26, 26, 46, 0.06),
+    0 28px 52px -28px rgba(26, 26, 46, 0.3);
 }
 
 /* Listed models: the whole tile clicks through to the detail page. */
@@ -742,11 +762,23 @@ rendered so scrollbar math stays stable. */
   cursor: pointer;
 }
 
+/* Rank as a compact eyebrow pill, consistent with the page's eyebrow tokens. */
 .hi-page .rcard-rank {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--muted);
+  font-family: var(--font-eyebrow);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .hi-page .rcard-name {
@@ -799,10 +831,10 @@ rendered so scrollbar math stays stable. */
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  margin: 6px 0 10px;
+  margin: 8px 0 10px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   background:
     radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.06), transparent 70%),
@@ -861,51 +893,82 @@ rendered so scrollbar math stays stable. */
   .hi-page .rcard-art-cue svg {
     transition: none;
   }
+
+  .hi-page .rcard {
+    transition: none;
+  }
+
+  .hi-page .rcard:hover {
+    transform: none;
+  }
 }
 
-.hi-page .rank-bubbles {
+/* Leaderboard cards only ("Most Human Models"): keep the orb as quiet art at
+   rest and reveal the play/pause glyph on hover or keyboard focus. Gated behind
+   hover-capable pointers so touch / no-hover devices keep it visible, and a
+   playing card always shows the control so it can be paused. Battle widget and
+   detail sample players are out of scope and keep their always-on controls. */
+@media (hover: hover) {
+  .hi-page .top-card-grid .rcard-art-cue {
+    opacity: 0;
+  }
+
+  .hi-page .top-card-grid .rcard:hover .rcard-art-cue,
+  .hi-page .top-card-grid .rcard:focus-within .rcard-art-cue,
+  .hi-page .top-card-grid .rcard-art:focus-visible .rcard-art-cue,
+  .hi-page .top-card-grid .rcard-art.is-playing .rcard-art-cue {
+    opacity: 1;
+  }
+}
+
+/* Humanness meter: a slim rounded track with a mint fill and a crisp thumb at
+   the model's score. Replaces the old field-of-dots strip. */
+.hi-page .rank-meter {
   margin: 12px 0 2px;
 }
 
-.hi-page .rank-bubbles-track {
+.hi-page .rank-meter-track {
   position: relative;
-  height: 24px;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 0 1px 2px rgba(26, 26, 46, 0.06);
 }
 
-.hi-page .rank-bubbles-track::before {
-  content: '';
+.hi-page .rank-meter-fill {
   position: absolute;
   left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.12);
+  top: 0;
+  bottom: 0;
+  min-width: 8px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mint, #00cd8f) 55%, #ffffff),
+    var(--mint, #00cd8f)
+  );
 }
 
-.hi-page .rank-bubble {
+.hi-page .rank-meter-thumb {
   position: absolute;
   top: 50%;
-  width: 7px;
-  height: 7px;
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid #ffffff;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.28);
+  background: var(--mint, #00cd8f);
+  box-shadow:
+    0 1px 3px rgba(26, 26, 46, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--mint, #00cd8f) 35%, transparent);
   transform: translate(-50%, -50%);
 }
 
-.hi-page .rank-bubble.is-self {
-  width: 13px;
-  height: 13px;
-  z-index: 1;
-  background: var(--mint);
-  opacity: 1;
-}
-
-.hi-page .rank-bubbles-ends {
+.hi-page .rank-meter-ends {
   display: flex;
   justify-content: space-between;
   gap: 12px; /* keep LOWER/HIGHER apart when the card is narrow */
-  margin-top: 6px;
-  color: rgba(255, 255, 255, 0.5);
+  margin-top: 7px;
+  color: var(--muted);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -919,22 +982,25 @@ rendered so scrollbar math stays stable. */
   flex-wrap: wrap; /* value drops below the label instead of colliding on narrow cards */
   gap: 2px 10px;
   min-width: 0;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .hi-page .rcard-score-label {
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-family: var(--font-eyebrow);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .hi-page .rcard-score-value {
-  color: #fff;
-  font-size: 24px;
-  font-weight: 900;
+  color: var(--ink);
+  font-size: 27px;
+  font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .hi-page .rcard-stats {
@@ -942,28 +1008,32 @@ rendered so scrollbar math stays stable. */
   /* one row: the values are short, so three tight columns always fit */
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  margin: 10px 0 0;
+  margin: 14px 0 0;
+  padding-top: 13px;
+  border-top: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .hi-page .rcard-stats div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .hi-page .rcard-stats dt {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-family: var(--font-eyebrow);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .hi-page .rcard-stats dd {
   margin: 0;
-  color: #fff;
-  font-size: 13px;
+  color: var(--ink);
+  font-size: 14px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap; /* "~200 ms" stays on one line */
 }
 
@@ -982,24 +1052,11 @@ icon sits flush left of the number; it fills out (1 → 3 people) with votes. */
   opacity: 0.55;
 }
 
-.hi-page .rcard.tone-light .rcard-rank,
 .hi-page .rcard.tone-light .rcard-model,
 .hi-page .rcard.tone-light .rcard-score-label,
 .hi-page .rcard.tone-light .rcard-stats dt,
-.hi-page .rcard.tone-light .rank-bubbles-ends {
+.hi-page .rcard.tone-light .rank-meter-ends {
   color: var(--muted);
-}
-
-.hi-page .rcard.tone-light .rank-bubbles-track::before {
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.hi-page .rcard.tone-light .rank-bubble {
-  background: rgba(0, 0, 0, 0.22);
-}
-
-.hi-page .rcard.tone-light .rank-bubble.is-self {
-  background: var(--mint);
 }
 
 .hi-page .rcard.tone-light .rcard-name,
@@ -1008,9 +1065,15 @@ icon sits flush left of the number; it fills out (1 → 3 people) with votes. */
   color: var(--ink);
 }
 
+/* Crisp light well for the orb, matching the card surface. */
 .hi-page .rcard.tone-light .rcard-art {
-  border: 1px solid #e6e6e6;
-  background: #fefefe;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: radial-gradient(
+    120% 80% at 50% 0%,
+    #ffffff,
+    color-mix(in srgb, var(--cream, #faf9f6) 70%, #ffffff)
+  );
+  box-shadow: inset 0 1px 2px rgba(26, 26, 46, 0.04);
 }
 
 /* Featured #1 card — double-width hero (2 cols,
@@ -1018,6 +1081,27 @@ single row) */
 .hi-page .rcard-featured {
   grid-column: span 2;
   overflow: visible; /* don't clip the full-width copy */
+}
+
+/* The leader gets a restrained mint emphasis: a faint mint wash and a minty
+   border, so it reads as the same card language, dialed up. */
+.hi-page .rcard-featured.tone-light {
+  border-color: color-mix(in srgb, var(--mint, #00cd8f) 24%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mint, #00cd8f) 5%, #ffffff),
+    #ffffff
+  );
+}
+
+.hi-page .rcard-featured.tone-light:hover {
+  border-color: color-mix(in srgb, var(--mint, #00cd8f) 55%, transparent);
+}
+
+.hi-page .rcard-featured.tone-light .rcard-rank {
+  border-color: color-mix(in srgb, var(--mint, #00cd8f) 38%, transparent);
+  background: color-mix(in srgb, var(--mint, #00cd8f) 12%, transparent);
+  color: var(--teal-strong, #00a371);
 }
 
 .hi-page .fcard-top {
@@ -1040,7 +1124,6 @@ single row) */
 .hi-page .fcard-stats {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   margin: 2px 0 0;
 }
 
@@ -1049,13 +1132,25 @@ single row) */
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.hi-page .fcard-stat:first-child {
+  padding-top: 0;
+}
+
+.hi-page .fcard-stat:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .hi-page .fcard-stat dt {
   color: var(--muted);
+  font-family: var(--font-eyebrow);
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1065,6 +1160,7 @@ single row) */
   color: var(--ink);
   font-size: 16px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -1362,8 +1458,8 @@ single row) */
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-auto-flow: row dense;
-  gap: 14px;
-  margin-top: 14px;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .hi-page .legend {

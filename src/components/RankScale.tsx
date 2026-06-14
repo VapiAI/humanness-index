@@ -1,6 +1,11 @@
+import { humannessScore } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
 
-/** Where this model's score sits across the whole field, as a bubble strip. */
+/**
+ * Where this model sits low to high, as a slim filled meter. The marker tracks
+ * the model's Humanness score (0 to 100), so it always agrees with the number
+ * shown beside it.
+ */
 export const RankScale = ({
   model,
   allModels,
@@ -8,24 +13,19 @@ export const RankScale = ({
   model: ScoredModel;
   allModels: ScoredModel[];
 }) => {
-  const elos = allModels.map((m) => m.elo);
-  const min = Math.min(...elos);
-  const max = Math.max(...elos);
-  const pos = (elo: number) => 6 + (max > min ? (elo - min) / (max - min) : 0.5) * 88;
+  const pct = humannessScore(model, allModels);
 
   return (
-    <div className="rank-bubbles">
-      <div className="rank-bubbles-track">
-        {allModels.map((m) => (
-          <span
-            key={m.id}
-            className={`rank-bubble${m.id === model.id ? ' is-self' : ''}`}
-            style={{ left: `${pos(m.elo)}%` }}
-            title={`${m.provider} ${m.model}: ${m.elo}`}
-          />
-        ))}
+    <div className="rank-meter">
+      <div
+        className="rank-meter-track"
+        role="img"
+        aria-label={`Humanness ${pct} of 100, lower to higher`}
+      >
+        <span className="rank-meter-fill" style={{ width: `${pct}%` }} />
+        <span className="rank-meter-thumb" style={{ left: `${pct}%` }} />
       </div>
-      <div className="rank-bubbles-ends">
+      <div className="rank-meter-ends" aria-hidden="true">
         <span>Lower</span>
         <span>Higher</span>
       </div>

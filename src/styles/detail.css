@@ -234,26 +234,10 @@
   font-size: 12px;
 }
 
-/* Rank bubbles strip on the light hero (the shared styles assume dark cards) */
+/* Humanness meter on the light hero (shares the leaderboard meter styles). */
 
 .hi-detail .detail-hero-scale {
   width: min(100%, 360px);
-}
-
-.hi-detail .detail-hero-scale .rank-bubbles-track::before {
-  background: rgba(0, 0, 0, 0.12);
-}
-
-.hi-detail .detail-hero-scale .rank-bubble {
-  background: rgba(0, 0, 0, 0.22);
-}
-
-.hi-detail .detail-hero-scale .rank-bubble.is-self {
-  background: var(--mint);
-}
-
-.hi-detail .detail-hero-scale .rank-bubbles-ends {
-  color: var(--muted);
 }
 
 /* Hero right column: sample card / provider medallion card */
@@ -287,8 +271,13 @@
   height: 256px;
   margin: 0;
   /* Light well to match the leaderboard cards (the base art well is dark). */
-  border: 1px solid #e6e6e6;
-  background: #fefefe;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: radial-gradient(
+    120% 80% at 50% 0%,
+    #ffffff,
+    color-mix(in srgb, var(--cream, #faf9f6) 70%, #ffffff)
+  );
+  box-shadow: inset 0 1px 2px rgba(26, 26, 46, 0.04);
 }
 
 .hi-detail .detail-sample-caption {
