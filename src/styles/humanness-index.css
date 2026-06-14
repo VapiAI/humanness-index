@@ -2545,45 +2545,78 @@ would clip at its top edge. */
 .hi-page .hiw-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Editorial numbered card: a large ghosted numeral for depth, a mint eyebrow
+   step label, then title + a two-line subtitle. Equal heights via the grid. */
 .hi-page .hiw-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  position: relative;
   margin: 0;
-  padding: 18px 20px;
+  padding: 26px 24px;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
-  border-radius: 14px;
-  background: #fff;
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    #ffffff,
+    color-mix(in srgb, var(--cream, #faf9f6) 55%, #ffffff)
+  );
   box-shadow:
     0 1px 2px rgba(26, 26, 46, 0.04),
-    0 18px 40px -30px rgba(26, 26, 46, 0.3);
+    0 22px 44px -34px rgba(26, 26, 46, 0.28);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
 }
 
-.hi-page .hiw-num {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mint, #00cd8f) 16%, #fff);
+.hi-page .hiw-step:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--mint, #00cd8f) 45%, transparent);
+  box-shadow:
+    0 1px 2px rgba(26, 26, 46, 0.05),
+    0 30px 52px -30px rgba(26, 26, 46, 0.34);
+}
+
+/* The oversized faint numeral that gives each card its editorial anchor. */
+.hi-page .hiw-ghost {
+  position: absolute;
+  top: -18px;
+  right: 8px;
+  z-index: 0;
+  font-family: var(--font-display);
+  font-size: 112px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: color-mix(in srgb, var(--mint, #00cd8f) 13%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+
+.hi-page .hiw-body {
+  position: relative;
+  z-index: 1;
+}
+
+.hi-page .hiw-eyebrow {
+  margin: 0 0 12px;
   color: var(--teal-strong, #00a371);
-  font-size: 13px;
+  font-family: var(--font-eyebrow);
+  font-size: 11px;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .hi-page .hiw-title {
-  margin: 1px 0 4px;
+  margin: 0 0 7px;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
@@ -2592,8 +2625,8 @@ would clip at its top edge. */
   margin: 0;
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.5;
-  text-wrap: pretty;
+  line-height: 1.55;
+  text-wrap: balance;
 }
 
 /* Full-width "why" callout, edge to edge within its section: the negative

@@ -3,7 +3,7 @@ const STEPS = [
   {
     n: 1,
     title: 'Same voice, every model',
-    desc: "We clone one natural, conversational voice onto each TTS model, so you're judging the model, not its demo reel.",
+    desc: "We clone one conversational voice onto every model, so you're judging the model, not its demo reel.",
   },
   {
     n: 2,
@@ -13,7 +13,7 @@ const STEPS = [
   {
     n: 3,
     title: 'A real human sets the bar',
-    desc: 'Votes become an Elo score, normalized so a human scores 100. The closer a model gets, the more human it sounds.',
+    desc: 'Votes become an Elo score, with a real human at 100. The closer a model gets, the more human it sounds.',
   },
 ];
 
@@ -22,10 +22,11 @@ export const HowItWorks = () => (
     <ol className="hiw-grid">
       {STEPS.map((step) => (
         <li className="hiw-step" key={step.n}>
-          <span className="hiw-num" aria-hidden="true">
+          <span className="hiw-ghost" aria-hidden="true">
             {step.n}
           </span>
-          <div className="hiw-text">
+          <div className="hiw-body">
+            <p className="hiw-eyebrow">Step {step.n}</p>
             <h3 className="hiw-title">{step.title}</h3>
             <p className="hiw-desc">{step.desc}</p>
           </div>

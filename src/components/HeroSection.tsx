@@ -114,10 +114,8 @@ export const HeroSection = ({
         <p className="hero-eyebrow">The Humanness Index™</p>
         <h1 className="hero-title">How human does your voice AI really sound?</h1>
         <p className="hero-note">
-          In conversation, few things matter more than whether a voice feels like a real
-          person, and few things are harder to measure. We clone one voice onto every model
-          and play them blind against a real human, so the score reflects the model, not the
-          clip.
+          Sounding human is hard to measure. So we clone one voice onto every model and
+          play them blind against a real human.
         </p>
         {/* Until a formal whitepaper ships, the methodology doc is the source. */}
         <a
