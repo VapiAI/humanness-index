@@ -4,6 +4,14 @@
   "totalUniqueVotes": 721,
   "models": [
     {
+      "id": "human",
+      "elo": 1338,
+      "wins": 0,
+      "losses": 0,
+      "ties": 0,
+      "voteCount": 0
+    },
+    {
       "id": "xai-xai-tts",
       "elo": 1306.53,
       "wins": 71,

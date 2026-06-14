@@ -86,10 +86,12 @@ const MARKS_DIR = resolve(import.meta.dir, '../../public/marks');
 
 describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
-    expect(BASE_PROVIDER_ENTRIES.length).toBe(9);
-    expect(BASE_MODEL_ENTRIES.length).toBe(21);
-    expect(arenaProviderEntries().length).toBe(9);
-    expect(arenaModelEntries().length).toBe(21);
+    // 10 providers / 22 models: the 9 vendors + 21 TTS models, plus the Human
+    // baseline (provider `human`, model `human`).
+    expect(BASE_PROVIDER_ENTRIES.length).toBe(10);
+    expect(BASE_MODEL_ENTRIES.length).toBe(22);
+    expect(arenaProviderEntries().length).toBe(10);
+    expect(arenaModelEntries().length).toBe(22);
     // The committed registry carries no unlisted entries today; embargoed
     // ones live in the private overlay until their providers announce them.
     expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual(
@@ -181,9 +183,14 @@ describe('registry: ids, slugs, refs', () => {
       );
     }
     // Every listed model with a seed row carries its frozen first-paint label;
-    // unseeded models must not fake one.
+    // unseeded models must not fake one. The Human baseline is seeded (its
+    // anchor Elo) but has no competitive rank, so it is exempt.
     for (const model of MODEL_ENTRIES) {
-      if (model.status !== 'unlisted' && seedIdSet.has(model.id)) {
+      if (
+        model.status !== 'unlisted' &&
+        seedIdSet.has(model.id) &&
+        !model.baseline
+      ) {
         expect(model.seedLikelyRank).toBeDefined();
       }
       if (UNSEEDED_MODEL_IDS.has(model.id)) {
@@ -433,6 +440,12 @@ const EXPECTED_MODELS = [
     providerId: 'neuphonic',
     name: 'neu_hq',
   },
+  {
+    id: 'human',
+    arenaId: 'human:human',
+    providerId: 'human',
+    name: 'Homo Sapien',
+  },
 ];
 
 const EXPECTED_PROVIDERS = [
@@ -445,6 +458,7 @@ const EXPECTED_PROVIDERS = [
   { id: 'inworld', name: 'Inworld' },
   { id: 'smallestai', name: 'Smallest.ai' },
   { id: 'neuphonic', name: 'Neuphonic' },
+  { id: 'human', name: 'Human' },
 ];
 
 const SOURCE_VOICE_IDS = [
@@ -463,17 +477,34 @@ describe('server/catalog derivation equality', () => {
     expect([...PROVIDERS_BY_ID.values()]).toEqual(EXPECTED_PROVIDERS);
   });
 
-  it('derives the exact 84-variant matrix (ids feed the audio hashes)', () => {
+  it('derives the exact 86-variant matrix (ids feed the audio hashes)', () => {
+    // The Human baseline only has clips for Clara and Nelliot today; every
+    // other model serves the whole roster.
+    const HUMAN_VOICES = ['voice-clara', 'voice-nelliot'];
+    const voicesFor = (modelId: string): string[] =>
+      modelId === 'human' ? HUMAN_VOICES : SOURCE_VOICE_IDS;
     const expectedVariants = SOURCE_VOICE_IDS.flatMap((voiceId) =>
-      EXPECTED_MODELS.map((model) => ({
+      EXPECTED_MODELS.filter((model) =>
+        voicesFor(model.id).includes(voiceId),
+      ).map((model) => ({
         id: `variant:${voiceId}:${model.providerId}:${model.arenaId.split(':', 2)[1]}`,
         sourceVoiceId: voiceId,
         providerId: model.providerId,
         modelId: model.id,
       })),
     );
-    expect(VARIANTS.length).toBe(84);
+    // 21 TTS models x 4 voices + the Human baseline x 2 recorded voices = 86.
+    expect(VARIANTS.length).toBe(86);
     expect(VARIANTS).toEqual(expectedVariants);
+  });
+
+  it('limits the Human baseline to its recorded source voices', () => {
+    const humanVoices = VARIANTS.filter((v) => v.modelId === 'human')
+      .map((v) => v.sourceVoiceId)
+      .sort();
+    // Clara + Nelliot are recorded; Emma + Godfrey are not, so Human has no
+    // variant (and so no battle) on them.
+    expect(humanVoices).toEqual(['voice-clara', 'voice-nelliot']);
   });
 
   it('resolves the frozen audio content hashes (golden URLs)', () => {
@@ -597,6 +628,21 @@ describe('fallback clips', () => {
  * now derived as seed-standings × registry identity.
  */
 const EXPECTED_ARENA_ROWS = [
+  {
+    // The Human baseline anchor: seeded above the field so it is the unique
+    // 100 from first paint. No competitive rank (blank label), 0 votes.
+    id: 'human',
+    provider: 'Human',
+    model: 'Homo Sapien',
+    elo: 1338,
+    uncertainty: 160,
+    wins: 0,
+    losses: 0,
+    ties: 0,
+    likelyRank: '',
+    voiceProfile: 24,
+    baseline: true,
+  },
   {
     id: 'xai-xai-tts',
     provider: 'xAI',
@@ -857,6 +903,9 @@ const EXPECTED_VOICE_STATS: Array<[string, string, string, string, string]> = [
   // No published Neuphonic API pricing as of 2026-06-12 (renders a dash).
   ['Neuphonic', 'neu_hq', '276 ms', '9', '\u2014'],
   ['Smallest.ai', 'Lightning v3.1', '420 ms', '12', '$15'],
+  // The Human baseline is a real person reading the line: no latency, no
+  // languages count, no price. All dashes.
+  ['Human', 'Homo Sapien', '\u2014', '\u2014', '\u2014'],
 ];
 
 describe('data/providers derivation equality', () => {
@@ -901,6 +950,7 @@ describe('data/providers derivation equality', () => {
       Inworld: 'inworld.png',
       'Smallest.ai': 'smallestai.png',
       Neuphonic: 'neuphonic.png',
+      Human: 'human.svg',
       // Overlay providers keep their marks wired for re-listing.
       ...Object.fromEntries(
         OVERLAY.providers.map((provider) => [provider.name, provider.mark]),
@@ -919,6 +969,7 @@ describe('data/providers derivation equality', () => {
       ['Gradium', 'G'],
       ['Smallest.ai', 'S'],
       ['Neuphonic', 'N'],
+      ['Human', 'H'],
       ['Acme Voice Co', 'AV'],
     ];
     for (const [provider, text] of expected) {
@@ -1012,8 +1063,8 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(21);
-    expect(listedProviderEntries().length).toBe(9);
+    expect(listedModelEntries().length).toBe(22);
+    expect(listedProviderEntries().length).toBe(10);
   });
 });
 
@@ -1034,6 +1085,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
       'smallestai-lightning-v31',
     );
     expect(slugById.get('neuphonic-neu-hq')).toBe('neuphonic-neu-hq');
+    expect(slugById.get('human')).toBe('human');
     // Overlay slugs are frozen identity too: id and slug must already agree
     // with the store before an entry ever goes public.
     for (const model of OVERLAY.models) {
@@ -1047,6 +1099,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
       'cartesia',
       'elevenlabs',
       'gradium',
+      'human-baseline',
       'inworld',
       'minimax',
       'neuphonic',

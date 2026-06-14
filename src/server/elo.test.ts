@@ -100,6 +100,26 @@ describe('chooseBattlePair', () => {
     }
   });
 
+  it('only ever pairs the Human baseline on a recorded voice (clara/nelliot)', () => {
+    const state = freshState();
+    // Force coverage onto Human: every other variant is well-voted, Human's
+    // are not, so every pick must include the Human baseline.
+    for (const variant of VARIANTS) {
+      if (variant.modelId === 'human') continue;
+      state.set(variant.id, { ...freshVariantStats(), voteCount: 50 });
+    }
+    for (let i = 0; i < 100; i += 1) {
+      const [left, right] = chooseBattlePair(state);
+      const human = [left, right].find((v) => v.modelId === 'human');
+      // Coverage forcing puts Human in every pair, always on a recorded voice;
+      // the opponent reads that same voice and is never emma/godfrey for Human.
+      expect(human).toBeDefined();
+      expect(['voice-clara', 'voice-nelliot']).toContain(human!.sourceVoiceId);
+      expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
+      expect(left.modelId).not.toBe(right.modelId);
+    }
+  });
+
   it('prefers pairs touching an under-voted model', () => {
     const state = freshState();
     // Give every variant a vote except those of one lagging model.

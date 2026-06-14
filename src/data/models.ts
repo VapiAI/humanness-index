@@ -21,6 +21,10 @@ const seedUncertainty = (voteCount: number) =>
  * the `voiceProfile` seed for each model's visualizer fingerprint. Unlisted
  * registry entries (and any seed row without a registry entry) are filtered
  * out; the live leaderboard replaces all of it on mount.
+ *
+ * The Human baseline is seeded above the field (server/seed-standings.json,
+ * anchor Elo) so it is the unique 100 from first paint; it carries no
+ * competitive rank, so its `likelyRank` is blank and the UI shows a dash.
  */
 export const ARENA_ROWS: ArenaRow[] = SEED_STANDINGS.models.flatMap((seed) => {
   const entry = modelEntryById(seed.id);
@@ -35,9 +39,11 @@ export const ARENA_ROWS: ArenaRow[] = SEED_STANDINGS.models.flatMap((seed) => {
       wins: seed.wins,
       losses: seed.losses,
       ties: seed.ties,
-      // Presence for every listed seeded model is enforced by catalog.test.
-      likelyRank: entry.seedLikelyRank!,
+      // Competitors carry their frozen first-paint label (enforced by
+      // catalog.test); the baseline has no competitive rank.
+      likelyRank: entry.baseline ? '' : entry.seedLikelyRank!,
       voiceProfile: entry.voiceProfile,
+      ...(entry.baseline ? { baseline: true } : {}),
     },
   ];
 });
@@ -66,4 +72,7 @@ export const mergeStandings = (rows: ArenaModelRow[]): ArenaRow[] =>
       ARENA_ROWS_BY_ID.get(row.id)?.voiceProfile ??
       modelEntryById(row.id)?.voiceProfile ??
       index + 1,
+    // The Human baseline carries its flag onto the live row so scoring,
+    // sorting, and the table can treat it as the reference, not a competitor.
+    ...(modelEntryById(row.id)?.baseline ? { baseline: true } : {}),
   }));

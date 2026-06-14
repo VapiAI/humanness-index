@@ -19,6 +19,8 @@ import {
   ARENA_AUDIO_ORIGIN,
   arenaModelEntriesOfProvider,
   arenaProviderEntries,
+  modelEntryById,
+  SOURCE_VOICE_IDS,
 } from '../catalog';
 
 type CatalogProvider = {
@@ -85,15 +87,28 @@ const SOURCE_VOICES: CatalogVoice[] = [
   { id: 'voice-nelliot', name: 'Nelliot' },
 ];
 
-// Every provider cloned every rostered voice, so the matrix is complete.
+/**
+ * The source voices a model serves: its registry `sourceVoices` subset, or the
+ * whole roster by default (every TTS provider cloned all four). Restricting
+ * this is what keeps a model (the Human baseline, mid-rollout) out of voices
+ * it has no clips for.
+ */
+const voicesForModel = (modelId: string): readonly string[] =>
+  modelEntryById(modelId)?.sourceVoices ?? SOURCE_VOICE_IDS;
+
+// Most models cloned every rostered voice (the full matrix); a model that only
+// has clips for a subset (see ModelEntry.sourceVoices) contributes variants
+// for just those voices, so it is never paired on a voice it lacks.
 export const VARIANTS: CatalogVariant[] = SOURCE_VOICES.flatMap((voice) =>
-  MODELS.map((model) => ({
-    // variant:{voice}:{provider}:{arena model api id}
-    id: `variant:${voice.id}:${model.providerId}:${model.arenaId.split(':', 2)[1]}`,
-    sourceVoiceId: voice.id,
-    providerId: model.providerId,
-    modelId: model.id,
-  })),
+  MODELS.filter((model) => voicesForModel(model.id).includes(voice.id)).map(
+    (model) => ({
+      // variant:{voice}:{provider}:{arena model api id}
+      id: `variant:${voice.id}:${model.providerId}:${model.arenaId.split(':', 2)[1]}`,
+      sourceVoiceId: voice.id,
+      providerId: model.providerId,
+      modelId: model.id,
+    }),
+  ),
 );
 
 /** The 20 customer-support prompts every model reads (frozen since the original prototype). */

@@ -3,12 +3,13 @@ import { describe, expect, it } from 'bun:test';
 
 import {
   clamp,
+  competitorRank,
   eloExpectation,
   humannessScore,
   mean,
   outcomeFor,
   parseLatencyMs,
-  resultHeading,
+  revealHeadline,
   sortByStanding,
   voteMatchesCrowd,
 } from './scoring';
@@ -70,6 +71,75 @@ describe('humannessScore', () => {
     for (const model of tied) {
       expect(humannessScore(model, tied)).toBe(100);
     }
+  });
+});
+
+describe('humannessScore with a Human baseline', () => {
+  // Mirrors the seeded day-one field: the Human anchor (seed-standings.json)
+  // sits above the top TTS (Grok), with the worst model at the floor.
+  const field = [
+    { elo: 1338, baseline: true as const }, // Human anchor
+    { elo: 1306.53 }, // Grok TTS (top competitor)
+    { elo: 1200 },
+    { elo: 1027.55 }, // worst of the field
+  ];
+
+  it('gives the baseline a unique 100 with the field fanned out below', () => {
+    expect(humannessScore(field[0], field)).toBe(100); // baseline pinned
+    // Top competitor lands ~90 against [minElo, anchorElo] = [1027.55, 1338].
+    expect(humannessScore(field[1], field)).toBe(90);
+    expect(humannessScore(field[3], field)).toBe(0);
+    // The 100 is the baseline's alone: every competitor sits strictly below.
+    for (const competitor of field.slice(1)) {
+      expect(humannessScore(competitor, field)).toBeLessThan(100);
+    }
+  });
+
+  it('anchors at the top competitor (no overshoot) if one overtakes the baseline', () => {
+    // Edge case: a competitor's Elo exceeds the baseline. The anchor follows
+    // the competitor so it tops out at exactly 100, and the baseline stays 100.
+    const f = [
+      { elo: 1200, baseline: true as const },
+      { elo: 1307 },
+      { elo: 1028 },
+    ];
+    expect(humannessScore(f[1], f)).toBe(100); // overtaking competitor, capped at 100
+    expect(humannessScore(f[0], f)).toBe(100); // baseline still pinned
+    expect(humannessScore(f[2], f)).toBe(0);
+  });
+
+  it('falls back to plain min-max when no baseline is present', () => {
+    const f = [{ elo: 1307 }, { elo: 1200 }, { elo: 1028 }];
+    expect(humannessScore(f[0], f)).toBe(100);
+    expect(humannessScore(f[2], f)).toBe(0);
+  });
+});
+
+describe('sortByStanding with a baseline', () => {
+  it('pins the baseline on top regardless of its Elo', () => {
+    const models = [
+      scoredModel({ id: 'top', elo: 1400 }),
+      scoredModel({ id: 'human', elo: 1200, baseline: true }),
+      scoredModel({ id: 'mid', elo: 1300 }),
+    ];
+    expect(sortByStanding(models).map((m) => m.id)).toEqual([
+      'human',
+      'top',
+      'mid',
+    ]);
+  });
+});
+
+describe('competitorRank', () => {
+  it('numbers competitors and skips the baseline (0 for the baseline itself)', () => {
+    const rows = [
+      scoredModel({ id: 'human', baseline: true }),
+      scoredModel({ id: 'a' }),
+      scoredModel({ id: 'b' }),
+    ];
+    expect(competitorRank('a', rows)).toBe(1);
+    expect(competitorRank('b', rows)).toBe(2);
+    expect(competitorRank('human', rows)).toBe(0);
   });
 });
 
@@ -161,26 +231,64 @@ describe('voteMatchesCrowd', () => {
   });
 });
 
-describe('resultHeading', () => {
-  it('celebrates a correct pick and credits the leader otherwise', () => {
-    const correct = resultHeading({ correct: true, tie: false, leaderName: 'xAI TTS' });
-    const incorrect = resultHeading({
-      correct: false,
-      tie: false,
-      leaderName: 'xAI TTS',
+describe('revealHeadline', () => {
+  it('calls out the real person when the human is in the pairing', () => {
+    const spotted = revealHeadline({
+      winner: 'left',
+      correct: true,
+      humanSide: 'left',
+      pickedName: 'Homo Sapien',
+      crowdName: 'Homo Sapien',
     });
-    expect(correct).not.toBe(incorrect);
-    expect(incorrect).toContain('xAI TTS');
+    const fooled = revealHeadline({
+      winner: 'left',
+      correct: false,
+      humanSide: 'right',
+      pickedName: 'xAI Grok TTS',
+      crowdName: 'Homo Sapien',
+    });
+    expect(spotted).toBe('That one was a real person. Great ear.');
+    // Fooled: names the synthetic the listener picked, no em dash.
+    expect(fooled).toContain('xAI Grok TTS');
+    expect(fooled).not.toContain('\u2014');
   });
 
-  it('handles tie picks both with and against the Index', () => {
-    const agreed = resultHeading({ correct: true, tie: true, leaderName: 'Sonic 3' });
-    const disagreed = resultHeading({
-      correct: false,
-      tie: true,
-      leaderName: 'Sonic 3',
+  it('handles a tie with a human in the pairing', () => {
+    expect(
+      revealHeadline({
+        winner: 'tie',
+        correct: false,
+        humanSide: 'left',
+        pickedName: null,
+        crowdName: 'xAI Grok TTS',
+      }),
+    ).toBe('Too close to call, and one of them was a real person.');
+  });
+
+  it('speaks to the crowd when both voices are synthetic', () => {
+    const agree = revealHeadline({
+      winner: 'left',
+      correct: true,
+      humanSide: null,
+      pickedName: 'xAI Grok TTS',
+      crowdName: 'xAI Grok TTS',
     });
-    expect(agreed).not.toBe(disagreed);
-    expect(disagreed).toContain('Sonic 3');
+    const disagree = revealHeadline({
+      winner: 'right',
+      correct: false,
+      humanSide: null,
+      pickedName: 'Cartesia Sonic',
+      crowdName: 'xAI Grok TTS',
+    });
+    const tie = revealHeadline({
+      winner: 'tie',
+      correct: true,
+      humanSide: null,
+      pickedName: null,
+      crowdName: 'xAI Grok TTS',
+    });
+    expect(agree).toBe('Good ear. The crowd hears your pick as more human too.');
+    expect(disagree).toContain('xAI Grok TTS');
+    expect(tie).toBe('A dead heat. The Index agrees.');
   });
 });

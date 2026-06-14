@@ -9,6 +9,8 @@
  * in server/seed-standings.json.
  */
 
+import type { SourceVoiceId } from './voices';
+
 /** A claimed fact with provenance — renderable as a footnoted stat. */
 export type Sourced<T> = {
   value: T;
@@ -111,6 +113,23 @@ type ModelEntryBase = {
   arenaApiId: string;
   /** ISO date, 'YYYY-MM', or 'YYYY' when vendors published no finer date. */
   releaseDate?: Sourced<string>;
+  /**
+   * Marks the Human baseline reference (the four source-voice actors reading
+   * the same lines). A baseline anchors the Humanness scale at 100, battles
+   * head to head against the cloned TTS of the same voice, and is excluded
+   * from the model/provider counts, the highlight cards, and the latency
+   * chart. Only the `human` entry sets this; everything else is a competitor.
+   */
+  baseline?: true;
+  /**
+   * The source voices this model has clips for, as a subset of the frozen
+   * roster (SOURCE_VOICE_IDS). Omit to serve all four (every TTS provider
+   * cloned the whole roster). The arena only builds variants and battle
+   * pairings for these voices, so a model is never matched on a voice it
+   * lacks. The Human baseline sets this and extends it as each voice's
+   * recordings are uploaded (one-line edit per voice).
+   */
+  sourceVoices?: SourceVoiceId[];
   stats: {
     /**
      * Measured-only (hard rule): exact 50-trial streaming TTFB median from

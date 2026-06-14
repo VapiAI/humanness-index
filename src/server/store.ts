@@ -153,7 +153,13 @@ const blobStore = (token: string): ArenaStore => {
       ? new Map(
           VARIANTS.map((variant) => [
             variant.id,
-            snapshot.variants[variant.id] ?? freshVariantStats(),
+            // A snapshot predates any model added after it was written, so fall
+            // back to the production seed (e.g. the Human baseline's anchor
+            // Elo) before a blank row, so newly seeded entries don't reset to
+            // the default Elo on a store that already has a snapshot.
+            snapshot.variants[variant.id] ??
+              seeded.state.get(variant.id) ??
+              freshVariantStats(),
           ]),
         )
       : seeded.state;

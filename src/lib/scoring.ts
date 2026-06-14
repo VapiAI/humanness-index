@@ -1,5 +1,5 @@
 import { modelEntryByDisplayName } from '../catalog';
-import type { ArenaRow, ScoredModel, VoteChoice } from './types';
+import type { ArenaRow, BattleSide, ScoredModel, VoteChoice } from './types';
 
 export const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
@@ -10,16 +10,34 @@ export const mean = (values: number[]) =>
     : 0;
 
 /**
- * The published Humanness transform: 0–100, min-max normalized over the
- * current field's Elo — the leader reads 100, the last place reads 0.
+ * The published Humanness transform: 0–100.
+ *
+ * When a Human baseline is in the field it anchors the top of the scale: the
+ * baseline always reads 100, and every competitor is normalized against
+ * [minElo, anchorElo] and clamped to 0..100, so scores read as a share of the
+ * human mark. The anchor is max(baselineElo, topCompetitorElo): with Human
+ * seeded above the field (see server/seed-standings.json) this yields a clean
+ * gap below 100 from day one, and if a competitor ever overtakes Human it
+ * maps to 100 rather than overshooting (Human itself stays pinned to 100).
+ * With no baseline present it falls back to a plain min-max over the field.
  */
 export const humannessScore = (
-  model: Pick<ScoredModel, 'elo'>,
-  allModels: readonly Pick<ScoredModel, 'elo'>[],
+  model: Pick<ScoredModel, 'elo' | 'baseline'>,
+  allModels: readonly Pick<ScoredModel, 'elo' | 'baseline'>[],
 ) => {
+  // The baseline is the anchor; it always reads 100.
+  if (model.baseline) return 100;
   const elos = allModels.map((m) => m.elo);
   const minElo = Math.min(...elos);
-  const maxElo = Math.max(...elos);
+  const baseline = allModels.find((m) => m.baseline);
+  const topCompetitorElo = Math.max(
+    ...allModels.filter((m) => !m.baseline).map((m) => m.elo),
+  );
+  // Anchor never below the strongest competitor, so a TTS that overtakes the
+  // baseline still tops out at 100 instead of overshooting.
+  const maxElo = baseline
+    ? Math.max(baseline.elo, topCompetitorElo)
+    : topCompetitorElo;
   // A single-model or fully tied field has no spread to normalize against.
   if (maxElo === minElo) return 100;
   return clamp(
@@ -36,8 +54,29 @@ export const parseLatencyMs = (
   modelEntryByDisplayName(model.provider, model.model)?.stats.latencyMs
     ?.value ?? null;
 
+/**
+ * Standing order, best first. The Human baseline is always pinned to the top
+ * (it is the reference the field is measured against, not a ranked
+ * competitor); the rest sort by Elo, breaking ties with lower uncertainty.
+ */
 export const sortByStanding = (models: ScoredModel[]) =>
-  [...models].sort((a, b) => b.elo - a.elo || a.uncertainty - b.uncertainty);
+  [...models].sort(
+    (a, b) =>
+      Number(Boolean(b.baseline)) - Number(Boolean(a.baseline)) ||
+      b.elo - a.elo ||
+      a.uncertainty - b.uncertainty,
+  );
+
+/**
+ * 1-based rank among ranked competitors, ignoring any baseline rows (so the
+ * top model is #1 whether or not the Human baseline sits above it). Returns 0
+ * for a baseline row, which has no competitive rank.
+ */
+export const competitorRank = (
+  id: string,
+  models: readonly Pick<ScoredModel, 'id' | 'baseline'>[],
+): number =>
+  models.filter((m) => !m.baseline).findIndex((m) => m.id === id) + 1;
 
 /** Standard Elo expectation for the left side of a pairing. */
 export const eloExpectation = (leftElo: number, rightElo: number) =>
@@ -72,22 +111,38 @@ export const voteMatchesCrowd = (
   return winner === consensus;
 };
 
-/** Reveal-view headline after a pick. */
-export const resultHeading = ({
+/**
+ * Reveal-view headline after a pick. Battles are mixed, so the copy is honest
+ * either way: when a real Human recording is one of the two voices it calls out
+ * whether the listener spotted the person or got fooled; when both voices are
+ * synthetic it speaks to the crowd consensus instead.
+ */
+export const revealHeadline = ({
+  winner,
   correct,
-  tie,
-  leaderName,
+  humanSide,
+  pickedName,
+  crowdName,
 }: {
+  winner: VoteChoice;
   correct: boolean;
-  tie: boolean;
-  leaderName: string;
-}) => {
-  if (tie) {
-    return correct
-      ? 'Too close to call. The Index agrees.'
-      : `A fair tie, though most listeners give ${leaderName} a slight edge.`;
+  /** The side the real Human baseline is on, or null if both are synthetic. */
+  humanSide: BattleSide | null;
+  /** Display name of the voice the listener picked (null on a tie). */
+  pickedName: string | null;
+  /** Display name of the crowd-favored (higher-Elo) voice. */
+  crowdName: string;
+}): string => {
+  if (humanSide) {
+    if (winner === 'tie') {
+      return 'Too close to call, and one of them was a real person.';
+    }
+    return winner === humanSide
+      ? 'That one was a real person. Great ear.'
+      : `Fooled you. That was ${pickedName}. The real person was the other voice.`;
   }
+  if (winner === 'tie') return 'A dead heat. The Index agrees.';
   return correct
-    ? 'Great ears. Your pick ranks higher on the Index.'
-    : `Love it, though most listeners lean toward ${leaderName}.`;
+    ? 'Good ear. The crowd hears your pick as more human too.'
+    : `Most listeners hear ${crowdName} as more human.`;
 };

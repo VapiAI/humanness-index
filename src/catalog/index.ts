@@ -19,6 +19,7 @@ import type { ModelEntry, ProviderEntry } from './types';
 
 export * from './types';
 export * from './audio';
+export * from './voices';
 
 /** Committed registry + private overlay (unlisted-only), overlay last. */
 export const MODEL_ENTRIES: ModelEntry[] = [

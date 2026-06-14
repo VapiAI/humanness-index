@@ -1466,6 +1466,78 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     ],
   },
 
+  /* --------------------------------- Human -------------------------------- */
+  // The Human baseline: the four source-voice actors reading the same 20
+  // lines. Not a TTS model. `baseline: true` pins its Humanness score to 100
+  // (catalog anchor) and keeps it off the model/provider counts, the
+  // highlight cards, and the latency chart. Frozen ids (provider/model/api
+  // all `human`) feed the clip hashes; the recordings are ingested by
+  // pipeline/ingestHumanClips.ts. Unseeded: it enters at Elo 1200 on the
+  // first "which one is human?" votes.
+  {
+    id: 'human',
+    slug: 'human',
+    providerId: 'human',
+    // Easter egg: the provider stays "Human"; the model is the species name.
+    // Frozen identity (id/slug/apiModelId/arenaApiId = `human`) is unchanged
+    // since it feeds the clip hashes.
+    name: 'Homo Sapien',
+    apiModelId: 'human',
+    arenaApiId: 'human',
+    status: 'active',
+    baseline: true,
+    // Recorded source voices only: the arena builds Human variants and battle
+    // pairings for these voices alone, so Human is never matched on a voice it
+    // has no clips for. Extend this list (one line) as each voice's 20
+    // recordings are uploaded and HEAD-verified. As of 2026-06-13 Clara and
+    // Nelliot are live; add 'voice-emma' and 'voice-godfrey' when they land.
+    sourceVoices: ['voice-clara', 'voice-nelliot'],
+    stats: {
+      // No reachable API to measure and no per-character price: a person read
+      // the line. Both render as a dash, and the null latency keeps Human off
+      // the latency chart like the other unmeasured rows.
+      latencyMs: null,
+    },
+    voiceProfile: 24,
+    sample: {
+      // voice-clara x clip-01: sha256("variant:voice-clara:human:human|clip-01|settings-v3")[:32].
+      // The recording is ingested to this hash by humanness:human-clips.
+      fallbackClip: clip(
+        'voice-clara',
+        'human',
+        'human',
+        'clip-01',
+        'fe137bcb33a0ce1178283e7ea3c6888e',
+      ),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: [
+          'Human is the baseline reference on the Humanness Index rather than a text to speech model. The four source voices on the Index, Clara, Emma, Godfrey, and Nelliot, are real people, and each of them recorded the same 20 customer support lines that every TTS model reads, false starts and filler words included. In a battle a Human recording goes head to head against a cloned TTS version of the same voice reading the same line, so the listener is answering one question: which one is human?',
+        ],
+      },
+      {
+        heading: 'Why it anchors 100',
+        paragraphs: [
+          'Human is pinned to a Humanness score of 100, and every model is then read as a share of that human mark. It is a reference, not a competitor, so it sits outside the model and provider counts, it does not appear in the most human highlight cards, and it carries no latency or price. The recordings are loudness normalized and converted to MP3 on ingest, the same handling the synthetic clips get, so the only thing a listener compares is the voice.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: 'Is Human a text to speech model?',
+        answer:
+          'No. Human is real people reading the lines. It is the four source voices recorded by the actors behind them, and it exists to anchor the top of the scale so every model score reads as how close that model gets to a real person.',
+      },
+      {
+        question: 'How is the Human baseline recorded and scored?',
+        answer:
+          'The same four actors read all 20 lines exactly as written in a quiet room, one line per file. The recordings are loudness normalized and converted to MP3, then battle head to head against the cloned TTS of the same voice. Human is pinned to a Humanness score of 100 and the rest of the field is normalized against that anchor.',
+      },
+    ],
+  },
+
   // Unannounced or embargoed entries are not listed here: they live in the
   // private registry overlay (catalog/overlay.local.ts, see SPEC 4.3) until
   // their providers announce them, then move into this file with a status

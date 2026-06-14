@@ -196,7 +196,15 @@ const variantVoteCounts = (state: StandingsState): Map<string, number> =>
 const uncertaintyGain = (voteCount: number) =>
   eloStandardError(voteCount) - eloStandardError(voteCount + 1);
 
-/** All same-voice, different-model pairs (the model_vs_model candidate set). */
+/**
+ * All same-voice, different-model pairs (the model_vs_model candidate set).
+ *
+ * Pairs are formed within a shared source voice over VARIANTS, and a model
+ * only has variants for the voices it actually serves (ModelEntry.sourceVoices
+ * via server/catalog.ts). So a pair's voice is always in BOTH models'
+ * available voices — the intersection is enforced by construction, and a model
+ * (e.g. the Human baseline mid-rollout) is never paired on a voice it lacks.
+ */
 const allPairs = (): Pair[] => {
   const byVoice = new Map<string, CatalogVariant[]>();
   for (const variant of VARIANTS) {

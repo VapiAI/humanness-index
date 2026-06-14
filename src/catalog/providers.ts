@@ -376,7 +376,45 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       },
     ],
   },
-  // Providers whose only models are unannounced live in the private registry
-  // overlay (catalog/overlay.local.ts, see SPEC 4.3) and append here, last,
-  // when their models go public.
+  // The Human baseline reference (not a vendor). Appended last and kept off
+  // the model/provider counts; it anchors the Humanness scale at 100. Has no
+  // languages or pricing (it is people reading lines, not an API), so both
+  // render as a dash.
+  {
+    id: 'human',
+    // The model slug is the frozen `human` (/models/human); the provider slug
+    // stays distinct so it never collides with it (separate URL namespaces,
+    // but the registry keeps every slug globally unique).
+    slug: 'human-baseline',
+    name: 'Human',
+    websiteUrl: 'https://humannessindex.vapi.ai',
+    mark: 'human.svg',
+    stats: {},
+    copy: [
+      {
+        heading: 'About the Human baseline',
+        paragraphs: [
+          'Human is the reference point on the Humanness Index, not a text to speech model. The four original source voices on the Index (Clara, Emma, Godfrey, and Nelliot) are real people, and each of them recorded the same 20 customer support lines that every TTS model reads. Those recordings are the Human baseline.',
+        ],
+      },
+      {
+        heading: 'Why it anchors the scale',
+        paragraphs: [
+          'In the arena a Human recording goes head to head against a cloned TTS version of the same voice reading the same line, so the question is literally which one is human. Human is pinned to a Humanness score of 100, and every model is then read as a share of that human mark. Because it is a reference and not a competitor, the Human baseline sits outside the model and provider counts and outside the latency comparison.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        question: 'Is the Human baseline a text to speech model?',
+        answer:
+          'No. It is the four source voices, recorded by the real people behind them reading the same 20 lines the models read. It exists to anchor the top of the scale, so a model score reads as how close that model gets to a real person.',
+      },
+      {
+        question: 'How is the Human baseline recorded?',
+        answer:
+          'The same four actors read all 20 customer support lines exactly as written, in a quiet room at a consistent level. The recordings are loudness normalized and converted to MP3 on ingest, the same handling the synthetic clips get, so the only difference a listener hears is the voice itself.',
+      },
+    ],
+  },
 ];
