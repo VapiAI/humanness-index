@@ -2,7 +2,14 @@
   "name": "humanness-index",
   "version": "1.0.0",
   "private": true,
-  "description": "The Humanness Index™: the open benchmark for how human text-to-speech sounds, built by Vapi.",
+  "description": "The Humanness Index™: the open benchmark for how human voice AI sounds, built by Vapi.",
+  "license": "Apache-2.0",
+  "homepage": "https://humannessindex.vapi.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VapiAI/humanness-index.git"
+  },
+  "author": "Vapi (https://vapi.ai)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,6 +19,9 @@
     "ensure-overlay": "bun run scripts/ensure-overlay.ts",
     "postinstall": "bun run scripts/ensure-overlay.ts",
     "humanness:clips": "bun run src/pipeline/generateClips.ts",
+    "humanness:human-clips": "bun run src/pipeline/ingestHumanClips.ts",
+    "humanness:human-segment": "bun run src/pipeline/segmentHumanTakes.ts",
+    "humanness:human-detap": "bun run src/pipeline/detapTakes.ts",
     "humanness:clone": "bun run src/pipeline/cloneVoices.ts",
     "humanness:verify-clips": "bun run src/pipeline/verifyClips.ts",
     "humanness:ttfb": "bun run src/pipeline/ttfbBench.ts"

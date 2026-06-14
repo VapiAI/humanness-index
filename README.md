@@ -14,12 +14,16 @@ scores are produced.
 ## How scores work
 
 - Blind, same-voice battles: both sides of every round speak with the same
-  cloned source voice, so votes compare the models, not the voices. Model
-  names are hidden until after the vote.
+  cloned source voice, so votes compare the models, not the voices. The
+  battle carries no model identities until you vote (the server reveals them
+  only in the vote response), so the test is truly blind.
+- Human baseline: a real person ("Homo Sapien", provider "Human") reads the
+  same lines and anchors the scale at 100, shown as a distinct top reference
+  row. Every model scores as a share of that human mark.
 - Pure-vote Elo: each (voice, model) variant carries an Elo rating updated
-  per vote; a model's Humanness score is its Elo normalized across the
-  field (top reads 100, bottom reads 0), with an uncertainty band that
-  narrows as votes accumulate.
+  per vote; a model's Humanness score is its Elo normalized across the field
+  (the Human baseline anchors 100, the lowest model reads 0), with an
+  uncertainty band that narrows as votes accumulate.
 - Measured-only latency: every latency figure is the median of 50
   sequential live streaming trials from the in-repo bench. Vendor
   estimates are never shown.

@@ -10,6 +10,13 @@ Every battle is a head-to-head round: two models read the same customer
 support prompt, and the listener picks whichever sounds more human (or
 calls a tie). Model names are hidden until after the vote.
 
+The blind is enforced server-side. The battle payload carries no identities,
+only the two clips and a signed token; the identities, each side's Elo change,
+and whether the pick matched the crowd are returned only by the vote, and the
+client builds the reveal from that response. "Listen" samples elsewhere on the
+page pass the battle token so the server never serves a battling model on the
+battle's voice, which keeps a labeled clip from unmasking a blind card.
+
 The critical control is the voice itself. Both sides of every battle speak
 with the same cloned source voice. We licensed master recordings from four
 voice talents (Clara, Emma, Godfrey, and Nelliot) and cloned each voice on
@@ -41,8 +48,9 @@ editorial weighting, no panel, and no vendor input.
   each other.
 - A model's displayed rating is the mean of its variants' Elo ratings; its
   win/loss/tie counts are summed across variants.
-- The displayed Humanness score normalizes the field's Elo ratings so the
-  top model reads 100 and the bottom reads 0.
+- The displayed Humanness score normalizes the field's Elo so the anchor reads
+  100 and the lowest model reads 0. With the Human baseline present it is the
+  anchor (see below); without a baseline, the top model reads 100.
 - Uncertainty is the standard error of an Elo estimate after n votes
   (160 divided by the square root of n). The "likely rank" range shows
   every rank consistent with each model's rating plus or minus its
@@ -60,11 +68,28 @@ The store is event-sourced; standings are a deterministic fold of the vote
 events over the production seed, so anyone can audit the math in
 `src/server/elo.ts` and `src/server/store.ts`.
 
+## The Human baseline
+
+The Index includes one real-human reference, shown as provider "Human", model
+"Homo Sapien". It is not a TTS model: the same four voice talents who recorded
+the source voices also read the same 20 lines, and those recordings battle the
+cloned TTS of the same voice head to head ("which voice sounds more human?").
+
+- It anchors the scale at 100. The human is pinned to a Humanness of 100 and
+  every model is normalized against it, so a score reads as a share of the
+  human mark. Its anchor Elo is seeded above the field so the top TTS lands a
+  clear gap below 100, and a model that ever overtakes it still tops out at 100.
+- It is a reference, not a competitor: a distinct pinned top "baseline" row,
+  excluded from the model and provider counts and from latency plots, with no
+  latency or price.
+- It only battles on the source voices it has actually recorded (Clara and
+  Nelliot today). This is the general `sourceVoices` rule: any model is paired
+  only on the voices it has clips for.
+
 ## Measured-only latency
 
 The latency column is never a vendor estimate. Every figure is the median
-of 50 sequential live streaming trials run by `src/pipeline/ttfbBench.ts`
-(a port of the original prototype's bench):
+of 50 sequential live streaming trials run by `src/pipeline/ttfbBench.ts`:
 
 - 2 warm-up trials discarded, 50 measured trials per model.
 - Sequential within a provider (concurrency inflates TTFB); providers run
