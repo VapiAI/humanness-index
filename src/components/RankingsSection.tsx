@@ -228,9 +228,7 @@ export const RankingsSection = ({
         </div>
       </div>
       <p className="rankings-intro">
-        Humanness is each model&apos;s Elo from blind votes, normalized so a real human is
-        100. Latency is measured time-to-first-audio. The best voices sit top-right: as
-        human as a person, with none of the&nbsp;lag.
+        Humanness against measured latency, the best voices sit top-right.
       </p>
       <div className="rankings-toolbar">
         <div className="rankings-search">
@@ -268,11 +266,9 @@ export const RankingsSection = ({
       />
 
       <div className="chart-callout section-callout section-callout-light">
-        <h3 className="section-callout-title">Why latency matters</h3>
-        <p className="section-callout-body">
-          Humanness can&apos;t come at the cost of latency. A voice that lags breaks the
-          conversation, and the bar for real-time is brutal. The ideal model is top-right
-          of the chart: human-level, and instant.
+        <p className="chart-callout-text">
+          <strong>Why latency matters.</strong>{' '}
+          A voice that lags breaks the conversation, no matter how human it sounds.
         </p>
       </div>
 

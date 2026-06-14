@@ -2676,14 +2676,6 @@ would clip at its top edge. */
   background: color-mix(in srgb, var(--ink) 3%, transparent);
 }
 
-.hi-page .section-callout-light .section-callout-title {
-  color: var(--ink);
-}
-
-.hi-page .section-callout-light .section-callout-body {
-  color: var(--muted);
-}
-
 /* Vertical spacing within each host section. */
 .hi-page .pieces-callout {
   margin-top: 36px;
@@ -2701,6 +2693,21 @@ would clip at its top edge. */
 
 .hi-page .chart-callout {
   margin-top: 18px;
+}
+
+/* The latency callout is a single body-size paragraph with an inline bold
+   lead-in (no separate heading), unlike the cloning callout. */
+.hi-page .chart-callout-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.hi-page .chart-callout-text strong {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* "Why this exists" manifesto above the CTA band. */
