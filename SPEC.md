@@ -2,9 +2,11 @@
 
 The Humanness Index is the open benchmark for how human voice AI sounds,
 built and operated by [Vapi](https://vapi.ai) and live at
-[humannessindex.vapi.ai](https://humannessindex.vapi.ai). Listeners hear two
-models read the same prompt in the same cloned voice, blind, and pick the one
-that sounds more human; rankings derive purely from those votes.
+[humannessindex.vapi.ai](https://humannessindex.vapi.ai). Humanness is whether
+a voice can pass as a real person in a live conversation, not a feature
+checklist. Listeners hear two voices read the same line, both in one shared
+source voice, blind, and pick whichever sounds more human; rankings derive
+purely from those votes.
 
 This document is the technical spec: how the system is put together and why.
 For the scoring write-up see [docs/METHODOLOGY.md](docs/METHODOLOGY.md); for
@@ -16,6 +18,10 @@ the model-onboarding process see [docs/ADDING_A_MODEL.md](docs/ADDING_A_MODEL.md
   the vote backend, the Elo engine, the model registry, and the
   clip/benchmark pipeline. Anyone can read exactly how scores are produced.
 - Pure-vote scoring with a real-human reference point, no editorial weighting.
+- Latency measured, never estimated: humanness can't come at the cost of
+  conversational responsiveness, so time-to-first-audio is benchmarked in
+  repo and plotted alongside humanness (the ideal model is human-level and
+  instant).
 - Community participation without compromising methodology: model suggestions
   and code contributions are open; clip generation and registration stay
   maintainer-gated because they require the licensed cloned voices.
@@ -123,11 +129,14 @@ display name **Homo Sapien**, registered in `src/catalog/models.ts` with
 same 20 lines the TTS models read (see `src/pipeline/HUMAN-RECORDING.md`), and
 its clips share the frozen content-hash scheme (`variant:voice-X:human:human`).
 
-- It anchors the Humanness scale at **100**. Its anchor Elo is seeded above the
-  field in `seed-standings.json`, and `humannessScore` normalizes competitors
-  against `max(baselineElo, topCompetitorElo)` so the human is a unique 100
-  with a clean gap below it (and a TTS that ever overtakes it still tops out at
-  100 rather than overshooting).
+- It anchors the Humanness scale at **100**, the human reference point the
+  field is measured against rather than a perfect-score ceiling. Its anchor
+  Elo is seeded above the field in `seed-standings.json`, and `humannessScore`
+  normalizes competitors against `max(baselineElo, topCompetitorElo)` so the
+  human reads a clean 100 with a gap below it. The Elo that votes actually move
+  is uncapped, so a model that listeners judge more human than the real person
+  out-rates it and reaches the 100 mark (the human stays pinned at 100 as the
+  reference).
 - It is presentation-special: a distinct pinned top "baseline" row, excluded
   from the model/provider counts and from sort reordering, with dashes for
   latency/price, and excluded from the latency distribution chart.

@@ -1,10 +1,14 @@
-# Human baseline — voice recording brief
+# Human baseline: voice recording brief
 
-We're adding a **Human** baseline to the Humanness Index. The four original
-source-voice actors (Clara, Emma, Godfrey, Nelliot) each read the same 20
+The **Human** baseline is part of the Humanness Index: the four original
+source-voice actors (Clara, Emma, Godfrey, Nelliot) read the same 20
 customer-support lines the TTS models read. In the arena these recordings go
-head-to-head against the cloned TTS versions of the **same voice** ("which one
-is human?"), and Human anchors the scale at **100**.
+head to head against the cloned TTS versions of the **same voice** ("which one
+sounds more human?"), and Human anchors the scale at **100**, the reference
+the field is measured against rather than a perfect-score ceiling. It battles
+only on the voices recorded so far (Clara and Nelliot today); this brief is
+how we collect each remaining voice's readings (see `RUNBOOK.md` for how they
+are cleaned and ingested).
 
 ## How to record
 

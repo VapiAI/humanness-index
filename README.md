@@ -4,31 +4,36 @@ The open benchmark for how human voice AI sounds, built and operated by
 [Vapi](https://vapi.ai). Live at
 [humannessindex.vapi.ai](https://humannessindex.vapi.ai).
 
-Listeners hear two text-to-speech models read the same customer support
-prompt with the same cloned voice, blind, and pick whichever sounds more
-human. Rankings derive purely from those votes. This repository contains
-the entire benchmark: the site, the vote backend, the Elo engine, the model
-registry, and the clip/benchmark pipeline, so anyone can read exactly how
-scores are produced.
+Humanness means one thing here: whether a voice can pass as a real person in
+a live conversation. It is not a feature checklist. To measure it, listeners
+hear two voices read the same customer support line, blind, and pick
+whichever sounds more human. Rankings derive purely from those votes. This
+repository contains the entire benchmark: the site, the vote backend, the
+Elo engine, the model registry, and the clip/benchmark pipeline, so anyone
+can read exactly how scores are produced.
 
 ## How scores work
 
 - Blind, same-voice battles: both sides of every round speak with the same
   cloned source voice, so votes compare the models, not the voices. The
-  battle carries no model identities until you vote (the server reveals them
-  only in the vote response), so the test is truly blind.
+  pre-vote battle payload carries no identities (the server reveals them
+  only in the vote response), so the test is truly blind and cannot be gamed.
 - Human baseline: a real person ("Homo Sapien", provider "Human") reads the
   same lines and anchors the scale at 100, shown as a distinct top reference
-  row. Every model scores as a share of that human mark.
+  row. Every model scores as a share of that human mark. The anchor is the
+  human reference point, not a perfect-score ceiling.
 - Pure-vote Elo: each (voice, model) variant carries an Elo rating updated
   per vote; a model's Humanness score is its Elo normalized across the field
   (the Human baseline anchors 100, the lowest model reads 0), with an
   uncertainty band that narrows as votes accumulate.
-- Measured-only latency: every latency figure is the median of 50
-  sequential live streaming trials from the in-repo bench. Vendor
-  estimates are never shown.
+- Measured-only latency: humanness can't come at the cost of conversational
+  responsiveness, so the Index also measures time-to-first-audio. Every
+  figure is the median of 50 sequential live streaming trials from the
+  in-repo bench, never a vendor estimate; the best models sit top-right of
+  the chart, human-level and instant.
 - Cloning is the inclusion criterion: a model must support voice cloning
-  to be listed, because the same-voice control depends on it.
+  to be listed, because the same-voice control depends on it. Models that
+  can't clone a voice can't be compared fairly, so they aren't listed.
 
 The full write-up lives in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 

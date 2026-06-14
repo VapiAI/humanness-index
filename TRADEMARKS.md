@@ -33,7 +33,7 @@ clips to train models.
 
 The leaderboard standings (Elo, win/loss/tie counts, vote totals) published
 by the public API are licensed under CC BY 4.0. Attribute "The Humanness
-Index by Vapi" with a link to the site.
+Index™ by Vapi" with a link to the site.
 
 ## Provider logomarks
 

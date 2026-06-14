@@ -1,8 +1,9 @@
 # Methodology
 
-The Humanness Index™ answers one question: how human does a text-to-speech
-model sound? Nobody can fully define that feeling, so we do not try to
-score it with a rubric. We play voices blind and let people judge.
+The Humanness Index™ answers one question: in a live conversation, can a
+text-to-speech voice pass as a real person? Nobody can fully define that
+feeling, so we do not try to score it with a rubric. We play voices blind,
+let people judge, and set the bar at a real human (a Humanness of 100).
 
 ## Blind, same-voice battles
 
@@ -74,11 +75,17 @@ The Index includes one real-human reference, shown as provider "Human", model
 "Homo Sapien". It is not a TTS model: the same four voice talents who recorded
 the source voices also read the same 20 lines, and those recordings battle the
 cloned TTS of the same voice head to head ("which voice sounds more human?").
+The human takes run through the same human-clip pipeline before they enter the
+arena (segmented per line, de-tapped, denoised, and loudness-matched), so a
+battle turns on the voice itself, not on recording quality.
 
-- It anchors the scale at 100. The human is pinned to a Humanness of 100 and
-  every model is normalized against it, so a score reads as a share of the
-  human mark. Its anchor Elo is seeded above the field so the top TTS lands a
-  clear gap below 100, and a model that ever overtakes it still tops out at 100.
+- It anchors the scale at 100, the human reference point the field is measured
+  against, not a perfect-score ceiling. The human is pinned to a Humanness of
+  100 and every model is normalized against it, so a score reads as a share of
+  the human mark. Its anchor Elo is seeded above the field so the top TTS lands
+  a clear gap below 100, and because the Elo that votes move is uncapped, a
+  model that listeners ever judge more human than the real person out-rates it
+  and reaches the 100 mark (the human stays pinned at 100 as the reference).
 - It is a reference, not a competitor: a distinct pinned top "baseline" row,
   excluded from the model and provider counts and from latency plots, with no
   latency or price.
@@ -87,6 +94,11 @@ cloned TTS of the same voice head to head ("which voice sounds more human?").
   only on the voices it has clips for.
 
 ## Measured-only latency
+
+Humanness can't come at the cost of latency: a voice that lags breaks the
+conversation. So the distribution chart pairs Humanness with measured
+responsiveness, and the best models sit top-right, as human as a person and
+near-instant.
 
 The latency column is never a vendor estimate. Every figure is the median
 of 50 sequential live streaming trials run by `src/pipeline/ttfbBench.ts`:
@@ -108,10 +120,11 @@ they are marked as such in the data with reduced confidence.
 
 ## Inclusion criterion: voice cloning
 
-The Index only includes models that support voice cloning, because the
-same-voice control requires cloning our licensed source voices on each
-provider. A model without cloning support cannot be compared fairly and is
-not listed. This is also why pull requests cannot add models end to end:
+A model can sound human on its own demo voice and robotic on yours, so
+comparing vendors' hand-picked clips is apples to oranges. The Index only
+includes models that support voice cloning, because the same-voice control
+requires cloning our licensed source voices on each provider. A model without
+cloning support cannot be compared fairly and is not listed. This is also why pull requests cannot add models end to end:
 clip generation requires the licensed source voices, which stay with the
 maintainers (see `docs/ADDING_A_MODEL.md`).
 

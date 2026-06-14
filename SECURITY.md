@@ -1,5 +1,9 @@
 # Security policy
 
+This policy covers The Humanness Index™: the live site, the public vote API,
+and this repository. The vote path is the sensitive surface, since the
+benchmark's credibility rests on vote integrity.
+
 ## Reporting a vulnerability
 
 Email humannessindex@vapi.ai with the details. Include reproduction steps

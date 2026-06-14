@@ -93,7 +93,8 @@ the first live fetch).
 ## The Human baseline (special case)
 
 `human` is registered in `catalog/models.ts` (provider `human`, display name
-"Homo Sapien", `baseline: true`) and anchors the Humanness scale at 100. It is
+"Homo Sapien", `baseline: true`) and anchors the Humanness scale at 100 (the
+human reference point, not a perfect-score ceiling). It is
 NOT synthesized: the four source-voice actors read the same 20 lines the TTS
 models read (see `HUMAN-RECORDING.md`). Its clips share the frozen content-hash
 scheme (`variant:voice-X:human:human`), so the human-clip scripts stand in for
@@ -145,7 +146,7 @@ upload. No TTFB bench (Human has no API; `latencyMs: null`).
 
 | Provider | Models | Blocker | Next action |
 | --- | --- | --- | --- |
-| Inworld | TTS-1, TTS-1.5 Mini | Cloning pending: the current API key authenticates for TTS synthesis but lacks the `voices` write scope, so `POST /voices/v1/voices:clone` returns 403 (`api key does not have required scopes`). Per-voice samples are staged in `results/source-voices/inworld/` | Use an Inworld key with `voices` rw scope from platform.inworld.ai (or clone the four voices in the portal UI), persist ids via `humanness:clone inworld --record voice-clara=<id> ...`, then `humanness:clips inworld-tts-1 --upload` + `inworld-tts-1-5-mini` (rows already in pipeline/models.ts), register, bench |
+| Inworld | TTS-1, TTS-1.5 Mini | **Cloning RESOLVED**: TTS-1.5-max (`inworld-tts-15-max`) and TTS-2 (`inworld-tts-2`) are registered + active in the catalog with measured TTFB (337 ms / 288 ms), so the Inworld voices are cloned and the earlier `voices`-scope 403 is behind us. Only TTS-1 and TTS-1.5 Mini remain, as pre-registration rows in `pipeline/models.ts` (`inworld-tts-1` / `inworld-tts-15-mini`, frozen arenaApiIds `tts-1` / `tts-1-5-mini`) | Generate + upload their 80 clips against the existing Inworld clones (`humanness:clips inworld-tts-1 --upload`, then `inworld-tts-15-mini`), register, bench; or delete the two pre-registration rows if the 1.5-max / TTS-2 pair is considered complete coverage for Inworld |
 | Smallest.ai | Lightning v3.1 | **REGISTERED + MEASURED (2026-06-12)**: in the catalog as `smallestai-lightning-v31` + `smallestai` ProviderEntry; all 81 hosted clips HEAD-verify; 50-trial TTFB median 420 ms (`pipelineTtfb(420)`). Transport uses the unified `POST /waves/v1/tts` with body `model: lightning_v3.1` (per-model get_speech routes retire 2026-07-14); clone endpoint `POST /waves/v1/voice-cloning` (5-15 s sample, max 5 MB). clara x clip-05 DEFECT RESOLVED IN PLACE: the model deterministically reads the prompt but truncates the final question ("...have the wrong-") and then screams for ~87 s (reproduced 4x incl. one regen on 2026-06-12); the hosted clip was trimmed at the 13.0 s silence boundary (now 13.2 s, Scribe-verified clean speech, same hash path) and the registry pins emma x clip-12 as fallbackClip, NEVER clara/clip-05. BENCH QUIRKS (2026-06-12): Bun 1.0.3 fetch wedges the event loop (100% CPU, 0 sockets) after ~30-40 streaming trials in one process, so run the bench in `--trials 10` slices in fresh processes and merge (see results/merge-ttfb-20260612.ts); killing a wedged run mid-stream tripped a ~15-min server-side throttle where `/waves/v1/tts` accepts connections but never responds while other routes stay 200. Wedge REPRODUCED later the same day: a redundant single-process 50-trial retry stalled at 30/50 (killed; the bench only writes the artifact at the end, so nothing was lost). The slice guidance stands | None: done (median 420 ms landed via the 5 x 10-trial slices) |
 | Neuphonic | neu_hq | **REGISTERED + MEASURED (2026-06-12)**: in the catalog as `neuphonic-neu-hq` + `neuphonic` ProviderEntry; all 81 hosted clips HEAD-verify; 50-trial TTFB median 276 ms (`pipelineTtfb(276)`). The public API **ignores `model`** everywhere (bogus values return audio; identical TTFB distributions; both current SDKs dropped the field): one served pool, so the entry represents that pool under the neu_hq branding and the model page says so. Clone quirks: endpoint is `POST /voices?voice_name=...` (multipart `voice_file`); sample must be **3-10 s** (docs say at least 6 s, and the upper bound is wrong); some WAVs 500 instantly, re-encoding the same audio as MP3 succeeds. Bench quirk: an EMPTY `voice_id` draws an in-stream 500 error event, so omit the field for the default voice (fixed in transports/neuphonic.ts 2026-06-12) | None: done |
 | Neuphonic | neu_fast | **PARKED, hosted but unregistered (2026-06-12)**: 80 clips uploaded + HEAD-verified under arenaApiId `neu-fast` (FROZEN), but the API ignores the model param, so these clips came from the SAME served pool as neu_hq's; registering both would put two rows on one system (methodology integrity wins). The request body did send `model: neu_fast`, so the clips become retroactively correct if Neuphonic exposes true per-model selection | Revisit if Neuphonic exposes true per-model selection; the pre-registration row stays in pipeline/models.ts |
@@ -171,10 +172,10 @@ dropped in; the originals supersede them.)
   `minimax-clara|emma|godfrey|nelliot`. `MINIMAX_GROUP_ID` is appended as
   `?GroupId=` where present.
 - **Inworld**: `INWORLD_API_KEY` is a base64 **Basic** token. Hosted clips
-  are MP3 48 kHz. Registry `arenaApiId`s are frozen without dots
-  (`tts-1-5-mini`); the vendor API wants `inworld-tts-1.5-mini`, and the
-  mapping lives in `pipeline/models.ts` (VENDOR_MODEL_ID_OVERRIDES handles
-  the already-registered ids).
+  are MP3 48 kHz. Registry `arenaApiId`s are frozen without dots (e.g.
+  `tts-1-5-max`); the vendor API wants the dotted form `inworld-tts-1.5-max`,
+  and the mapping lives in `pipeline/models.ts` (VENDOR_MODEL_ID_OVERRIDES
+  handles the already-registered ids).
 - **xAI (2026-06-12)**: both Grok configs speak the SAME realtime WebSocket
   `wss://api.x.ai/v1/tts`; per the team, the two Index models differ only by
   the `optimize_streaming_latency` query param: enabled for Grok TTS

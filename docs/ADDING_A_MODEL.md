@@ -1,9 +1,10 @@
 # Adding a model to the Index
 
-This is the public version of the maintainer checklist. Anyone can propose
-a model; maintainers run the audio pipeline because it requires the
-licensed source voices (see the fairness rationale in
-`docs/METHODOLOGY.md`).
+The Index measures whether a voice can pass as a real person in
+conversation, so every model is judged on the same cloned source voice (see
+the fairness rationale in `docs/METHODOLOGY.md`). This is the public version
+of the maintainer checklist: anyone can propose a model, and maintainers run
+the audio pipeline because it requires the licensed source voices.
 
 ## Propose a model (anyone)
 

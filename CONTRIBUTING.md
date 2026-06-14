@@ -1,6 +1,7 @@
 # Contributing
 
-Thanks for your interest in The Humanness Index™. The benchmark's
+Thanks for your interest in The Humanness Index™, the open benchmark for
+whether a voice AI can pass as a real person in conversation. The benchmark's
 credibility depends on the code being open and the methodology being
 reproducible, so contributions are welcome and held to that bar.
 
