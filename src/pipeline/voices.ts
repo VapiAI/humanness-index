@@ -4,9 +4,8 @@
  *
  * The four licensed source voices (Clara, Emma, Godfrey, Nelliot) were
  * cloned on each provider once; every clip a provider's models generate
- * uses these clone ids. Existing ids are ported from the original
- * prototype's source-voice catalog (the one the arena
- * generated/imported its ~1,700 clips with).
+ * uses these clone ids. The static ids below match the clips already hosted
+ * on the audio origin.
  *
  * New providers get their ids from `cloneVoices.ts`, which persists them to
  * pipeline/voices.local.json (gitignored, machine state). That file is
@@ -27,7 +26,7 @@ export type SourceVoiceId = (typeof SOURCE_VOICE_IDS)[number];
 
 export type VoiceMap = Partial<Record<SourceVoiceId, string>>;
 
-/** Clone ids ported from the original prototype (active voices only). */
+/** Clone ids for the active source voices (match the hosted clips). */
 const STATIC_CLONED_VOICE_IDS: Record<string, VoiceMap> = {
   elevenlabs: {
     'voice-clara': 'ScCxrqX5aNtDVkIsrVZ1',
@@ -42,23 +41,21 @@ const STATIC_CLONED_VOICE_IDS: Record<string, VoiceMap> = {
     'voice-nelliot': '621a0684-2a58-4693-b762-a54093bf0c4c',
   },
   minimax: {
-    // Re-cloned 2026-06-11 on the provider key's account (the team's original
-    // clones lived elsewhere), from the licensed ElevenLabs PVC source
-    // recordings; the canonical arena ids were accepted verbatim.
+    // MiniMax voice_ids are caller-chosen at clone time, so the four source
+    // voices use these canonical arena ids verbatim.
     'voice-clara': 'minimax-clara',
     'voice-emma': 'minimax-emma',
     'voice-godfrey': 'minimax-godfrey',
     'voice-nelliot': 'minimax-nelliot',
   },
-  // Inworld: pending 2026-06-11. The arena's clones (inworld-clara, ...) live
-  // on a separate provider account; this INWORLD_API_KEY cannot see them and
-  // lacks the `voices` write scope to re-clone (403 on /voices/v1/voices:clone).
-  // Get a key with voices rw — or clone via the Portal UI — then
-  // `humanness:clone inworld --record voice-clara=<id> ...`.
+  // Inworld: clones pending. The current INWORLD_API_KEY authenticates for
+  // synthesis but lacks the `voices` write scope needed to create clones. Use
+  // a key with that scope (or clone the four voices in the provider portal),
+  // then record the ids: `humanness:clone inworld --record voice-clara=<id> ...`.
   inworld: {},
-  // Slots for the expansion providers — filled by `humanness:clone` into
-  // voices.local.json (source masters: results/source-voices/originals/).
-  // smallestai + neuphonic ids already live in voices.local.json.
+  // Slots for expansion providers, filled by `humanness:clone` into
+  // voices.local.json (source masters in results/source-voices/originals/).
+  // The active smallestai + neuphonic ids already live in voices.local.json.
   smallestai: {},
   neuphonic: {},
   hume: {},

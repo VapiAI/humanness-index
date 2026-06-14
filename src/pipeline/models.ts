@@ -40,8 +40,24 @@ const VENDOR_MODEL_ID_OVERRIDES: Record<string, string> = {
  * a model's clips are hashed — graduated rows get deleted, never edited.
  */
 const NEW_MODELS: PipelineModel[] = [
-  // The Inworld pair stays here until cloning unblocks (the provider
-  // INWORLD_API_KEY lacks the `voices` write scope — see RUNBOOK.md).
+  // The Human baseline. FROZEN ids (provider/arenaApiId both `human`) feed the
+  // clip hashes. It is not synthesized: real actors recorded the 20 lines and
+  // ingestHumanClips.ts (humanness:human-clips) uploads them. The row keeps
+  // the frozen ids documented in the pipeline; once `human` is registered in
+  // catalog/models.ts the registry entry wins and pipelineModels() drops this
+  // one (so it is harmless dead weight today, kept for the pre-registration
+  // record). vendorModelId is a placeholder: there is no synthesis transport.
+  {
+    id: 'human',
+    slug: 'human',
+    providerId: 'human',
+    arenaApiId: 'human',
+    vendorModelId: 'human',
+    name: 'Human',
+    registered: false,
+  },
+  // The Inworld pair stays here until cloning is completed (the current
+  // INWORLD_API_KEY lacks the `voices` write scope; see RUNBOOK.md).
   {
     // PARKED (2026-06-12): clips hosted + HEAD-verified, but Neuphonic's
     // API ignores the `model` field, so they came from the same served

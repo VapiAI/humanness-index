@@ -1,26 +1,31 @@
 # Humanness Index™ expansion pipeline: RUNBOOK
 
 Everything clip-related lives in this folder and runs through package.json
-scripts (bun). The original private prototype is reference-only: the
-transports here port its per-provider adapter shapes and its 50-trial TTFB
-methodology.
+scripts (bun). It is maintainer-run: generating clips needs the licensed
+source voices and provider keys (`pipeline/.env`, gitignored). The transports
+follow each vendor's public synthesis/cloning/TTFB request shapes.
 
 ```
 pipeline/
-  .env                # secrets (gitignored); see .env.example
-  voices.local.json   # clone ids registered by humanness:clone (gitignored)
-  results/            # clips, manifests, benchmark JSON (gitignored)
-  transports/         # per-provider synthesis + clone + TTFB request shapes
-  env.ts              # pipeline/.env loader + requireEnv
-  lib.ts              # frozen hash scheme, clip URLs, arg/stat helpers
-  prompts.ts          # the 20 arena prompts (verbatim copy, sync note inside)
-  voices.ts           # provider -> source voice -> cloned-voice-id registry
-  models.ts           # registry-backed model resolution (+ pre-registration table)
-  generateClips.ts    # humanness:clips  -- 80 clips per model, hash-named
-  uploadClips.ts      # blob upload, skip-if-exists
-  cloneVoices.ts      # humanness:clone -- register the 4 source voices
-  ttfbBench.ts        # humanness:ttfb  -- 50-trial TTFB port
-  verifyClips.ts      # humanness:verify-clips -- registry-derived HEAD check
+  .env                 # secrets (gitignored); see .env.example
+  voices.local.json    # clone ids registered by humanness:clone (gitignored)
+  results/             # clips, masters, manifests, benchmark JSON (gitignored)
+  transports/          # per-provider synthesis + clone + TTFB request shapes
+  env.ts               # pipeline/.env loader + requireEnv
+  lib.ts               # frozen hash scheme, clip URLs, arg/stat helpers
+  prompts.ts           # the 20 arena prompts (verbatim copy, sync note inside)
+  voices.ts            # provider -> source voice -> cloned-voice-id registry
+  models.ts            # registry-backed model resolution (+ pre-registration table)
+  generateClips.ts     # humanness:clips  -- 80 clips per model, hash-named
+  uploadClips.ts       # blob upload, skip-if-exists
+  cloneVoices.ts       # humanness:clone -- register the 4 source voices
+  ttfbBench.ts         # humanness:ttfb  -- 50-trial TTFB bench
+  verifyClips.ts       # humanness:verify-clips -- registry-derived HEAD check
+  segmentHumanTakes.ts # humanness:human-segment -- Deepgram nova-3 cut to lines
+  detapTakes.ts        # humanness:human-detap -- de-tap/clean recorded takes
+  audioClean.ts        # shared de-tap high-pass + light denoise filters
+  ingestHumanClips.ts  # humanness:human-clips -- normalize + upload human clips
+  HUMAN-RECORDING.md   # the actor recording brief (the 20 lines)
 ```
 
 ## The five frozen steps for ANY new model
@@ -85,17 +90,62 @@ New models enter at Elo 1200 on their first live votes (no seed-standings
 row; `mergeStandings` handles unseeded models and the table includes them on
 the first live fetch).
 
-## Status: the remaining expansion models
+## The Human baseline (special case)
 
-(LMNT was cut from the expansion on 2026-06-11. Its dormant, never-run-live
-transport and the LMNT_API_KEY slot in .env.example were deleted in the
-2026-06-12 cleanup. Should that change: LMNT clones voices from a 5-10 s
-sample via its Voices API on all paid tiers, and synthesizes over WS/HTTP
-per docs.lmnt.com; model ids were blizzard-2.0 and aurora.)
+`human` is registered in `catalog/models.ts` (provider `human`, display name
+"Homo Sapien", `baseline: true`) and anchors the Humanness scale at 100. It is
+NOT synthesized: the four source-voice actors read the same 20 lines the TTS
+models read (see `HUMAN-RECORDING.md`). Its clips share the frozen content-hash
+scheme (`variant:voice-X:human:human`), so the human-clip scripts stand in for
+`generateClips.ts`. Battles only pair Human on the voices it has recorded,
+declared as `sourceVoices` on the registry entry (Clara + Nelliot today);
+extend that one-line list as each voice's clips land.
+
+Recordings arrive under
+`results/source-voices/human-readings/{clara,emma,godfrey,nelliot}/`. Three steps:
+
+1. **Segment** longer takes into one clean clip per line (skip if the actor
+   already recorded one line per file). Needs `DEEPGRAM_API_KEY` in
+   `pipeline/.env` (https://console.deepgram.com):
+
+   ```sh
+   bun run humanness:human-segment   # Deepgram nova-3 word timestamps, aligned
+                                     # to the script, neighbor-bounded cuts (cached)
+   ```
+
+2. **Clean** the cut takes: a de-tap high-pass that removes mouth/keyboard taps
+   plus a light room-tone denoise, with per-voice params in the script:
+
+   ```sh
+   bun run humanness:human-detap     # preview/clean the de-tap chain on the takes
+   ```
+
+3. **Ingest**: normalize (mono / 44.1 kHz / loudnorm / trim silence), upload,
+   HEAD-verify. The clean chain can also run inline here via flags:
+
+   ```sh
+   bun run humanness:human-clips                          # dry run: which of the 80 are present/missing
+   bun run humanness:human-clips --detap --denoise light --upload   # clean + upload + verify
+   bun run humanness:human-clips --upload --overwrite               # replace a re-recorded take in place
+   bun run humanness:verify-clips human                             # HEAD pass over the hosted human clips + fallback
+   ```
+
+   Flags: `--detap` applies the de-tap high-pass; `--denoise off|light|medium`
+   (with `--noise-floor <dB>`) tunes the denoise; `--voices clara,emma` limits
+   the run; `--overwrite` replaces existing hashes (skip-if-exists is the
+   default, so partial sets upload incrementally as takes arrive);
+   `--skip-verify` skips the in-loop HEAD check (verify separately).
+
+Then `bun run check-types && bun test`, browser-check `/models/human` and a
+battle that pairs Human, and deploy. Never upload placeholder audio: it would
+take the real clip's hash slot and skip-if-exists would then block the real
+upload. No TTFB bench (Human has no API; `latencyMs: null`).
+
+## Status: the remaining expansion models
 
 | Provider | Models | Blocker | Next action |
 | --- | --- | --- | --- |
-| Inworld | TTS-1, TTS-1.5 Mini | TWO keys tried (2026-06-11 and 2026-06-12): both authenticate for TTS synthesis (`GET /tts/v1/voices` 200) but lack the `voices` write scope. `POST /voices/v1/voices:clone` and `GET /voices/v1/voices` return 403 `{"code":7,"message":"api key does not have required scopes"}` on every attempt. The arena's original clones (`inworld-clara` etc.) live on an account neither key can access (synthesis with those ids 404s; voice listing shows 148 stock voices, 0 custom). Per-voice 15 s samples stay staged in `results/source-voices/inworld/` | Get an Inworld key with `voices` rw scope from platform.inworld.ai (or clone the 4 voices in the Portal UI), persist ids via `humanness:clone inworld --record voice-clara=<id> ...`, then `humanness:clips inworld-tts-1 --upload` + `inworld-tts-1-5-mini` (rows already in pipeline/models.ts), register, bench |
+| Inworld | TTS-1, TTS-1.5 Mini | Cloning pending: the current API key authenticates for TTS synthesis but lacks the `voices` write scope, so `POST /voices/v1/voices:clone` returns 403 (`api key does not have required scopes`). Per-voice samples are staged in `results/source-voices/inworld/` | Use an Inworld key with `voices` rw scope from platform.inworld.ai (or clone the four voices in the portal UI), persist ids via `humanness:clone inworld --record voice-clara=<id> ...`, then `humanness:clips inworld-tts-1 --upload` + `inworld-tts-1-5-mini` (rows already in pipeline/models.ts), register, bench |
 | Smallest.ai | Lightning v3.1 | **REGISTERED + MEASURED (2026-06-12)**: in the catalog as `smallestai-lightning-v31` + `smallestai` ProviderEntry; all 81 hosted clips HEAD-verify; 50-trial TTFB median 420 ms (`pipelineTtfb(420)`). Transport uses the unified `POST /waves/v1/tts` with body `model: lightning_v3.1` (per-model get_speech routes retire 2026-07-14); clone endpoint `POST /waves/v1/voice-cloning` (5-15 s sample, max 5 MB). clara x clip-05 DEFECT RESOLVED IN PLACE: the model deterministically reads the prompt but truncates the final question ("...have the wrong-") and then screams for ~87 s (reproduced 4x incl. one regen on 2026-06-12); the hosted clip was trimmed at the 13.0 s silence boundary (now 13.2 s, Scribe-verified clean speech, same hash path) and the registry pins emma x clip-12 as fallbackClip, NEVER clara/clip-05. BENCH QUIRKS (2026-06-12): Bun 1.0.3 fetch wedges the event loop (100% CPU, 0 sockets) after ~30-40 streaming trials in one process, so run the bench in `--trials 10` slices in fresh processes and merge (see results/merge-ttfb-20260612.ts); killing a wedged run mid-stream tripped a ~15-min server-side throttle where `/waves/v1/tts` accepts connections but never responds while other routes stay 200. Wedge REPRODUCED later the same day: a redundant single-process 50-trial retry stalled at 30/50 (killed; the bench only writes the artifact at the end, so nothing was lost). The slice guidance stands | None: done (median 420 ms landed via the 5 x 10-trial slices) |
 | Neuphonic | neu_hq | **REGISTERED + MEASURED (2026-06-12)**: in the catalog as `neuphonic-neu-hq` + `neuphonic` ProviderEntry; all 81 hosted clips HEAD-verify; 50-trial TTFB median 276 ms (`pipelineTtfb(276)`). The public API **ignores `model`** everywhere (bogus values return audio; identical TTFB distributions; both current SDKs dropped the field): one served pool, so the entry represents that pool under the neu_hq branding and the model page says so. Clone quirks: endpoint is `POST /voices?voice_name=...` (multipart `voice_file`); sample must be **3-10 s** (docs say at least 6 s, and the upper bound is wrong); some WAVs 500 instantly, re-encoding the same audio as MP3 succeeds. Bench quirk: an EMPTY `voice_id` draws an in-stream 500 error event, so omit the field for the default voice (fixed in transports/neuphonic.ts 2026-06-12) | None: done |
 | Neuphonic | neu_fast | **PARKED, hosted but unregistered (2026-06-12)**: 80 clips uploaded + HEAD-verified under arenaApiId `neu-fast` (FROZEN), but the API ignores the model param, so these clips came from the SAME served pool as neu_hq's; registering both would put two rows on one system (methodology integrity wins). The request body did send `model: neu_fast`, so the clips become retroactively correct if Neuphonic exposes true per-model selection | Revisit if Neuphonic exposes true per-model selection; the pre-registration row stays in pipeline/models.ts |
