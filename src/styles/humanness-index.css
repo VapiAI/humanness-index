@@ -2551,49 +2551,77 @@ would clip at its top edge. */
   list-style: none;
 }
 
-/* Editorial numbered card: a large ghosted numeral for depth, a mint eyebrow
-   step label, then title + a two-line subtitle. Equal heights via the grid. */
+/* Editorial numbered card: a refined surface with a faint inner top highlight,
+   a short mint accent rule, a crafted gradient step numeral, and the STEP
+   eyebrow + title + two-line subtitle. Equal heights via the grid. */
 .hi-page .hiw-step {
   position: relative;
   margin: 0;
-  padding: 26px 24px;
+  padding: 26px 24px 28px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
   border-radius: 16px;
   background: linear-gradient(
     180deg,
     #ffffff,
-    color-mix(in srgb, var(--cream, #faf9f6) 55%, #ffffff)
+    color-mix(in srgb, var(--cream, #faf9f6) 60%, #ffffff)
   );
   box-shadow:
-    0 1px 2px rgba(26, 26, 46, 0.04),
-    0 22px 44px -34px rgba(26, 26, 46, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 2px rgba(26, 26, 46, 0.05),
+    0 18px 38px -26px rgba(26, 26, 46, 0.24);
   transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease;
+    transform 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+/* A short mint accent rule at the top edge: the restrained brand tie-in. */
+.hi-page .hiw-step::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 24px;
+  width: 44px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(
+    90deg,
+    var(--mint, #00cd8f),
+    var(--teal-strong, #00a371)
+  );
 }
 
 .hi-page .hiw-step:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--mint, #00cd8f) 45%, transparent);
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--mint, #00cd8f) 50%, transparent);
   box-shadow:
-    0 1px 2px rgba(26, 26, 46, 0.05),
-    0 30px 52px -30px rgba(26, 26, 46, 0.34);
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 2px rgba(26, 26, 46, 0.06),
+    0 28px 50px -26px rgba(26, 26, 46, 0.3);
 }
 
-/* The oversized faint numeral that gives each card its editorial anchor. */
+/* Crafted step numeral: a soft mint gradient, deliberately scaled and fully
+   visible in the top-right (not a clipped flourish), opposite the eyebrow. */
 .hi-page .hiw-ghost {
   position: absolute;
-  top: -18px;
-  right: 8px;
+  top: 16px;
+  right: 20px;
   z-index: 0;
   font-family: var(--font-display);
-  font-size: 112px;
+  font-size: 60px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.05em;
-  color: color-mix(in srgb, var(--mint, #00cd8f) 13%, transparent);
+  letter-spacing: -0.04em;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--mint, #00cd8f) 36%, transparent),
+    color-mix(in srgb, var(--mint, #00cd8f) 9%, transparent)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   pointer-events: none;
   user-select: none;
 }
