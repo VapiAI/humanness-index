@@ -52,9 +52,12 @@ export const StandingsExcerpt = ({ rows, modelId, asOf }: StandingsExcerptProps)
               // unlisted rows stay plain text.
               const link = isSelf ? null : modelDetailLinkForId(row.id);
               const stats = voiceStats(row);
+              const rowClass = [isSelf ? 'selected-row' : '', row.baseline ? 'baseline-row' : '']
+                .filter(Boolean)
+                .join(' ');
               return (
-                <tr key={row.id} className={isSelf ? 'selected-row' : ''}>
-                  <td className="rt-rank">#{rank}</td>
+                <tr key={row.id} className={rowClass}>
+                  <td className="rt-rank">{row.baseline ? 'Baseline' : `#${rank}`}</td>
                   <td>
                     <span className="rt-provider">
                       <span className="rt-provider-chip" aria-hidden="true">

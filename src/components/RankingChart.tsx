@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { voiceStats } from '../data/providers';
 import { clamp, humannessScore, mean, parseLatencyMs } from '../lib/scoring';
@@ -39,7 +39,9 @@ export const RankingVisualizationPanel = ({
       <div className="ranking-chart-titles">
         <h3>
           {focusedModel
-            ? `${focusedModel.provider} ${focusedModel.model}`
+            ? focusedModel.baseline
+              ? 'Human baseline'
+              : `${focusedModel.provider} ${focusedModel.model}`
             : 'Humanness distribution'}
         </h3>
         {focusedModel ? (
@@ -65,10 +67,13 @@ type HoverPoint = {
   id: string;
   model: ScoredModel;
   rank: number;
-  xPct: number;
-  yPct: number;
+  /** Card anchor in px relative to the (non-scrolling) chart area. */
+  x: number;
+  y: number;
   below: boolean;
 };
+
+const HOVER_CARD_WIDTH = 202;
 
 /**
  * Log-scale ms domain: floor the field's min to a nice 1/2/5 value, then
@@ -109,6 +114,25 @@ const EloDistributionChart = ({
   onClearFocus,
 }: EloDistributionChartProps) => {
   const [hovered, setHovered] = useState<HoverPoint | null>(null);
+  const areaRef = useRef<HTMLDivElement>(null);
+
+  // Anchor the hover card to the dot's real on-screen position and clamp it
+  // inside the (non-scrolling) chart area, so it never runs off-screen on
+  // mobile where the chart pans inside a horizontal scroller.
+  const showPoint = (model: ScoredModel, rank: number, dot: SVGCircleElement) => {
+    const area = areaRef.current;
+    if (!area) return;
+    const ar = area.getBoundingClientRect();
+    const dr = dot.getBoundingClientRect();
+    const dotX = dr.left + dr.width / 2 - ar.left;
+    const dotY = dr.top + dr.height / 2 - ar.top;
+    const pad = 8;
+    const x = clamp(dotX, HOVER_CARD_WIDTH / 2 + pad, ar.width - HOVER_CARD_WIDTH / 2 - pad);
+    setHovered({ id: model.id, model, rank, x, y: dotY, below: dotY < ar.height * 0.42 });
+  };
+  const clearPoint = (id: string) =>
+    setHovered((current) => (current?.id === id ? null : current));
+
   const width = 1440;
   const height = 380;
   const left = 88;
@@ -118,24 +142,25 @@ const EloDistributionChart = ({
   const plotW = right - left;
   const plotH = bottom - top;
 
-  // Only models with a measured TTFB can sit honestly on a latency axis;
-  // the rest are listed in the footnote below the plot instead.
-  const plottable = allModels.filter((m) => parseLatencyMs(m) !== null);
-  const unplotted = allModels.filter((m) => parseLatencyMs(m) === null);
+  // The Human baseline anchors the Humanness scale at 100 but has no latency,
+  // so it is never plotted; the chart's field is the ranked competitors.
+  const ranked = allModels.filter((m) => !m.baseline);
+  const hasBaseline = allModels.length > ranked.length;
 
-  const elos = allModels.map((m) => m.elo);
+  // Only models with a measured TTFB can sit honestly on a latency axis;
+  // models without one are simply not plotted.
+  const plottable = ranked.filter((m) => parseLatencyMs(m) !== null);
+
   const lats = plottable.map((m) => parseLatencyMs(m) as number);
-  const elMin = Math.min(...elos);
-  const elMax = Math.max(...elos);
-  const elPad = (elMax - elMin) * 0.06 || 4;
-  const elLo = elMin - elPad;
-  const elHi = elMax + elPad;
   const { ticks: msTicks, lo: msLo, hi: msHi } = logMsScaleFor(
     Math.min(...lats),
     Math.max(...lats),
   );
 
-  const humScore = (elo: number) => clamp((100 * (elo - elLo)) / (elHi - elLo || 1), 0, 100);
+  // x is the published Humanness score (baseline-anchored when Human is in
+  // the field), identical to the table, so the dot, hover card, and table
+  // never drift apart.
+  const scoreOf = (model: ScoredModel) => humannessScore(model, allModels);
 
   const DOT_RADIUS = 7;
 
@@ -145,10 +170,14 @@ const EloDistributionChart = ({
     return `rgb(${channel(0, 45)}, ${channel(205, 107)}, ${channel(143, 255)})`;
   };
 
-  const avgHum = humScore(mean(elos));
+  const avgHum = mean(ranked.map(scoreOf));
   const avgLatMs = mean(lats);
 
   const xFor = (score: number) => left + (score / 100) * plotW;
+  // Clamp by a radius so the extremes never clip the axis or run past the
+  // Human anchor at the right edge.
+  const dotX = (model: ScoredModel) =>
+    clamp(xFor(scoreOf(model)), left + DOT_RADIUS, right - DOT_RADIUS);
   // Inverted log ms axis: fastest (lowest ms) at the top, slowest at the bottom.
   const yForMs = (ms: number) => {
     const t =
@@ -160,7 +189,8 @@ const EloDistributionChart = ({
   const xAxisTicks = [0, 25, 50, 75, 100];
 
   return (
-    <div className="ranking-chart-shell" onClick={onClearFocus}>
+    <div className="ranking-chart-area" ref={areaRef} onClick={onClearFocus}>
+      <div className="ranking-chart-shell">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         role="img"
@@ -259,25 +289,26 @@ const EloDistributionChart = ({
           Slower
         </text>
 
+        {hasBaseline && (
+          <g className="chart-baseline-ref" aria-hidden="true">
+            <line x1={xFor(100)} x2={xFor(100)} y1={top} y2={bottom} />
+            <text x={xFor(100)} y={top - 8} textAnchor="end">
+              Human {'\u00b7'} 100
+            </text>
+          </g>
+        )}
+
         {plottable.map((model) => {
           const matched = models.some((m) => m.id === model.id);
           // Ring + size bump on hover only; dots are uniform at rest (Figma).
           const hoveredThis = hovered?.id === model.id;
           const bright = matched || hoveredThis;
-          const rank = allModels.findIndex((m) => m.id === model.id) + 1;
-          const span = Math.max(allModels.length - 1, 1);
+          const rank = ranked.findIndex((m) => m.id === model.id) + 1;
+          const span = Math.max(ranked.length - 1, 1);
           const intensity = clamp(1 - (rank - 1) / span, 0, 1); // 1 = rank 1 (mint), 0 = worst (ocean)
           const dotFill = rankColor(intensity);
-          const cx = xFor(humScore(model.elo));
+          const cx = dotX(model);
           const cy = yForMs(parseLatencyMs(model) as number);
-          const point: HoverPoint = {
-            id: model.id,
-            model,
-            rank,
-            xPct: clamp((cx / width) * 100, 14, 86),
-            yPct: (cy / height) * 100,
-            below: cy < height * 0.42,
-          };
           return (
             <g key={model.id} className="chart-dot-group" opacity={bright ? 1 : 0.25}>
               <circle
@@ -292,10 +323,10 @@ const EloDistributionChart = ({
                 tabIndex={0}
                 role="button"
                 aria-label={`#${rank} ${model.provider} ${model.model}, Humanness ${humannessScore(model, allModels)}, latency ${voiceStats(model).latency}`}
-                onMouseEnter={() => setHovered(point)}
-                onMouseLeave={() => setHovered((h) => (h?.id === model.id ? null : h))}
-                onFocus={() => setHovered(point)}
-                onBlur={() => setHovered((h) => (h?.id === model.id ? null : h))}
+                onMouseEnter={(event) => showPoint(model, rank, event.currentTarget)}
+                onMouseLeave={() => clearPoint(model.id)}
+                onFocus={(event) => showPoint(model, rank, event.currentTarget)}
+                onBlur={() => clearPoint(model.id)}
                 onClick={(event) => {
                   event.stopPropagation();
                   onFocusModel(model);
@@ -311,24 +342,12 @@ const EloDistributionChart = ({
           );
         })}
       </svg>
-      {unplotted.length > 0 && (
-        <p className="chart-foot">
-          Not plotted (no public streaming API to measure):{' '}
-          {unplotted
-            .map((m) =>
-              m.model.startsWith(m.provider.split(/\s/)[0])
-                ? m.model
-                : `${m.provider} ${m.model}`,
-            )
-            .join(', ')}
-          .
-        </p>
-      )}
+      </div>
       {hovered && (
         <div
           className="chart-hover-card"
           data-below={hovered.below ? 'true' : undefined}
-          style={{ left: `${hovered.xPct}%`, top: `${hovered.yPct}%` }}
+          style={{ left: `${hovered.x}px`, top: `${hovered.y}px` }}
         >
           <div className="chc-head">
             <span className="chc-logo">

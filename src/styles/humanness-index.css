@@ -204,9 +204,10 @@ rendered so scrollbar math stays stable. */
 .hi-page .eyebrow {
   margin: 0 0 5px;
   color: var(--muted);
+  font-family: var(--font-eyebrow);
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -236,9 +237,10 @@ rendered so scrollbar math stays stable. */
 .hi-page .hero-eyebrow {
   margin: 0;
   color: rgba(0, 0, 0, 0.8);
+  font-family: var(--font-eyebrow);
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -274,7 +276,7 @@ rendered so scrollbar math stays stable. */
 
 .hi-page .lab-copy .hero-title {
   font-size: clamp(40px, 4.6vw, 58px);
-  line-height: 0.9;
+  line-height: 1.05;
   letter-spacing: -0.05em;
   color: #0a0a0a;
 }
@@ -815,14 +817,16 @@ rendered so scrollbar math stays stable. */
   padding: 18px;
 }
 
-/* Bare white play/pause glyph centered on the orb; springs in on hover/focus. */
+/* Bare white play/pause glyph centered on the orb. Always overlaid (so it's
+   visible/usable on touch, where there's no hover) and brightens on hover/focus. */
 .hi-page .rcard-art-cue {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
   color: rgba(255, 255, 255, 0.92);
-  opacity: 0;
+  opacity: 0.82;
   pointer-events: none;
   transition: opacity 180ms ease;
 }
@@ -1396,11 +1400,14 @@ single row) */
 }
 
 .hi-page .rankings-visual-panel {
-  margin-top: 8px;
+  margin-top: 18px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 14px;
   background: #fff;
+  box-shadow:
+    0 1px 2px rgba(26, 26, 46, 0.04),
+    0 18px 40px -30px rgba(26, 26, 46, 0.3);
 }
 
 .hi-page .ranking-chart-heading {
@@ -1408,8 +1415,8 @@ single row) */
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
 .hi-page .ranking-chart-heading h3 {
@@ -1417,6 +1424,12 @@ single row) */
   color: var(--ink);
   font-size: 16px;
   line-height: 1.15;
+}
+
+/* Non-scrolling wrapper that hosts the hover card: the card lives here (not in
+   the horizontal scroller) so it can be anchored to the visible viewport. */
+.hi-page .ranking-chart-area {
+  position: relative;
 }
 
 .hi-page .ranking-chart-shell {
@@ -1637,14 +1650,16 @@ single row) */
   transform: translateY(1px);
 }
 
+/* Solid white on the green band: the muted teal blended into the texture, so
+   the primary CTA goes high-contrast (the ghost button stays a white outline). */
 .hi-page .cta-btn-primary {
-  background: #0d9488;
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--ink);
 }
 
 .hi-page .cta-btn-primary:hover,
 .hi-page .cta-btn-primary:focus-visible {
-  background: #11a899;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .hi-page .cta-btn-ghost {
@@ -1668,7 +1683,12 @@ single row) */
 .hi-page .rankings-stats {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
+  padding: 9px 18px;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04);
 }
 
 .hi-page .rankings-stat {
@@ -1685,8 +1705,8 @@ single row) */
 .hi-page .rankings-divider {
   flex: 0 0 auto;
   width: 1px;
-  height: 16px;
-  background: #e6e6e6;
+  height: 14px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
 .hi-page .ranking-chart-titles {
@@ -1741,6 +1761,21 @@ single row) */
   letter-spacing: -0.02em;
 }
 
+/* The Human baseline anchors the right edge at 100; a faint reference line
+   plus label, since Human itself is never plotted (it has no latency). */
+.hi-page .chart-baseline-ref line {
+  stroke: var(--mint, #00cd8f);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  opacity: 0.7;
+}
+
+.hi-page .chart-baseline-ref text {
+  fill: var(--mint, #00cd8f);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .hi-page .chart-end-label {
   fill: var(--ink);
   font-size: 11px;
@@ -1772,21 +1807,30 @@ single row) */
 .hi-page .rankings-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 18px;
 }
 
 .hi-page .rankings-search {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 4px 12px;
-  border: 1px solid #e6e6e6;
-  border-radius: 6px;
-  background: var(--cream, #fefefe);
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  border-radius: 10px;
+  background: #fff;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+/* Mint focus ring on the whole field (the input itself is borderless inside). */
+.hi-page .rankings-search:focus-within {
+  border-color: var(--mint, #00cd8f);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint, #00cd8f) 16%, transparent);
 }
 
 .hi-page .rankings-search svg {
@@ -1818,11 +1862,19 @@ single row) */
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 32px;
-  padding: 0 4px 0 8px;
-  border: 1px solid #e6e6e6;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 8px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  border-radius: 10px;
   background: #fff;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.hi-page .rankings-select:focus-within {
+  border-color: var(--mint, #00cd8f);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint, #00cd8f) 16%, transparent);
 }
 
 .hi-page .rankings-select-label {
@@ -1869,25 +1921,33 @@ single row) */
 }
 
 .hi-page .ranking-table-wrap {
-  margin-top: 8px;
+  margin-top: 18px;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 14px;
   background: #fff;
+  box-shadow:
+    0 1px 2px rgba(26, 26, 46, 0.04),
+    0 18px 40px -30px rgba(26, 26, 46, 0.3);
 }
 
 .hi-page .ranking-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 1000px;
   border-collapse: collapse;
 }
 
 .hi-page .ranking-table th,
 .hi-page .ranking-table td {
   padding: 16px 7px;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
   text-align: left;
   vertical-align: middle;
+}
+
+/* Clean rounded corners: the last row meets the panel's bottom radius. */
+.hi-page .ranking-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .hi-page .ranking-table th:first-child,
@@ -1965,7 +2025,7 @@ would clip at its top edge. */
   top: calc(100% + 9px);
   left: 50%;
   z-index: 6;
-  width: 240px;
+  width: min(240px, calc(100vw - 40px));
   padding: 10px 12px;
   border-radius: 10px;
   background: var(--ink);
@@ -1975,7 +2035,9 @@ would clip at its top edge. */
   line-height: 1.45;
   text-align: left;
   white-space: normal;
-  transform: translateX(-50%);
+  /* --tip-shift is set in JS (clampTip) to keep the bubble on-screen near a
+     scroll edge; defaults to 0 so it stays centered when it already fits. */
+  transform: translateX(calc(-50% + var(--tip-shift, 0px)));
   box-shadow: 0 12px 28px -12px rgba(26, 26, 46, 0.45);
   opacity: 0;
   pointer-events: none;
@@ -1995,6 +2057,12 @@ would clip at its top edge. */
 
 .hi-page .ranking-table .rt-num {
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Elo reads as the secondary figure next to the headline Humanness score. */
+.hi-page .ranking-table .rt-elo {
+  color: var(--muted);
 }
 
 .hi-page .ranking-table th.rt-listen,
@@ -2046,6 +2114,31 @@ would clip at its top edge. */
 
 .hi-page .ranking-table tbody tr.selected-row {
   background: #e6f6f4;
+}
+
+/* The Human baseline row: pinned on top as a clearly distinct mint band, set
+   apart from the ranked rows and from the selected/hover states, with a
+   hairline separating it from the competitors below. */
+.hi-page .ranking-table tbody tr.baseline-row {
+  background: rgba(0, 205, 143, 0.18);
+  box-shadow: inset 0 -1px 0 rgba(0, 205, 143, 0.5);
+}
+
+.hi-page .ranking-table tbody tr.baseline-row:hover {
+  background: rgba(0, 205, 143, 0.22);
+}
+
+.hi-page .rt-baseline-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(0, 205, 143, 0.14);
+  color: #0a8f66;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .hi-page .ranking-table tbody tr:hover:not(.selected-row) {
@@ -2131,12 +2224,23 @@ would clip at its top edge. */
 }
 
 @media (max-width: 680px) {
+  /* Unify every section's content to a single 20px gutter on phones so the
+     hero, cards, table, pieces and CTA all line up on the same left edge
+     (the inner wrappers otherwise double up gutter + pad to 40px). */
   .hi-page .leaderboard-section,
   .hi-page .long-tail-section {
     width: auto;
     max-width: none;
-    margin-inline: 10px;
-    padding: 14px;
+    margin-inline: 0;
+    padding: 14px 20px;
+  }
+
+  .hi-page .pieces-inner,
+  .hi-page .cta-inner {
+    width: auto;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 20px;
   }
 
   .hi-page .top-card-grid {
@@ -2164,6 +2268,21 @@ would clip at its top edge. */
   .hi-page .rankings-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  /* Tighter CTA band: trim the tall desktop band and let both actions go
+     full-width so they stack evenly with comfortable tap targets. */
+  .hi-page .cta-band {
+    padding-block: 48px;
+  }
+
+  .hi-page .cta-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hi-page .cta-btn {
+    width: 100%;
   }
 }
 
@@ -2205,6 +2324,24 @@ would clip at its top edge. */
 
   .hi-page .ranking-chart-shell svg {
     min-width: 760px;
+  }
+
+  /* The 1440px viewBox renders ~0.53x on phones, shrinking SVG text to ~6px;
+     bump the user-unit sizes so axis ticks and labels stay legible. */
+  .hi-page .ranking-chart-shell text {
+    font-size: 19px;
+  }
+
+  .hi-page .chart-axis-label {
+    font-size: 22px;
+  }
+
+  .hi-page .chart-end-label {
+    font-size: 18px;
+  }
+
+  .hi-page .chart-avg-label {
+    font-size: 16px;
   }
 
   /* Tighter standings table so less side-scrolling is needed. */

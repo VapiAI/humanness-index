@@ -98,7 +98,9 @@ export const ProviderCrossLinks = ({ siblings, rows }: ProviderCrossLinksProps) 
             name={sibling.name}
             sub={
               best
-                ? `Best ranked model #${best.rank} \u00b7 ${best.row.model}`
+                ? best.row.baseline
+                  ? 'Baseline reference \u00b7 Humanness 100'
+                  : `Best ranked model #${best.rank} \u00b7 ${best.row.model}`
                 : 'Provider profile'
             }
           />

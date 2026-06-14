@@ -15,9 +15,10 @@ import { useArenaData } from './hooks/useArenaData';
 import { useVoteGate } from './hooks/useVoteGate';
 import { voiceStats } from './data/providers';
 import { trackRoundStarted, trackVote } from './lib/analytics';
-import { parseLatencyMs, voteMatchesCrowd } from './lib/scoring';
+import { parseLatencyMs } from './lib/scoring';
 import type {
   BattleSide,
+  RoundReveal,
   ScoredModel,
   TableSort,
   TableSortKey,
@@ -37,6 +38,7 @@ const DEFAULT_SORT_DIR: Record<TableSortKey, 'asc' | 'desc'> = {
   rank: 'asc',
   provider: 'asc',
   humanness: 'desc',
+  elo: 'desc',
   latency: 'asc',
   price: 'asc',
   votes: 'desc',
@@ -58,9 +60,10 @@ const sortTableRows = (rows: ScoredModel[], sort: TableSort): ScoredModel[] => {
         return parsePriceUsd(model);
       case 'votes':
         return model.wins;
-      // Rank and Humanness sort on the same backing value: Elo.
+      // Rank, Humanness, and the Elo column all sort on the backing Elo.
       case 'rank':
       case 'humanness':
+      case 'elo':
         return model.elo;
     }
   };
@@ -68,6 +71,8 @@ const sortTableRows = (rows: ScoredModel[], sort: TableSort): ScoredModel[] => {
   // Rank #1 is the highest Elo, so ascending rank descends by value.
   const dir = sort.key === 'rank' ? -flip : flip;
   return [...rows].sort((a, b) => {
+    // The Human baseline is always the top row, regardless of the active sort.
+    if (Boolean(a.baseline) !== Boolean(b.baseline)) return a.baseline ? -1 : 1;
     const av = value(a);
     const bv = value(b);
     if (av === null || bv === null) {
@@ -85,21 +90,26 @@ const sortTableRows = (rows: ScoredModel[], sort: TableSort): ScoredModel[] => {
 };
 
 /**
- * The post-vote reveal, snapshotted at vote time. The vote itself shifts the
- * standings, so correctness AND the "crowd favorite" copy must both be judged
- * against the pre-vote order — otherwise a vote that flips two close models
- * would name the listener's own pick as the crowd's.
+ * Blind side placeholders for the two battle cards. A live battle carries no
+ * identities, so the cards play and track by SIDE: these give the audio engine
+ * a stable per-side id (and a neutral fallback voice). The visible blind orb
+ * uses its own fixed per-side seed inside BattleVoiceCard. Post-vote, the cards
+ * render the real revealed models from the vote response instead.
  */
-type RoundReveal = {
-  winner: VoteChoice;
-  correct: boolean;
-  left: ScoredModel;
-  right: ScoredModel;
-  sorted: ScoredModel[];
-  /** Pairwise Elo shifts this vote produced (left/right, signed). */
-  leftDelta: number;
-  rightDelta: number;
-};
+const blindSide = (id: string, voiceProfile: number): ScoredModel => ({
+  id,
+  provider: '',
+  model: '',
+  elo: 0,
+  uncertainty: 0,
+  wins: 0,
+  losses: 0,
+  ties: 0,
+  likelyRank: '',
+  voiceProfile,
+});
+const BLIND_LEFT = blindSide('battle-left', 7);
+const BLIND_RIGHT = blindSide('battle-right', 13);
 
 export const HumannessIndexPage = () => {
   const arena = useArenaData();
@@ -122,17 +132,35 @@ export const HumannessIndexPage = () => {
 
   const { models, sortedModels, battle: currentBattle } = arena;
 
+  // The Human baseline is a reference, not a competitor: keep it out of the
+  // provider filter, the highlight cards, and the default battle fallback.
+  const rankedModels = useMemo(
+    () => sortedModels.filter((model) => !model.baseline),
+    [sortedModels],
+  );
+
   const providerOptions = useMemo(
-    () => [ALL_PROVIDERS, ...new Set(models.map((row) => row.provider))],
+    () => [
+      ALL_PROVIDERS,
+      ...new Set(models.filter((row) => !row.baseline).map((row) => row.provider)),
+    ],
     [models],
   );
   // Two grid rows: the double-width #1 card plus six rank cards.
-  const topModels = sortedModels.slice(0, 7);
+  const topModels = rankedModels.slice(0, 7);
 
-  const leftModel =
-    models.find((model) => model.id === currentBattle.leftModelId) ?? sortedModels[0];
-  const rightModel =
-    models.find((model) => model.id === currentBattle.rightModelId) ?? sortedModels[1];
+  // The blind cards play/track by side (no identities pre-vote).
+  const playingSide: BattleSide | null =
+    audio.playingId === BLIND_LEFT.id
+      ? 'left'
+      : audio.playingId === BLIND_RIGHT.id
+        ? 'right'
+        : null;
+
+  // Blind-test integrity is enforced server-side: every sample carries the
+  // active battle's opaque token, and the server samples a different voice if
+  // the model happens to be battling. The client never learns the matchup.
+  const battleToken = currentBattle.voteToken;
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -151,7 +179,14 @@ export const HumannessIndexPage = () => {
 
   // The table always lists the full standings (top 10, expandable). Focus only
   // highlights the chosen row and dims the rest — it does not filter the table.
-  const visibleRows = showAll ? filteredRows : filteredRows.slice(0, 10);
+  // The Human baseline is pinned on top and always visible; "top 10" counts
+  // the ranked competitors below it.
+  const visibleRows = useMemo(() => {
+    if (showAll) return filteredRows;
+    const baselineRows = filteredRows.filter((model) => model.baseline);
+    const rankedRows = filteredRows.filter((model) => !model.baseline);
+    return [...baselineRows, ...rankedRows.slice(0, 10)];
+  }, [showAll, filteredRows]);
   const focusedModel = focusedModelId
     ? (models.find((model) => model.id === focusedModelId) ?? null)
     : null;
@@ -159,11 +194,8 @@ export const HumannessIndexPage = () => {
   const handlePlayRound = () => {
     setReveal(null);
     arena.markRoundStarted();
-    audio.playRound(currentBattle, leftModel, rightModel);
-    trackRoundStarted({
-      leftModelId: leftModel.id,
-      rightModelId: rightModel.id,
-    });
+    audio.playRound(currentBattle, BLIND_LEFT, BLIND_RIGHT);
+    trackRoundStarted();
   };
 
   const handleToggleSide = (side: BattleSide) => {
@@ -172,14 +204,11 @@ export const HumannessIndexPage = () => {
     if (audio.roundPhase === 'idle') {
       setReveal(null);
       arena.markRoundStarted();
-      trackRoundStarted({
-        leftModelId: leftModel.id,
-        rightModelId: rightModel.id,
-      });
+      trackRoundStarted();
     }
     audio.toggleBattleSide(
       side,
-      side === 'left' ? leftModel : rightModel,
+      side === 'left' ? BLIND_LEFT : BLIND_RIGHT,
       side === 'left' ? currentBattle.leftAudio : currentBattle.rightAudio,
     );
   };
@@ -188,32 +217,33 @@ export const HumannessIndexPage = () => {
     if (!audio.bothStarted || revealed) return;
 
     // Every 10th vote must pass the Turnstile check before it counts
-    // (no-op without keys — castVote then runs immediately).
+    // (no-op without keys — castVote then runs immediately). The reveal is
+    // built entirely from the vote response (identities, deltas, correctness);
+    // the client never held the pre-vote identities.
     voteGate.guardVote((captchaToken) => {
-      // Judge the pick against pre-vote standings, then apply it.
-      const correct = voteMatchesCrowd(leftModel.elo, rightModel.elo, winner);
-      const { leftDelta, rightDelta } = arena.applyVote({
-        leftModel,
-        rightModel,
-        winner,
-        voteToken: currentBattle.voteToken,
-        captchaToken,
-      });
-      trackVote({
-        winner,
-        leftModelId: leftModel.id,
-        rightModelId: rightModel.id,
-        correct,
-      });
-      setReveal({
-        winner,
-        correct,
-        left: leftModel,
-        right: rightModel,
-        sorted: sortedModels,
-        leftDelta,
-        rightDelta,
-      });
+      void arena
+        .applyVote({
+          winner,
+          voteToken: currentBattle.voteToken,
+          captchaToken,
+          // Offline fallback only (no token): the bundled round's local ids.
+          offline: currentBattle.voteToken
+            ? undefined
+            : {
+                leftModelId: currentBattle.leftModelId,
+                rightModelId: currentBattle.rightModelId,
+              },
+        })
+        .then((outcome) => {
+          if (!outcome) return;
+          setReveal(outcome);
+          trackVote({
+            winner,
+            leftModelId: outcome.left.model.id,
+            rightModelId: outcome.right.model.id,
+            correct: outcome.correct,
+          });
+        });
     });
   };
 
@@ -232,9 +262,9 @@ export const HumannessIndexPage = () => {
   const lastSideRef = useRef<BattleSide | null>(null);
   useEffect(() => {
     if (revealed || audio.roundPhase === 'idle') return;
-    if (audio.playingId === leftModel.id) lastSideRef.current = 'left';
-    else if (audio.playingId === rightModel.id) lastSideRef.current = 'right';
-  }, [audio.playingId, audio.roundPhase, revealed, leftModel.id, rightModel.id]);
+    if (audio.playingId === BLIND_LEFT.id) lastSideRef.current = 'left';
+    else if (audio.playingId === BLIND_RIGHT.id) lastSideRef.current = 'right';
+  }, [audio.playingId, audio.roundPhase, revealed]);
 
   // Space on the reveal advances AND auto-starts once the next pair lands.
   const autoStartRef = useRef(false);
@@ -278,9 +308,9 @@ export const HumannessIndexPage = () => {
           return;
         }
         const side =
-          audio.playingId === leftModel.id
+          audio.playingId === BLIND_LEFT.id
             ? 'left'
-            : audio.playingId === rightModel.id
+            : audio.playingId === BLIND_RIGHT.id
               ? 'right'
               : lastSideRef.current;
         if (side) handleVote(side);
@@ -334,7 +364,7 @@ export const HumannessIndexPage = () => {
   const selectRankModel = (model: ScoredModel) => {
     if (focusedModelId === model.id) {
       if (audio.playingId === model.id) clearRankFocus();
-      else audio.playModelSample(model);
+      else audio.playModelSample(model, battleToken);
       return;
     }
     // Play the new selection when nothing is playing, or when the current
@@ -344,7 +374,7 @@ export const HumannessIndexPage = () => {
       audio.playingId !== null && audio.playingId === focusedModelId;
     focusRankModel(model);
     if (audio.playingId === null || switchingSelection) {
-      audio.playModelSample(model);
+      audio.playModelSample(model, battleToken);
     }
   };
 
@@ -356,7 +386,16 @@ export const HumannessIndexPage = () => {
       return;
     }
     focusRankModel(model);
-    audio.playModelSample(model);
+    audio.playModelSample(model, battleToken);
+  };
+
+  // Leaderboard card Listen: same server-side battle-aware sample protection.
+  const togglePlaySample = (model: ScoredModel) => {
+    if (audio.playingId === model.id) {
+      audio.stopPlayback();
+      return;
+    }
+    audio.playModelSample(model, battleToken);
   };
 
   // The root layout already renders the page inside <main>, so this is a
@@ -368,20 +407,14 @@ export const HumannessIndexPage = () => {
       <div className="app-rails" aria-hidden="true" />
       {voteGate.challenge}
 
-      {/* While the reveal is up, the hero reads from the pre-vote snapshot so
-          the leader/rank copy describes the matchup the listener judged. */}
+      {/* Blind until the vote: the cards play from audio only, and the reveal
+          (identities, deltas, result copy) is built from the vote response. */}
       <HeroSection
-        leftModel={reveal?.left ?? leftModel}
-        rightModel={reveal?.right ?? rightModel}
-        sortedModels={reveal?.sorted ?? sortedModels}
+        reveal={reveal}
         roundPhase={audio.roundPhase}
         playedSides={audio.playedSides}
-        playingId={audio.playingId}
-        revealed={revealed}
-        roundResult={reveal?.winner ?? null}
+        playingSide={playingSide}
         canVote={audio.bothStarted}
-        voteCorrect={reveal?.correct ?? false}
-        voteImpact={reveal ? { left: reveal.leftDelta, right: reveal.rightDelta } : null}
         onPlayRound={handlePlayRound}
         onToggleSide={handleToggleSide}
         onVote={handleVote}
@@ -392,7 +425,7 @@ export const HumannessIndexPage = () => {
         topModels={topModels}
         allModels={sortedModels}
         playingId={audio.playingId}
-        onTogglePlay={audio.togglePlay}
+        onTogglePlay={togglePlaySample}
       />
 
       <PiecesSection />

@@ -62,12 +62,16 @@ export const ModelLiveStats = ({ modelId, initialRows, asOf }: ModelLiveStatsPro
   const standing = standingForModel(standings.rows, modelId);
   if (!standing) return null;
 
+  // The Human baseline is a reference, not a ranked competitor: it reads as a
+  // baseline with no rank or likely-rank range.
+  const isBaseline = Boolean(standing.row.baseline);
+
   return (
     <div className="detail-hero-standings">
       <dl className="detail-hero-stats">
         <div className="detail-hero-stat">
           <dt>Rank</dt>
-          <dd>#{standing.rank}</dd>
+          <dd>{isBaseline ? 'Baseline' : `#${standing.rank}`}</dd>
         </div>
         <div className="detail-hero-stat">
           <dt>Humanness</dt>
@@ -75,7 +79,9 @@ export const ModelLiveStats = ({ modelId, initialRows, asOf }: ModelLiveStatsPro
         </div>
         <div className="detail-hero-stat">
           <dt>Likely rank</dt>
-          <dd>{standing.row.likelyRank.replace('-', '\u2013')}</dd>
+          <dd>
+            {isBaseline ? '\u2014' : standing.row.likelyRank.replace('-', '\u2013')}
+          </dd>
         </div>
         <div className="detail-hero-stat">
           <dt>Blind votes</dt>

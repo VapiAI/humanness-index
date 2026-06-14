@@ -19,17 +19,19 @@ export const CueGlyph = ({ paused = false }: { paused?: boolean }) => {
         </linearGradient>
       </defs>
       {paused ? (
+        // Sized to match the play triangle's footprint (same height/center) so
+        // the cue doesn't change size when it toggles play <-> pause.
         <g fill={fill}>
-          <rect x="7" y="5" width="3.6" height="14" rx="1.4" />
-          <rect x="13.4" y="5" width="3.6" height="14" rx="1.4" />
+          <rect x="8.6" y="6.2" width="3" height="11.6" rx="1.2" />
+          <rect x="13.6" y="6.2" width="3" height="11.6" rx="1.2" />
         </g>
       ) : (
+        // Single filled path with the corners rounded into the geometry. (A
+        // stroke for rounding would double-cover the edge and, with this
+        // translucent gloss, show a brighter triangle outline just inside it.)
         <path
-          d="M9 6 18 12 9 18 Z"
+          d="M10.3 6.4 L17.1 10.9 Q18.7 12 17.1 13.1 L10.3 17.6 Q8.6 18.7 8.6 16.7 L8.6 7.3 Q8.6 5.3 10.3 6.4 Z"
           fill={fill}
-          stroke={fill}
-          strokeWidth="2.6"
-          strokeLinejoin="round"
         />
       )}
     </svg>

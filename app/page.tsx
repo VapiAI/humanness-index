@@ -13,7 +13,7 @@ const DESCRIPTION =
   'The benchmark for how human voice AI sounds. Vote in blind voice-vs-voice tests and explore the rankings of leading text-to-speech models.';
 
 const OG_IMAGE = {
-  url: '/og/og.jpg',
+  url: '/og/og-v2.jpg',
   width: 1536,
   height: 1024,
   alt: 'The Humanness Index™. How human does your voice AI really sound?',

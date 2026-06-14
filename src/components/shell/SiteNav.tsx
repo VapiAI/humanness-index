@@ -1,7 +1,6 @@
 import Link from 'next/link';
 
 import { GitHubIcon } from '../icons';
-import { NavOrb } from './NavOrb';
 
 export const GITHUB_URL = 'https://github.com/VapiAI/humanness-index';
 export const METHODOLOGY_URL = `${GITHUB_URL}/blob/main/docs/METHODOLOGY.md`;
@@ -15,7 +14,6 @@ export const SiteNav = () => {
       </a>
       <div className="site-nav-inner">
         <Link className="site-nav-wordmark" href="/">
-          <NavOrb />
           <span>
             The Humanness Index
             <span className="site-nav-tm">™</span>

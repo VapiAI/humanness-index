@@ -24,6 +24,9 @@
     'Segoe UI', sans-serif;
   --font-display: var(--font-instrument-sans), Inter, ui-sans-serif, system-ui,
     -apple-system, 'Segoe UI', sans-serif;
+  /* Uppercase eyebrow labels (brand uses Gridnik; Tomorrow is the OSS stand-in). */
+  --font-eyebrow: var(--font-tomorrow), 'Tomorrow', ui-sans-serif, system-ui,
+    sans-serif;
   color: var(--ink);
   background: var(--cream);
   font-family: var(--sans);

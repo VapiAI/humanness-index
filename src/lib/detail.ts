@@ -23,7 +23,7 @@ import {
 } from '../catalog';
 import { ARENA_ROWS, mergeStandings } from '../data/models';
 import type { ArenaModelRow } from './api';
-import { humannessScore, sortByStanding } from './scoring';
+import { competitorRank, humannessScore, sortByStanding } from './scoring';
 import type { ArenaRow } from './types';
 
 const SITE_ORIGIN = 'https://humannessindex.vapi.ai';
@@ -187,12 +187,13 @@ export const standingForModel = (
   rows: ArenaRow[],
   modelId: string,
 ): ModelStanding | null => {
-  const index = rows.findIndex((row) => row.id === modelId);
-  if (index === -1) return null;
-  const row = rows[index];
+  const row = rows.find((candidate) => candidate.id === modelId);
+  if (!row) return null;
   return {
     row,
-    rank: index + 1,
+    // Ranked among competitors, ignoring the Human baseline (0 for the
+    // baseline itself, which has no competitive rank).
+    rank: competitorRank(modelId, rows),
     score: humannessScore(row, rows),
     votes: row.wins + row.losses + row.ties,
   };
@@ -217,7 +218,9 @@ export const standingsExcerptFor = (
   const start = Math.max(0, index - 2);
   return rows
     .slice(start, Math.min(rows.length, index + 3))
-    .map((row, offset) => ({ row, rank: start + offset + 1 }));
+    // Competitor rank ignores the Human baseline so neighbor ranks read the
+    // same here as on the index (baseline rows resolve to 0).
+    .map((row) => ({ row, rank: competitorRank(row.id, rows) }));
 };
 
 /* ------------------------------ Sourced stats ------------------------------ */

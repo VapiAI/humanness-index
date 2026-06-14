@@ -12,7 +12,6 @@ import { ProviderLogo } from './ProviderLogo';
 import { VoiceViz } from './VoiceViz';
 
 type BattleVoiceCardProps = {
-  model: ScoredModel;
   label: 'A' | 'B';
   playing?: boolean;
   played?: boolean;
@@ -22,52 +21,59 @@ type BattleVoiceCardProps = {
   isPick?: boolean;
   /** This side ranks higher on the Index than its opponent. */
   isLeader?: boolean;
-  /** 1-based Index rank, shown once revealed. */
+  /** The revealed model — only present after the vote (the card is blind before). */
+  model?: ScoredModel;
+  /** 1-based competitor rank, shown once revealed (baseline shows "Baseline"). */
   rank?: number;
   /** Humanness score (0–100), shown once revealed. */
   humanness?: number;
   /** Signed Elo shift the listener's vote gave this side, shown once revealed. */
   eloDelta?: number | null;
-  /** Idle only: the first card click starts the round. */
-  onStart?: () => void;
-  /** Play this side (or stop it if it's already speaking). */
+  /** Play this side (or stop it if it's already speaking). From idle, this
+   *  opens the round in manual mode on this side. */
   onTogglePlay?: () => void;
 };
 
+// Fixed blind orb fingerprint per side, so the pre-vote viz never derives from
+// (and so never leaks) the real model — side A and side B just look like A and B.
+const BLIND_VIZ: Record<'A' | 'B', Pick<ScoredModel, 'provider' | 'voiceProfile'>> = {
+  A: { provider: '', voiceProfile: 7 },
+  B: { provider: '', voiceProfile: 13 },
+};
+
 /**
- * One side of the blind head-to-head. The orb stays in place the whole time
- * and pulses with the live clip amplitude while this voice plays; on hover a
- * play/pause glyph fades in over it (same as the leaderboard cards).
- *
- * The surface is listen-only: idle → starts the round; afterwards every click
- * switches playback to this voice (clicking the speaking card stops it), with
- * unlimited back-and-forth. Voting lives in the explicit pick buttons below
- * the arena — a card click never casts a vote. After the vote the card stays
- * in place and reveals its real identity (provider, rank, Humanness).
+ * One side of the blind head-to-head. Blind until the vote: a fixed A/B accent
+ * and a generic orb pulsing with the live clip amplitude, with NO model
+ * identity in the DOM. After the vote it reveals the real identity (provider,
+ * rank, Humanness, Elo shift) supplied by the vote response.
  */
 export const BattleVoiceCard = ({
-  model,
   label,
   playing = false,
   played = false,
   revealed = false,
   isPick = false,
   isLeader = false,
+  model,
   rank,
   humanness,
   eloDelta = null,
-  onStart,
   onTogglePlay,
 }: BattleVoiceCardProps) => {
   // Blind A/B uses two cool brand accents (fixed per side, so they never leak
   // the model's real palette): teal for A, violet for B.
   const palette = label === 'A' ? PALETTES.teal : PALETTES.violet;
   // Post-vote conversion path: the revealed name links to its model page.
-  // Gated on `revealed` so the blind phase DOM stays fully anonymous — no
-  // hrefs to peek at before voting.
-  const revealLink = revealed ? modelDetailLinkForId(model.id) : null;
-  // Listen-only surface: start the round from idle, otherwise toggle playback.
-  const handleActivate = revealed ? undefined : (onStart ?? onTogglePlay);
+  const revealLink = revealed && model ? modelDetailLinkForId(model.id) : null;
+  // The Human baseline's provider and model are both "Human"; show it once.
+  const revealName = model
+    ? model.baseline
+      ? model.model
+      : `${model.provider} ${model.model}`
+    : '';
+  // Listen-only surface: every click plays/switches to this side. Gated on
+  // `revealed` so the blind DOM stays fully anonymous (no hrefs to peek at).
+  const handleActivate = revealed ? undefined : onTogglePlay;
   const clickable = typeof handleActivate === 'function';
   const surfaceLabel = clickable
     ? playing
@@ -98,6 +104,9 @@ export const BattleVoiceCard = ({
         } as CSSProperties
       }
       onClick={handleActivate}
+      // Don't take focus on click, so clicking to play and then using the
+      // arrow-key fast mode doesn't leave the card focus-visible (outlined).
+      onMouseDown={clickable ? (event) => event.preventDefault() : undefined}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       aria-label={surfaceLabel}
@@ -116,7 +125,7 @@ export const BattleVoiceCard = ({
         <span className="vcard-side" aria-hidden="true">
           {label}
         </span>
-        {revealed ? (
+        {revealed && model ? (
           <>
             {/* Corner flag: the listener's pick wins the slot; otherwise
                 point out the side the Index ranks higher. */}
@@ -136,16 +145,18 @@ export const BattleVoiceCard = ({
               <p className="vcard-reveal-name">
                 {revealLink ? (
                   <DetailPageLink className="vcard-reveal-link" kind="model" link={revealLink}>
-                    {`${model.provider} ${model.model}`}
+                    {revealName}
                   </DetailPageLink>
                 ) : (
-                  `${model.provider} ${model.model}`
+                  revealName
                 )}
               </p>
               <div className="vcard-reveal-stats">
                 <span className="vcard-reveal-chip">
                   <span className="vcard-reveal-k">Rank</span>
-                  <span className="vcard-reveal-v">#{rank}</span>
+                  <span className="vcard-reveal-v">
+                    {model.baseline ? 'Baseline' : `#${rank}`}
+                  </span>
                 </span>
                 <span className="vcard-reveal-chip">
                   <span className="vcard-reveal-k">Humanness</span>
@@ -168,10 +179,14 @@ export const BattleVoiceCard = ({
         ) : (
           <>
             <div className="vcard-art">
-              {/* The orb stays put and pulses with the live amplitude while
-                  this side plays. The corner A/B chip is the only identity
-                  marker during the blind phase. */}
-              <VoiceViz playing={playing} model={model} animate={playing} palette={palette} />
+              {/* Blind orb: a fixed per-side fingerprint pulsing with the live
+                  amplitude. The corner A/B chip is the only identity marker. */}
+              <VoiceViz
+                playing={playing}
+                model={BLIND_VIZ[label]}
+                animate={playing}
+                palette={palette}
+              />
             </div>
             <span className="rcard-art-cue" aria-hidden="true">
               <CueGlyph paused={playing} />

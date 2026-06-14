@@ -226,12 +226,6 @@ main:focus {
   opacity: 0.8;
 }
 
-.site-nav-orb {
-  display: block;
-  flex-shrink: 0;
-  margin: -2px 0;
-}
-
 .site-nav-tm {
   font-size: 0.55em;
   font-weight: 500;

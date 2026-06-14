@@ -75,7 +75,11 @@ export const ProviderDetailPage = ({ entry, snapshot }: ProviderDetailPageProps)
             return (
               <tr key={model.id}>
                 <td className="rt-rank">
-                  {standing ? `#${standing.rank}` : STAT_DASH}
+                  {!standing
+                    ? STAT_DASH
+                    : standing.row.baseline
+                      ? 'Baseline'
+                      : `#${standing.rank}`}
                 </td>
                 <td className="rt-model">
                   <Link href={modelPath(model)}>{model.name}</Link>

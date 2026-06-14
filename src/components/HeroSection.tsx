@@ -2,27 +2,27 @@
 
 import { ArrowDown, ArrowsCounterClockwise, Check } from '@phosphor-icons/react';
 
-import { humannessScore, resultHeading } from '../lib/scoring';
-import type { BattleSide, RoundPhase, ScoredModel, VoteChoice } from '../lib/types';
+import { revealHeadline } from '../lib/scoring';
+import type {
+  BattleSide,
+  RoundPhase,
+  RoundReveal,
+  ScoredModel,
+  VoteChoice,
+} from '../lib/types';
 import { BattleVoiceCard } from './BattleVoiceCard';
 import { PlayIcon } from './icons';
 import { METHODOLOGY_URL } from './shell/SiteNav';
 
 type HeroSectionProps = {
-  leftModel: ScoredModel;
-  rightModel: ScoredModel;
-  sortedModels: ScoredModel[];
+  /** The post-vote reveal, or null while the round is blind. */
+  reveal: RoundReveal | null;
   roundPhase: RoundPhase;
   playedSides: Record<BattleSide, boolean>;
-  playingId: string | null;
-  revealed: boolean;
-  roundResult: VoteChoice | null;
+  /** Which side is currently playing (blind side tracking, no identities). */
+  playingSide: BattleSide | null;
   /** Both voices have started playing — voting is enabled. */
   canVote: boolean;
-  /** Whether the revealed pick agreed with the crowd consensus. */
-  voteCorrect: boolean;
-  /** Signed Elo shifts the listener's vote produced, by card side. */
-  voteImpact: { left: number; right: number } | null;
   onPlayRound: () => void;
   onToggleSide: (side: BattleSide) => void;
   onVote: (choice: VoteChoice) => void;
@@ -31,47 +31,81 @@ type HeroSectionProps = {
 
 /**
  * The hero: page intro on the left, the blind "voice vs. voice" picker on the
- * right. The two battle cards are the one fixed stage for the whole round —
- * cards are listen-only (click to play/switch), voting happens in the pick
- * buttons, and the post-vote reveal unmasks both cards in place with no
- * layout change.
+ * right. The cards are blind until the vote (audio only, fixed A/B styling, no
+ * identities). After the vote, the reveal — built entirely from the vote
+ * response — unmasks both cards in place with no layout change.
  */
 export const HeroSection = ({
-  leftModel,
-  rightModel,
-  sortedModels,
+  reveal,
   roundPhase,
   playedSides,
-  playingId,
-  revealed,
-  roundResult,
+  playingSide,
   canVote,
-  voteCorrect,
-  voteImpact,
   onPlayRound,
   onToggleSide,
   onVote,
   onNext,
 }: HeroSectionProps) => {
-  const leaderSide: BattleSide = leftModel.elo >= rightModel.elo ? 'left' : 'right';
-  const leaderModel = leaderSide === 'left' ? leftModel : rightModel;
-  const pickedSide: BattleSide | null = roundResult === 'tie' ? null : roundResult;
-  const rankOf = (model: ScoredModel) =>
-    sortedModels.findIndex((m) => m.id === model.id) + 1;
+  const revealed = reveal !== null;
+  const roundResult: VoteChoice | null = reveal?.winner ?? null;
+  const pickedSide: BattleSide | null =
+    roundResult === 'tie' ? null : roundResult;
 
-  const headingText = revealed
-    ? resultHeading({
-        correct: voteCorrect,
-        tie: roundResult === 'tie',
-        leaderName: `${leaderModel.provider} ${leaderModel.model}`,
+  // Reveal-only derivations: identities arrive with the vote, never before.
+  const leaderSide: BattleSide | null = reveal
+    ? reveal.left.model.elo >= reveal.right.model.elo
+      ? 'left'
+      : 'right'
+    : null;
+  // Provider + model, except the Human baseline reads as just its model name.
+  const modelName = (model: ScoredModel) =>
+    model.baseline ? model.model : `${model.provider} ${model.model}`;
+  // Which side (if any) was the real Human recording, the voice the listener
+  // picked, and the crowd-favored (higher-Elo) voice — all from the reveal.
+  const humanSide: BattleSide | null = reveal
+    ? reveal.left.model.baseline
+      ? 'left'
+      : reveal.right.model.baseline
+        ? 'right'
+        : null
+    : null;
+  const pickedModel = reveal
+    ? roundResult === 'left'
+      ? reveal.left.model
+      : roundResult === 'right'
+        ? reveal.right.model
+        : null
+    : null;
+  // The crowd-favored voice is judged on PRE-vote standings (the server's
+  // `correct`): when the pick agreed it is the picked side, otherwise the other
+  // side. Derived from `correct` rather than post-vote Elo, which a close vote
+  // can flip — so the headline always matches the correct/incorrect verdict.
+  const crowdModel =
+    reveal && roundResult !== 'tie'
+      ? reveal.correct
+        ? pickedModel
+        : roundResult === 'left'
+          ? reveal.right.model
+          : reveal.left.model
+      : null;
+
+  const headingText = reveal
+    ? revealHeadline({
+        winner: reveal.winner,
+        correct: reveal.correct,
+        humanSide,
+        pickedName: pickedModel ? modelName(pickedModel) : null,
+        crowdName: crowdModel ? modelName(crowdModel) : '',
       })
-    : 'Which one is human?';
+    : 'Which voice sounds more human?';
   const hintText = revealed
     ? "Here's who you were listening to."
-    : 'Listen to both blind samples, then cast your vote.';
+    : 'Same voice, different models. Pick the one that sounds more human.';
 
   const handleSeeLeaderboard = () => {
-    document.getElementById('leaderboard')?.scrollIntoView({ behavior: 'smooth' });
+    // Jump to the Humanness Deep Dive (dot distribution chart + full rankings
+    // table), not the highlight cards.
+    document.getElementById('rankings')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -80,8 +114,8 @@ export const HeroSection = ({
         <p className="hero-eyebrow">The Humanness Index™</p>
         <h1 className="hero-title">How human does your voice AI really sound?</h1>
         <p className="hero-note">
-          Humanness is how much a voice feels like a real person. Help rank the models with
-          your preferences.
+          Humanness is how much a voice feels like a real person. Listen to blind pairs,
+          pick the more human one, and help rank the models against a real human baseline.
         </p>
         {/* Until a formal whitepaper ships, the methodology doc is the source. */}
         <a
@@ -103,16 +137,15 @@ export const HeroSection = ({
         <div className="lab-arena">
           <BattleVoiceCard
             label="A"
-            model={leftModel}
-            playing={playingId === leftModel.id}
+            playing={playingSide === 'left'}
             played={playedSides.left}
             revealed={revealed}
             isPick={pickedSide === 'left'}
             isLeader={leaderSide === 'left'}
-            rank={rankOf(leftModel)}
-            humanness={humannessScore(leftModel, sortedModels)}
-            eloDelta={voteImpact?.left ?? null}
-            onStart={roundPhase === 'idle' ? onPlayRound : undefined}
+            model={reveal?.left.model}
+            rank={reveal?.left.rank}
+            humanness={reveal?.left.humanness}
+            eloDelta={reveal?.left.eloDelta ?? null}
             onTogglePlay={() => onToggleSide('left')}
           />
           <div className="lab-vs">
@@ -122,16 +155,15 @@ export const HeroSection = ({
           </div>
           <BattleVoiceCard
             label="B"
-            model={rightModel}
-            playing={playingId === rightModel.id}
+            playing={playingSide === 'right'}
             played={playedSides.right}
             revealed={revealed}
             isPick={pickedSide === 'right'}
             isLeader={leaderSide === 'right'}
-            rank={rankOf(rightModel)}
-            humanness={humannessScore(rightModel, sortedModels)}
-            eloDelta={voteImpact?.right ?? null}
-            onStart={roundPhase === 'idle' ? onPlayRound : undefined}
+            model={reveal?.right.model}
+            rank={reveal?.right.rank}
+            humanness={reveal?.right.humanness}
+            eloDelta={reveal?.right.eloDelta ?? null}
             onTogglePlay={() => onToggleSide('right')}
           />
         </div>

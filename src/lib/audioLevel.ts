@@ -82,5 +82,8 @@ export const sampleAudioLevel = (): number => {
     sum += v * v;
   }
   const rms = Math.sqrt(sum / timeData.length);
-  return Math.min(1, rms * 2.4);
+  // Conversational speech RMS sits low (~0.04) with brief peaks, so a flat gain
+  // barely moves the orb. Gain it up and apply a soft curve (sqrt-ish) so normal
+  // speech fills a lively 0..1 range and the orb tracks each syllable.
+  return Math.pow(Math.min(1, rms * 3), 0.6);
 };

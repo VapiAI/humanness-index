@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Instrument_Sans } from 'next/font/google';
+import { Instrument_Sans, Tomorrow } from 'next/font/google';
 import Script from 'next/script';
 import type { PropsWithChildren } from 'react';
 
@@ -15,6 +15,16 @@ const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-instrument-sans',
+});
+
+// Uppercase eyebrow labels behind `--font-eyebrow` (tokens.css). The brand
+// uses Gridnik; Tomorrow is the open-font stand-in. Only the two weights the
+// eyebrows render are loaded (font-synthesis is off).
+const tomorrow = Tomorrow({
+  subsets: ['latin'],
+  weight: ['500', '700'],
+  display: 'swap',
+  variable: '--font-tomorrow',
 });
 
 export const viewport: Viewport = {
@@ -38,7 +48,7 @@ const POSTHOG_HOST =
 
 const RootLayout = ({ children }: PropsWithChildren) => {
   return (
-    <html className={instrumentSans.variable} lang="en">
+    <html className={`${instrumentSans.variable} ${tomorrow.variable}`} lang="en">
       <head>
         {/* Analytics is env-gated: without NEXT_PUBLIC_POSTHOG_KEY (forks,
             local dev) nothing loads and lib/analytics.ts no-ops. */}

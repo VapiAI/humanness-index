@@ -9,7 +9,9 @@ import { drawOrb, subscribeViz, voiceFingerprint, voiceStyle } from '../lib/voic
 const VIZ_SIZE = 132;
 
 type VoiceVizProps = {
-  model: ScoredModel;
+  // Only the brand/seed fields drive the orb, so a blind battle card can pass a
+  // fixed per-side fingerprint (no real identity) instead of a full model.
+  model: Pick<ScoredModel, 'provider' | 'voiceProfile'>;
   playing: boolean;
   size?: number;
   animate?: boolean;
@@ -84,13 +86,14 @@ export const VoiceViz = ({
 
   useEffect(() => {
     const ctx = ctxRef.current;
-    // Idle: reset to the calm baseline (frame 0) and stop.
+    // Idle: settle to calm (level 0) but DON'T reset the morph clock — redraw at
+    // the CURRENT frame so the blob's phase doesn't snap when playback stops.
+    // The per-orb frame counter persists, so the next play resumes from here.
     if (!active || !onScreen) {
       if (ctx) {
         levelRef.current = 0;
-        frameRef.current = 0;
         ctx.clearRect(0, 0, size, size);
-        drawOrb(ctx, 0, size, palette, 0, fingerprint);
+        drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint);
       }
       return undefined;
     }
@@ -98,8 +101,9 @@ export const VoiceViz = ({
       if (!ctx) return;
       const target = playingRef.current ? sampleAudioLevel() : 0;
       const cur = levelRef.current;
-      // Gentle attack on start, slower release on stop — both ease smoothly.
-      levelRef.current = cur + (target - cur) * (target > cur ? 0.3 : 0.1);
+      // Fast attack so the orb rises with each syllable; slower release so it
+      // rides the speech envelope smoothly instead of flickering in the gaps.
+      levelRef.current = cur + (target - cur) * (target > cur ? 0.45 : 0.12);
       frameRef.current += 1;
       ctx.clearRect(0, 0, size, size);
       drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint);

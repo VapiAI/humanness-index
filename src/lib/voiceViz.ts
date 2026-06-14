@@ -109,12 +109,15 @@ export const drawOrb = (
   const sp = fp.speed ?? 1;
   const lvl = Math.max(0, Math.min(1, level));
   const breathe = 1 + 0.018 * Math.sin(frame * 0.04 + seed);
-  const R = size * 0.27 * breathe * (1 + 0.12 * lvl);
+  // The core swells with amplitude; the slightly smaller base radius leaves
+  // headroom so loud peaks (plus the wobble below) never clip the canvas edge.
+  const R = size * 0.26 * breathe * (1 + 0.17 * lvl);
 
-  // Outer glow halo — blooms with amplitude.
-  const haloR = R * (1.55 + 0.6 * lvl);
+  // Outer glow halo — blooms with amplitude (fades to 0 alpha, so its reach can
+  // exceed the core without a hard edge).
+  const haloR = R * (1.5 + 0.55 * lvl);
   const halo = ctx.createRadialGradient(c, c, R * 0.5, c, c, haloR);
-  halo.addColorStop(0, hexA(pal.from, 0.16 + 0.34 * lvl));
+  halo.addColorStop(0, hexA(pal.from, 0.16 + 0.42 * lvl));
   halo.addColorStop(1, hexA(pal.from, 0));
   ctx.fillStyle = halo;
   ctx.beginPath();
@@ -129,7 +132,7 @@ export const drawOrb = (
   ];
   layers.forEach((layer, idx) => {
     const lr = R * layer.rr;
-    const wob = layer.wob * (1 + 1.5 * lvl);
+    const wob = layer.wob * (1 + 1.2 * lvl);
     const spin = frame * 0.016 * (idx + 1) * sp + seed + idx;
     ctx.beginPath();
     for (let i = 0; i <= 72; i += 1) {
@@ -160,25 +163,6 @@ export const drawOrb = (
     ctx.fill();
   });
   ctx.globalAlpha = 1;
-
-  // Soft top-left sheen, clipped to the core for a 3D read.
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(c, c, R * 0.98, 0, TAU);
-  ctx.clip();
-  const sheen = ctx.createRadialGradient(
-    c - R * 0.32,
-    c - R * 0.4,
-    0,
-    c - R * 0.32,
-    c - R * 0.4,
-    R * 1.1,
-  );
-  sheen.addColorStop(0, 'rgba(255, 255, 255, 0.38)');
-  sheen.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-  ctx.fillStyle = sheen;
-  ctx.fillRect(c - R, c - R, R * 2, R * 2);
-  ctx.restore();
 };
 
 // One shared ~60fps clock ticks the playing orbs (idle orbs are static), so
