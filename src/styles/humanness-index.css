@@ -2650,71 +2650,37 @@ would clip at its top edge. */
 .hi-page .hiw-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  margin: 0;
+  gap: 0;
+  /* Pull the row out by the column padding so the outer text aligns with the
+     page content edge while every column keeps symmetric inner padding. */
+  margin: 0 calc(-1 * clamp(16px, 1.6vw, 22px));
   padding: 0;
   list-style: none;
 }
 
-/* Editorial numbered card: a refined surface with a faint inner top highlight,
-   a short mint accent rule, a crafted gradient step numeral, and the STEP
-   eyebrow + title + two-line subtitle. Equal heights via the grid. */
+/* Flush editorial column: no card chrome at all (no surface, border, radius,
+   shadow, or hover lift), just the STEP eyebrow, a soft gradient numeral, the
+   title, and the two-line subtitle. Columns sit on the page background and are
+   separated by thin vertical hairlines. */
 .hi-page .hiw-step {
   position: relative;
   margin: 0;
-  padding: 26px 24px 28px;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
-  border-radius: 16px;
-  background: linear-gradient(
-    180deg,
-    #ffffff,
-    color-mix(in srgb, var(--cream, #faf9f6) 60%, #ffffff)
-  );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 1px 2px rgba(26, 26, 46, 0.05),
-    0 18px 38px -26px rgba(26, 26, 46, 0.24);
-  transition:
-    transform 200ms ease,
-    border-color 200ms ease,
-    box-shadow 200ms ease;
+  padding: 2px clamp(16px, 1.6vw, 22px);
 }
 
-/* A short mint accent rule at the top edge: the restrained brand tie-in. */
-.hi-page .hiw-step::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 24px;
-  width: 44px;
-  height: 3px;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(
-    90deg,
-    var(--mint, #00cd8f),
-    var(--teal-strong, #00a371)
-  );
+.hi-page .hiw-step + .hiw-step {
+  border-left: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
 }
 
-.hi-page .hiw-step:hover {
-  transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--mint, #00cd8f) 50%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 1px 2px rgba(26, 26, 46, 0.06),
-    0 28px 50px -26px rgba(26, 26, 46, 0.3);
-}
-
-/* Crafted step numeral: a soft mint gradient, deliberately scaled and fully
-   visible in the top-right (not a clipped flourish), opposite the eyebrow. */
+/* Crafted step numeral: a soft mint gradient, sized to sit cleanly at the top
+   of the flush column (top-right, opposite the eyebrow) without a card frame. */
 .hi-page .hiw-ghost {
   position: absolute;
-  top: 16px;
-  right: 20px;
+  top: -2px;
+  right: clamp(16px, 1.6vw, 22px);
   z-index: 0;
   font-family: var(--font-display);
-  font-size: 60px;
+  font-size: 52px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -2852,8 +2818,23 @@ would clip at its top edge. */
 }
 
 @media (max-width: 860px) {
+  /* Stacked: full-width flush rows separated by horizontal hairlines. */
   .hi-page .hiw-grid {
     grid-template-columns: 1fr;
+    margin-inline: 0;
+  }
+
+  .hi-page .hiw-step {
+    padding: 18px 0;
+  }
+
+  .hi-page .hiw-step + .hiw-step {
+    border-left: 0;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  }
+
+  .hi-page .hiw-ghost {
+    right: 0;
   }
 }
 
