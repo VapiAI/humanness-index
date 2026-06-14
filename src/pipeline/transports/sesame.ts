@@ -48,7 +48,6 @@ export const sesame: ProviderTransport = {
   },
 
   createClone: async () => {
-    // TODO(decision): see module docblock — storage-coupled clone endpoint.
     throw new TransportError(
       'Sesame cloning is blocked on a decision: the hosted clone endpoint expects samples ' +
         'staged in its own private storage. Options: get upload access, self-host CSM-1B ' +
