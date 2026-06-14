@@ -5,8 +5,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { HERO_BATTLES } from '../data/battles';
 import { ARENA_ROWS, mergeStandings, SEED_TOTAL_UNIQUE_VOTES } from '../data/models';
 import { getBattle, getModels, submitVote } from '../lib/api';
-import { eloExpectation, outcomeFor, sortByStanding } from '../lib/scoring';
-import type { HeroBattle, ScoredModel, VoteChoice } from '../lib/types';
+import {
+  competitorRank,
+  eloExpectation,
+  humannessScore,
+  outcomeFor,
+  sortByStanding,
+  voteMatchesCrowd,
+} from '../lib/scoring';
+import type {
+  ArenaRow,
+  HeroBattle,
+  RoundReveal,
+  ScoredModel,
+  VoteChoice,
+} from '../lib/types';
 
 /** Elo K-factor for the optimistic local update (matches the backend). */
 const VOTE_K = 32;
@@ -40,10 +53,9 @@ export const useArenaData = () => {
   const fetchBattle = useCallback(async (): Promise<HeroBattle> => {
     try {
       const fetched = await getBattle();
+      // Live battles are blind: no model ids enter client state.
       return {
         prompt: fetched.prompt,
-        leftModelId: fetched.leftModelId,
-        rightModelId: fetched.rightModelId,
         leftAudio: fetched.leftAudioUrl,
         rightAudio: fetched.rightAudioUrl,
         voteToken: fetched.voteToken,
@@ -101,40 +113,72 @@ export const useArenaData = () => {
   }, [fetchBattle]);
 
   /**
-   * Record a head-to-head outcome: optimistic pairwise Elo locally, POSTed to
-   * the backend, whose authoritative standings reconcile on response. Returns
-   * the pairwise Elo deltas so the reveal can show the vote's impact.
+   * Record a head-to-head outcome and return the fully-built reveal.
+   *
+   * LIVE path (signed voteToken): POST to the backend and trust its response —
+   * the authoritative post-vote leaderboard plus the reveal (identities,
+   * per-side Elo shift, crowd-correctness). No optimistic update and no
+   * pre-vote identities are needed. OFFLINE path (no token, bundled fallback
+   * round): resolve the round's local ids and compute a reveal + optimistic
+   * standings client-side. Returns null if the vote could not be recorded.
    */
   const applyVote = useCallback(
-    ({
-      leftModel,
-      rightModel,
+    async ({
       winner,
       voteToken,
       captchaToken,
+      offline,
     }: {
-      leftModel: ScoredModel;
-      rightModel: ScoredModel;
       winner: VoteChoice;
       voteToken: string | null;
       /** Solved Turnstile token on gated (every 10th) votes. */
       captchaToken?: string;
-    }): { leftDelta: number; rightDelta: number } => {
+      /** Local ids for the offline fallback round (live path omits this). */
+      offline?: { leftModelId?: string; rightModelId?: string };
+    }): Promise<RoundReveal | null> => {
       hasVotedRef.current = true;
 
-      const expectedLeft = eloExpectation(leftModel.elo, rightModel.elo);
-      const expectedRight = 1 - expectedLeft;
-      const leftOutcome = outcomeFor(winner, 'left');
-      const rightOutcome = outcomeFor(winner, 'right');
-      const leftDelta = Math.round(VOTE_K * (leftOutcome - expectedLeft));
-      const rightDelta = Math.round(VOTE_K * (rightOutcome - expectedRight));
+      let nextModels: ArenaRow[];
+      let sides: {
+        left: { modelId: string; eloDelta: number };
+        right: { modelId: string; eloDelta: number };
+      };
+      let correct: boolean;
 
-      setModels((currentModels) =>
-        currentModels.map((model) => {
-          if (model.id !== leftModel.id && model.id !== rightModel.id) {
-            return model;
-          }
-          const isLeft = model.id === leftModel.id;
+      if (voteToken) {
+        let response;
+        try {
+          response = await submitVote(voteToken, winner, captchaToken);
+        } catch {
+          return null; // network failure: caller leaves the round as-is
+        }
+        nextModels = mergeStandings(response.models);
+        setModels(nextModels);
+        setTotalUniqueVotes(response.totalUniqueVotes);
+        sides = {
+          left: {
+            modelId: response.reveal.left.modelId,
+            eloDelta: response.reveal.left.eloDelta,
+          },
+          right: {
+            modelId: response.reveal.right.modelId,
+            eloDelta: response.reveal.right.eloDelta,
+          },
+        };
+        correct = response.correct;
+      } else {
+        const left = models.find((m) => m.id === offline?.leftModelId);
+        const right = models.find((m) => m.id === offline?.rightModelId);
+        if (!left || !right) return null;
+        const expectedLeft = eloExpectation(left.elo, right.elo);
+        const leftOutcome = outcomeFor(winner, 'left');
+        const rightOutcome = outcomeFor(winner, 'right');
+        const leftDelta = Math.round(VOTE_K * (leftOutcome - expectedLeft));
+        const rightDelta = Math.round(VOTE_K * (rightOutcome - (1 - expectedLeft)));
+        correct = voteMatchesCrowd(left.elo, right.elo, winner);
+        nextModels = models.map((model) => {
+          if (model.id !== left.id && model.id !== right.id) return model;
+          const isLeft = model.id === left.id;
           const delta = isLeft ? leftDelta : rightDelta;
           const outcome = isLeft ? leftOutcome : rightOutcome;
           return {
@@ -144,19 +188,13 @@ export const useArenaData = () => {
             losses: model.losses + (outcome === 0 ? 1 : 0),
             ties: model.ties + (outcome === 0.5 ? 1 : 0),
           };
-        }),
-      );
-      setTotalUniqueVotes((count) => count + 1);
-
-      if (voteToken) {
-        void submitVote(voteToken, winner, captchaToken)
-          .then((response) => {
-            setModels(mergeStandings(response.models));
-            setTotalUniqueVotes(response.totalUniqueVotes);
-          })
-          .catch(() => {
-            // Keep the optimistic update if the POST fails.
-          });
+        });
+        setModels(nextModels);
+        setTotalUniqueVotes((count) => count + 1);
+        sides = {
+          left: { modelId: left.id, eloDelta: leftDelta },
+          right: { modelId: right.id, eloDelta: rightDelta },
+        };
       }
 
       // Prefetch the next pairing while the reveal is on screen.
@@ -164,9 +202,24 @@ export const useArenaData = () => {
         upcomingBattleRef.current = fetched;
       });
 
-      return { leftDelta, rightDelta };
+      // Build the reveal from the post-vote standings (a consistent snapshot).
+      const sorted = sortByStanding(nextModels);
+      const cardFor = (side: { modelId: string; eloDelta: number }) => {
+        const model = nextModels.find((m) => m.id === side.modelId);
+        if (!model) return null;
+        return {
+          model,
+          rank: competitorRank(model.id, sorted),
+          humanness: humannessScore(model, sorted),
+          eloDelta: side.eloDelta,
+        };
+      };
+      const left = cardFor(sides.left);
+      const right = cardFor(sides.right);
+      if (!left || !right) return null;
+      return { winner, correct, left, right };
     },
-    [fetchBattle],
+    [fetchBattle, models],
   );
 
   return {

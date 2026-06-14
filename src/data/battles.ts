@@ -106,6 +106,9 @@ export const FALLBACK_BATTLE_SPECS: FallbackBattleSpec[] = [
   },
 ];
 
+// Offline/dev fallback rounds only. These keep their model ids (used to build
+// the local reveal when the battle API is unreachable); the LIVE path never
+// carries ids. See HeroBattle in lib/types.
 export const HERO_BATTLES: HeroBattle[] = FALLBACK_BATTLE_SPECS.map((spec) => ({
   voteToken: null,
   prompt: spec.prompt,

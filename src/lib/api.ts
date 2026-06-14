@@ -26,23 +26,30 @@ export type ModelsResponse = {
   totalUniqueVotes: number;
 };
 
+/**
+ * Blind by design: no model identities. The matchup is encoded only in the
+ * signed `voteToken`; the client learns who was who from the vote response.
+ */
 export type BattleResponse = {
   id: string;
   prompt: string;
   voteToken: string;
-  leftModelId: string;
-  rightModelId: string;
   leftAudioUrl: string;
   rightAudioUrl: string;
 };
 
 export type RevealSide = {
   modelId: string;
+  /** Post-vote model-level Elo. */
   elo: number;
+  /** Signed per-side Elo shift this vote produced (the "+N Elo"). */
+  eloDelta: number;
 };
 
 export type VoteResponse = {
   reveal: { left: RevealSide; right: RevealSide };
+  /** Whether the pick agreed with the crowd (judged on pre-vote standings). */
+  correct: boolean;
   models: ArenaModelRow[];
   totalUniqueVotes: number;
 };
@@ -66,9 +73,20 @@ export const getModels = (): Promise<ModelsResponse> =>
 export const getBattle = (): Promise<BattleResponse> =>
   getJson('/api/battle');
 
-/** A random hosted clip for a model's "Listen" button. */
-export const getSample = (modelId: string): Promise<SampleResponse> =>
-  getJson(`/api/sample?model=${encodeURIComponent(modelId)}`);
+/**
+ * A random hosted clip for a model's "Listen" button. Pass the active battle's
+ * opaque `battleToken` so the server can exclude the battle's voice/prompt if
+ * the model happens to be battling — without the client ever learning the
+ * matchup. Non-battling models (or no token) sample normally.
+ */
+export const getSample = (
+  modelId: string,
+  options?: { battleToken?: string | null },
+): Promise<SampleResponse> => {
+  const params = new URLSearchParams({ model: modelId });
+  if (options?.battleToken) params.set('battleToken', options.battleToken);
+  return getJson(`/api/sample?${params.toString()}`);
+};
 
 /**
  * Record a vote; returns the reveal plus refreshed standings.

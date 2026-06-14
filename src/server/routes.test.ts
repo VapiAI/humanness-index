@@ -55,17 +55,16 @@ describe('GET /api/battle', () => {
     const response = await getBattleRoute();
     expect(response.status).toBe(200);
     const battle = await response.json();
-    expect(battle.leftModelId).not.toBe(battle.rightModelId);
-    expect(MODELS_BY_ID.has(battle.leftModelId)).toBe(true);
-    expect(MODELS_BY_ID.has(battle.rightModelId)).toBe(true);
+    // Blind: no identities on the wire; the matchup lives only in the token.
+    expect(battle.leftModelId).toBeUndefined();
+    expect(battle.rightModelId).toBeUndefined();
     const payload = battleTokenDecode(battle.voteToken);
     expect(payload.id).toBe(battle.id);
-    expect(VARIANTS_BY_ID.get(payload.leftVariantId)?.modelId).toBe(
-      battle.leftModelId,
-    );
-    expect(VARIANTS_BY_ID.get(payload.rightVariantId)?.modelId).toBe(
-      battle.rightModelId,
-    );
+    const left = VARIANTS_BY_ID.get(payload.leftVariantId)!;
+    const right = VARIANTS_BY_ID.get(payload.rightVariantId)!;
+    expect(left.modelId).not.toBe(right.modelId);
+    expect(MODELS_BY_ID.has(left.modelId)).toBe(true);
+    expect(MODELS_BY_ID.has(right.modelId)).toBe(true);
     expect(PROMPTS_BY_ID.get(payload.promptId)?.text).toBe(battle.prompt);
     expect(battle.leftAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
     expect(battle.rightAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
@@ -92,6 +91,8 @@ describe('POST /api/vote', () => {
       const body = await response.json();
       expect(body.reveal.left.modelId).toBe('canopy-orpheus');
       expect(body.reveal.right.modelId).toBe('cartesia-sonic-2');
+      expect(typeof body.reveal.left.eloDelta).toBe('number');
+      expect(typeof body.correct).toBe('boolean');
       expect(Array.isArray(body.models)).toBe(true);
       expect(body.models.length).toBeGreaterThan(0);
       expect(typeof body.totalUniqueVotes).toBe('number');

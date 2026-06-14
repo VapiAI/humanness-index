@@ -186,24 +186,31 @@ export const useArenaAudio = () => {
   const sampleUrlsRef = useRef<Record<string, string>>({});
 
   const playModelSample = useCallback(
-    (model: ScoredModel) => {
+    (model: ScoredModel, battleToken?: string | null) => {
       playGenRef.current += 1; // fresh playback token; invalidates pending callbacks
       const gen = playGenRef.current;
       playSourceRef.current = 'sample';
       setPlayingId(model.id);
       trackSamplePlayed(model.id);
+      // Always pass the active battle's opaque token: the server samples a
+      // non-colliding voice if this model happens to be battling, without the
+      // client ever learning the matchup. Cache per (battle, model) so a new
+      // battle re-fetches (and re-excludes) instead of serving a stale clip
+      // that could match a blind card; same battle + model replays the same.
+      const cacheKey = `${battleToken ?? ''}:${model.id}`;
       void (async () => {
-        // The pinned clip, else a random one from the API (static fallback).
-        let url = sampleUrlsRef.current[model.id] ?? MODEL_SAMPLE_CLIPS[model.id];
-        if (!sampleUrlsRef.current[model.id]) {
+        let url = sampleUrlsRef.current[cacheKey] ?? MODEL_SAMPLE_CLIPS[model.id];
+        if (!sampleUrlsRef.current[cacheKey]) {
           try {
-            url = (await getSample(model.id)).audioUrl;
+            url = (
+              await getSample(model.id, battleToken ? { battleToken } : undefined)
+            ).audioUrl;
           } catch {
             // Keep the fallback clip.
           }
         }
         if (gen !== playGenRef.current) return; // stopped while fetching
-        if (url) sampleUrlsRef.current[model.id] = url;
+        if (url) sampleUrlsRef.current[cacheKey] = url;
         startClip(url, model, () => setPlayingId(null));
       })();
     },

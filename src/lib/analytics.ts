@@ -33,10 +33,9 @@ export const trackVote = (props: {
   correct: boolean;
 }) => capture(HUMANNESS_EVENT.VOTE, props);
 
-export const trackRoundStarted = (props: {
-  leftModelId: string;
-  rightModelId: string;
-}) => capture(HUMANNESS_EVENT.ROUND_STARTED, props);
+/** A blind round starting — no identities are known until the vote reveal. */
+export const trackRoundStarted = () =>
+  capture(HUMANNESS_EVENT.ROUND_STARTED, {});
 
 export const trackSamplePlayed = (modelId: string) =>
   capture(HUMANNESS_EVENT.SAMPLE_PLAYED, { modelId });

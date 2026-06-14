@@ -16,7 +16,9 @@ import {
   type BattlePayload,
 } from './battleToken';
 import {
+  audioUrlFor,
   MODELS_BY_ID,
+  PROMPTS,
   PROMPTS_BY_ID,
   VARIANTS,
   VARIANTS_BY_ID,
@@ -97,6 +99,12 @@ describe('submitVote', () => {
     const rightRow = response.models.find((row) => row.id === 'cartesia-sonic')!;
     expect(response.reveal.left.elo).toBe(leftRow.elo);
     expect(response.reveal.right.elo).toBe(rightRow.elo);
+    // The reveal carries the per-side Elo shift and the crowd-correctness, so
+    // the client can build the reveal without any pre-vote identities.
+    expect(response.reveal.left.eloDelta).toBeGreaterThan(0);
+    expect(response.reveal.right.eloDelta).toBeLessThan(0);
+    // Picking the heavy favorite (xAI ~1306 over Sonic ~1027) agrees with the crowd.
+    expect(response.correct).toBe(true);
   });
 
   it('moves Elo the other way when the right side wins', async () => {
@@ -219,20 +227,20 @@ describe('submitVote', () => {
 });
 
 describe('createBattle', () => {
-  it('returns two distinct catalog models with a decodable, consistent token', async () => {
+  it('is blind: no model ids in the response, identities only in the signed token', async () => {
     const battle = await createBattle();
-    expect(battle.leftModelId).not.toBe(battle.rightModelId);
-    expect(MODELS_BY_ID.has(battle.leftModelId)).toBe(true);
-    expect(MODELS_BY_ID.has(battle.rightModelId)).toBe(true);
+    // Integrity: the wire response carries no identities (blind until vote).
+    expect('leftModelId' in battle).toBe(false);
+    expect('rightModelId' in battle).toBe(false);
 
+    // The matchup is recoverable only by decoding the signed token (server-side).
     const payload = battleTokenDecode(battle.voteToken);
     expect(payload.id).toBe(battle.id);
-    expect(VARIANTS_BY_ID.get(payload.leftVariantId)?.modelId).toBe(
-      battle.leftModelId,
-    );
-    expect(VARIANTS_BY_ID.get(payload.rightVariantId)?.modelId).toBe(
-      battle.rightModelId,
-    );
+    const left = VARIANTS_BY_ID.get(payload.leftVariantId)!;
+    const right = VARIANTS_BY_ID.get(payload.rightVariantId)!;
+    expect(left.modelId).not.toBe(right.modelId);
+    expect(MODELS_BY_ID.has(left.modelId)).toBe(true);
+    expect(MODELS_BY_ID.has(right.modelId)).toBe(true);
     expect(PROMPTS_BY_ID.get(payload.promptId)?.text).toBe(battle.prompt);
     expect(battle.leftAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
     expect(battle.rightAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
@@ -247,6 +255,25 @@ describe('createBattle', () => {
       expect(left.modelId).not.toBe(right.modelId);
       expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
     }
+  });
+
+  it('only pairs the Human baseline on a recorded voice, never emma/godfrey', async () => {
+    let humanBattles = 0;
+    for (let i = 0; i < 80; i += 1) {
+      const battle = await createBattle();
+      const payload = battleTokenDecode(battle.voteToken);
+      const left = VARIANTS_BY_ID.get(payload.leftVariantId)!;
+      const right = VARIANTS_BY_ID.get(payload.rightVariantId)!;
+      if (left.modelId !== 'human' && right.modelId !== 'human') continue;
+      humanBattles += 1;
+      const human = left.modelId === 'human' ? left : right;
+      expect(['voice-clara', 'voice-nelliot']).toContain(human.sourceVoiceId);
+      // The opponent reads the same recorded voice, so both clips resolve.
+      expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
+    }
+    // The Human baseline is unseeded (0 votes), so coverage forcing surfaces it
+    // well within 80 draws — the assertions above are actually exercised.
+    expect(humanBattles).toBeGreaterThan(0);
   });
 });
 
@@ -279,6 +306,37 @@ describe('getSample', () => {
 
   it('rejects an unknown model id', async () => {
     await expectVoteError(getSample('not-a-model'));
+  });
+
+  it('excludes the battle voice for a model in the battle (decoded from the token)', async () => {
+    const battleLeft = variantOf('xai-xai-tts'); // voice-clara
+    const battleRight = variantsOfModel('cartesia-sonic').find(
+      (variant) => variant.sourceVoiceId === battleLeft.sourceVoiceId,
+    )!;
+    const token = tokenFor(battleLeft.id, battleRight.id, { promptId: 'clip-05' });
+    // Every clip xAI could produce on the battle's source voice — a battling
+    // model's sample must avoid all of them (different voice = different audio),
+    // so a labeled Listen clip can never byte-match the blind card.
+    const battleVoiceUrls = new Set(
+      variantsOfModel('xai-xai-tts')
+        .filter((variant) => variant.sourceVoiceId === battleLeft.sourceVoiceId)
+        .flatMap((variant) => PROMPTS.map((prompt) => audioUrlFor(variant.id, prompt.id))),
+    );
+    for (let i = 0; i < 30; i += 1) {
+      const sample = await getSample('xai-xai-tts', { battleToken: token });
+      expect(battleVoiceUrls.has(sample.audioUrl)).toBe(false);
+    }
+  });
+
+  it('samples a non-battling model normally even when a battle token is passed', async () => {
+    const battleLeft = variantOf('xai-xai-tts');
+    const battleRight = variantsOfModel('cartesia-sonic').find(
+      (variant) => variant.sourceVoiceId === battleLeft.sourceVoiceId,
+    )!;
+    const token = tokenFor(battleLeft.id, battleRight.id);
+    // Not in the battle → no exclusion, any voice/prompt is valid.
+    const sample = await getSample('elevenlabs-flash-v2', { battleToken: token });
+    expect(sample.audioUrl).toMatch(/^https:\/\/.+\.mp3$/);
   });
 });
 
