@@ -5,6 +5,7 @@ import { useMemo, type CSSProperties } from 'react';
 import { modelBlurb, voiceStats } from '../data/providers';
 import { humannessScore } from '../lib/scoring';
 import { orbSquareness, voiceStyle } from '../lib/voiceViz';
+import { CountUpNumber, meterFillDelayMs } from './CountUpNumber';
 import {
   RankCardArt,
   RankCardIdentity,
@@ -15,9 +16,18 @@ import { RankScale } from './RankScale';
 import { VotesCount } from './VotesCount';
 
 /** The #1 card — double-width hero with Vapi's editorial blurb on the leader. */
-export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCardProps) => {
+export const FeaturedCard = ({
+  model,
+  rank,
+  playing,
+  onPlay,
+  allModels,
+  animateIn = false,
+}: RankCardProps) => {
   const stats = voiceStats(model);
   const handleCardClick = useCardNavigation(model);
+  const score = humannessScore(model, allModels);
+  const fillDelayMs = meterFillDelayMs(rank);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
     () => voiceStyle({ provider, voiceProfile }),
@@ -46,7 +56,7 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
             animate={playing}
             onPlay={onPlay}
             featured
-            squareness={orbSquareness(humannessScore(model, allModels))}
+            squareness={orbSquareness(score)}
             enterDelay={(rank - 1) * 140}
           />
         </div>
@@ -54,9 +64,14 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
           <RankCardIdentity model={model} />
           <div className="rcard-score">
             <span className="rcard-score-label">Humanness</span>
-            <span className="rcard-score-value">{humannessScore(model, allModels)}</span>
+            <CountUpNumber
+              className="rcard-score-value"
+              value={score}
+              inView={animateIn}
+              delayMs={fillDelayMs}
+            />
           </div>
-          <RankScale model={model} allModels={allModels} fillDelayMs={(rank - 1) * 140} />
+          <RankScale model={model} allModels={allModels} fillDelayMs={fillDelayMs} />
           <dl className="fcard-stats">
             <div className="fcard-stat">
               <dt>Latency</dt>
