@@ -23,8 +23,14 @@ export type RankCardProps = {
   playing: boolean;
   onPlay: () => void;
   allModels: ScoredModel[];
-  /** Grid reveal flag: drives the meter fill + score count-up in sync. */
+  /** Row reveal flag: drives the meter fill + score count-up in sync. */
   animateIn?: boolean;
+  /**
+   * 0-based position within the card's reveal row, used to stagger the orb,
+   * bar fill, and count-up so each row cascades from its own start. Defaults
+   * to rank-1 for any single-group usage.
+   */
+  revealIndex?: number;
 };
 
 type RankCardArtProps = {
@@ -134,11 +140,12 @@ export const RankCard = ({
   onPlay,
   allModels,
   animateIn = false,
+  revealIndex = rank - 1,
 }: RankCardProps) => {
   const stats = voiceStats(model);
   const handleCardClick = useCardNavigation(model);
   const score = humannessScore(model, allModels);
-  const fillDelayMs = meterFillDelayMs(rank);
+  const fillDelayMs = meterFillDelayMs(revealIndex);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
     () => voiceStyle({ provider, voiceProfile }),
@@ -167,7 +174,7 @@ export const RankCard = ({
         animate={playing}
         onPlay={onPlay}
         squareness={orbSquareness(score)}
-        enterDelay={(rank - 1) * 140}
+        enterDelay={revealIndex * 140}
       />
       <div className="rcard-score">
         <span className="rcard-score-label">Humanness</span>

@@ -23,11 +23,12 @@ export const FeaturedCard = ({
   onPlay,
   allModels,
   animateIn = false,
+  revealIndex = rank - 1,
 }: RankCardProps) => {
   const stats = voiceStats(model);
   const handleCardClick = useCardNavigation(model);
   const score = humannessScore(model, allModels);
-  const fillDelayMs = meterFillDelayMs(rank);
+  const fillDelayMs = meterFillDelayMs(revealIndex);
   const { provider, voiceProfile } = model;
   const { palette } = useMemo(
     () => voiceStyle({ provider, voiceProfile }),
@@ -57,7 +58,7 @@ export const FeaturedCard = ({
             onPlay={onPlay}
             featured
             squareness={orbSquareness(score)}
-            enterDelay={(rank - 1) * 140}
+            enterDelay={revealIndex * 140}
           />
         </div>
         <div className="fcard-body">

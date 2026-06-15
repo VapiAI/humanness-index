@@ -1012,14 +1012,14 @@ rendered so scrollbar math stays stable. */
    playing card always shows the control so it can be paused. Battle widget and
    detail sample players are out of scope and keep their always-on controls. */
 @media (hover: hover) {
-  .hi-page .top-card-grid .rcard-art-cue {
+  .hi-page .lb-cards .rcard-art-cue {
     opacity: 0;
   }
 
-  .hi-page .top-card-grid .rcard:hover .rcard-art-cue,
-  .hi-page .top-card-grid .rcard:focus-within .rcard-art-cue,
-  .hi-page .top-card-grid .rcard-art:focus-visible .rcard-art-cue,
-  .hi-page .top-card-grid .rcard-art.is-playing .rcard-art-cue {
+  .hi-page .lb-cards .rcard:hover .rcard-art-cue,
+  .hi-page .lb-cards .rcard:focus-within .rcard-art-cue,
+  .hi-page .lb-cards .rcard-art:focus-visible .rcard-art-cue,
+  .hi-page .lb-cards .rcard-art.is-playing .rcard-art-cue {
     opacity: 1;
   }
 }
@@ -1041,7 +1041,7 @@ rendered so scrollbar math stays stable. */
 /* Fill + thumb are pure GPU transforms driven by --p (= score/100): the fill
    scales from the left, the thumb rides a full-width rail translated by the
    score. Default is the final fill (so SSR/no-JS show it filled); the
-   leaderboard cards animate it from 0 on reveal (see the .top-card-grid rules
+   leaderboard cards animate it from 0 on reveal (see the .lb-cards rules
    in the scroll-reveal section). */
 .hi-page .rank-meter-fill {
   position: absolute;
@@ -1588,10 +1588,14 @@ single row) */
   line-height: 1.12;
 }
 
-.hi-page .top-card-grid {
+/* "Most Human Models" cards split into two reveal rows: the top row (featured
+   #1 + #2 + #3) and the second row (#4-#7). Each is its own grid + reveal group
+   so the second row fades in as its own beat on desktop; both share .lb-cards
+   for the hover cue + meter-fill gating. The 16px margin-top doubles as the
+   heading gap (top row) and the inter-row gap (second row). */
+.hi-page .lb-cards {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-flow: row dense;
   gap: 16px;
   margin-top: 16px;
 }
@@ -2467,15 +2471,11 @@ would clip at its top edge. */
   color: var(--teal-strong, #00a371);
 }
 
+/* Below the two-clean-rows desktop width both rows drop to 2 columns (top row:
+   featured spans the row, then #2 + #3; second row: #4/#5 then #6/#7). The
+   rows stay separate reveal groups, but each is now a tidy 2-up block. */
 @media (max-width: 1180px) {
-  .hi-page .top-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* 3 columns get too narrow below ~980px — drop to 2 before the cards cramp */
-@media (max-width: 980px) {
-  .hi-page .top-card-grid {
+  .hi-page .lb-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -2500,13 +2500,14 @@ would clip at its top edge. */
     padding-inline: 20px;
   }
 
-  .hi-page .top-card-grid {
+  .hi-page .lb-cards--top {
     grid-template-columns: 1fr;
   }
 
-  /* Single-column stacking makes seven cards a wall; phones get the podium
-     (the full field stays in the rankings table below). */
-  .hi-page .top-card-grid > article:nth-child(n + 4) {
+  /* Single-column stacking makes seven cards a wall; phones get the podium —
+     the top-3 row — and the second row is dropped (the full field stays in the
+     rankings table below). This also collapses the reveal to one cascade. */
+  .hi-page .lb-cards--rest {
     display: none;
   }
 
@@ -3157,21 +3158,22 @@ html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(n + 15) { transition-del
    (--fill-delay). GPU transforms only; once a card settles (.is-in) the fill
    transitions to its final value, so live score updates animate to the new
    value instead of re-filling from 0. will-change is held only pre-reveal. */
-html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-fill {
+html.reveal-ready .lb-cards:not(.is-in) .rank-meter-fill {
   transform: scaleX(0);
 }
-html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-thumb-rail {
+html.reveal-ready .lb-cards:not(.is-in) .rank-meter-thumb-rail {
   transform: translateX(0);
 }
-html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-fill,
-html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-thumb-rail {
+html.reveal-ready .lb-cards:not(.is-in) .rank-meter-fill,
+html.reveal-ready .lb-cards:not(.is-in) .rank-meter-thumb-rail {
   will-change: transform;
 }
 /* Transition stays defined on the card meters (not just .is-in) so the
    scaleX(0) -> scaleX(--p) change on reveal actually animates, and so live
-   score updates ease to the new value too. */
-html.reveal-ready .top-card-grid .rank-meter-fill,
-html.reveal-ready .top-card-grid .rank-meter-thumb-rail {
+   score updates ease to the new value too. Each row gates its own cards via
+   its own .is-in, so the second row fills when the second row reveals. */
+html.reveal-ready .lb-cards .rank-meter-fill,
+html.reveal-ready .lb-cards .rank-meter-thumb-rail {
   transition: transform var(--fill-dur, 0.9s) var(--reveal-ease);
   transition-delay: var(--fill-delay, 0ms);
 }
@@ -3179,10 +3181,10 @@ html.reveal-ready .top-card-grid .rank-meter-thumb-rail {
 /* Reduced motion: show the meter filled to its value instantly (no growth),
    without forcing transform:none (which would flatten scaleX to a full bar). */
 @media (prefers-reduced-motion: reduce) {
-  html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-fill {
+  html.reveal-ready .lb-cards:not(.is-in) .rank-meter-fill {
     transform: scaleX(var(--p, 1));
   }
-  html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-thumb-rail {
+  html.reveal-ready .lb-cards:not(.is-in) .rank-meter-thumb-rail {
     transform: translateX(calc(var(--p, 1) * 100%));
   }
   html.reveal-ready .rank-meter-fill,

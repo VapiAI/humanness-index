@@ -16,9 +16,13 @@ export const METER_FILL_BASE_MS = 250;
 export const METER_FILL_STAGGER_MS = 140;
 export const METER_FILL_DURATION_MS = 900;
 
-/** Per-card delay shared by the bar fill and the number count-up. */
-export const meterFillDelayMs = (rank: number) =>
-  METER_FILL_BASE_MS + (rank - 1) * METER_FILL_STAGGER_MS;
+/**
+ * Per-card delay shared by the bar fill and the number count-up. `rowIndex` is
+ * the card's 0-based position WITHIN its reveal row, so each row (the top-3 row
+ * and the #4-#7 row) cascades from its own start when that row reveals.
+ */
+export const meterFillDelayMs = (rowIndex: number) =>
+  METER_FILL_BASE_MS + rowIndex * METER_FILL_STAGGER_MS;
 
 /**
  * cubic-bezier(0.16, 1, 0.3, 1) — the same curve as `--reveal-ease`, solved per

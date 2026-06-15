@@ -10,7 +10,7 @@ import type { ScoredModel } from '../lib/types';
  *
  * The fill (scaleX) and thumb (a full-width rail translated by the score) are
  * pure GPU transforms driven by `--p` (= score/100). On the leaderboard cards
- * the fill grows from 0 as the card reveals (see the `.top-card-grid` rules in
+ * the fill grows from 0 as the card reveals (see the `.lb-cards` rules in
  * humanness-index.css); `fillDelayMs` matches the card cascade so each bar
  * fills in turn. Elsewhere (e.g. the detail hero) it just renders filled.
  */
