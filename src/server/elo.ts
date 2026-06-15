@@ -197,42 +197,73 @@ const uncertaintyGain = (voteCount: number) =>
   eloStandardError(voteCount) - eloStandardError(voteCount + 1);
 
 /**
- * All same-voice, different-model pairs (the model_vs_model candidate set).
+ * All same-voice, different-model pairs, grouped by their shared source voice.
  *
  * Pairs are formed within a shared source voice over VARIANTS, and a model
  * only has variants for the voices it actually serves (ModelEntry.sourceVoices
  * via server/catalog.ts). So a pair's voice is always in BOTH models'
- * available voices — the intersection is enforced by construction, and a model
- * (e.g. the Human baseline mid-rollout) is never paired on a voice it lacks.
+ * available voices — the shared-voice intersection is enforced by construction,
+ * and a model (e.g. the Human baseline mid-rollout, which serves only
+ * Clara/Nelliot) is never paired on a voice it lacks.
+ *
+ * Returned keyed by voiceId so the picker can choose a voice first (see
+ * chooseBattlePair): selecting the voice up front makes "both sides share the
+ * source voice" structural rather than incidental, and keeps the source-voice
+ * mix even across the roster.
  */
-const allPairs = (): Pair[] => {
-  const byVoice = new Map<string, CatalogVariant[]>();
+const pairsByVoice = (): Map<string, Pair[]> => {
+  const variantsByVoice = new Map<string, CatalogVariant[]>();
   for (const variant of VARIANTS) {
-    const group = byVoice.get(variant.sourceVoiceId) ?? [];
+    const group = variantsByVoice.get(variant.sourceVoiceId) ?? [];
     group.push(variant);
-    byVoice.set(variant.sourceVoiceId, group);
+    variantsByVoice.set(variant.sourceVoiceId, group);
   }
-  const pairs: Pair[] = [];
-  for (const group of byVoice.values()) {
+  const byVoice = new Map<string, Pair[]>();
+  for (const [voiceId, group] of variantsByVoice) {
+    const pairs: Pair[] = [];
     for (let i = 0; i < group.length - 1; i += 1) {
       for (let j = i + 1; j < group.length; j += 1) {
         pairs.push([group[i], group[j]]);
       }
     }
+    // A voice served by a single model has no valid (different-model) pair;
+    // drop it so it can never be chosen.
+    if (pairs.length > 0) byVoice.set(voiceId, pairs);
   }
-  return pairs;
+  return byVoice;
 };
 
 /**
- * Pick the next blind pairing: under-voted models first, then weight by
- * information gain (uncertainty reduction, close matchups, unresolved rank
- * overlaps, per-voice balance).
+ * Pick the next blind pairing.
+ *
+ * (A) Same source voice on BOTH sides, always: the voice is chosen first, then
+ * a model pair *within* that voice — so a battle structurally cannot cross
+ * voices (including Human-baseline battles, which only ever land on a recorded
+ * voice the Human serves).
+ *
+ * (B) Source voice ~uniform across the available roster: the voice is chosen
+ * uniformly at random, so no voice dominates. This is what stops the schedule
+ * from collapsing onto the Human baseline's voices (Clara/Nelliot) — the
+ * earlier global, summed-vote coverage weighting over-served them because the
+ * Human, serving only two voices, looks perpetually under-covered.
+ *
+ * Within the chosen voice the pairing still favors information gain: under-voted
+ * models first, then weight by uncertainty reduction, close matchups, and
+ * unresolved rank overlaps.
  */
 export const chooseBattlePair = (state: StandingsState): Pair => {
-  let pairs = allPairs();
+  const byVoice = pairsByVoice();
+  // (B) Uniform source-voice choice across the voices that have a valid pair.
+  const voiceIds = [...byVoice.keys()];
+  const voiceId = voiceIds[Math.floor(Math.random() * voiceIds.length)];
+  let pairs = byVoice.get(voiceId)!;
+
   const modelVotes = modelVoteCounts(state);
 
-  // Force coverage: if any model lags, only consider pairs touching it.
+  // Force coverage WITHIN the chosen voice: if a model that serves this voice
+  // lags the field, only consider this voice's pairs that touch a lagging
+  // model. Scoping it to the voice keeps coverage forcing from ever collapsing
+  // the source-voice mix onto one under-voted model's voices (the (B) bug).
   const counts = [...modelVotes.values()];
   const targetVoteCount = Math.max(...counts);
   const lowestVoteCount = Math.min(...counts);
@@ -242,9 +273,12 @@ export const chooseBattlePair = (state: StandingsState): Pair => {
         .filter(([, votes]) => votes === lowestVoteCount)
         .map(([modelId]) => modelId),
     );
-    pairs = pairs.filter(
+    const covering = pairs.filter(
       ([left, right]) => undercovered.has(left.modelId) || undercovered.has(right.modelId),
     );
+    // Only narrow when a lagging model actually serves this voice; otherwise
+    // weight the voice's full pair set below.
+    if (covering.length > 0) pairs = covering;
   }
 
   const aggregates = modelAggregates(state);
@@ -274,10 +308,11 @@ export const chooseBattlePair = (state: StandingsState): Pair => {
     const closeMatch = 4 * expectedLeft * (1 - expectedLeft);
     const rankBoundary =
       (overlapsByModel.get(left.modelId) ?? 0) + (overlapsByModel.get(right.modelId) ?? 0);
-    const voiceBalance =
+    // Within the chosen voice, favor the less-sampled of its variants.
+    const variantBalance =
       uncertaintyGain(variantVotes.get(left.id) ?? 0) +
       uncertaintyGain(variantVotes.get(right.id) ?? 0);
-    return 1 + coverage + 8 * uncertainty + 6 * closeMatch + 1.5 * rankBoundary + voiceBalance;
+    return 1 + coverage + 8 * uncertainty + 6 * closeMatch + 1.5 * rankBoundary + variantBalance;
   });
 
   const pair = weightedChoice(pairs, weights);

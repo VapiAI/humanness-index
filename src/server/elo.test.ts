@@ -102,40 +102,77 @@ describe('chooseBattlePair', () => {
 
   it('only ever pairs the Human baseline on a recorded voice (clara/nelliot)', () => {
     const state = freshState();
-    // Force coverage onto Human: every other variant is well-voted, Human's
-    // are not, so every pick must include the Human baseline.
+    // Leave the Human baseline under-voted (every other variant is well-voted)
+    // so coverage forcing surfaces it — on its recorded voices only.
     for (const variant of VARIANTS) {
       if (variant.modelId === 'human') continue;
       state.set(variant.id, { ...freshVariantStats(), voteCount: 50 });
     }
-    for (let i = 0; i < 100; i += 1) {
+    let humanBattles = 0;
+    for (let i = 0; i < 200; i += 1) {
       const [left, right] = chooseBattlePair(state);
-      const human = [left, right].find((v) => v.modelId === 'human');
-      // Coverage forcing puts Human in every pair, always on a recorded voice;
-      // the opponent reads that same voice and is never emma/godfrey for Human.
-      expect(human).toBeDefined();
-      expect(['voice-clara', 'voice-nelliot']).toContain(human!.sourceVoiceId);
+      // (A) Same source voice on both sides, always.
       expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
       expect(left.modelId).not.toBe(right.modelId);
+      const human = [left, right].find((v) => v.modelId === 'human');
+      if (!human) continue;
+      humanBattles += 1;
+      // The Human serves only Clara/Nelliot, so it can never land on emma/godfrey;
+      // the opponent reads that same recorded voice.
+      expect(['voice-clara', 'voice-nelliot']).toContain(human.sourceVoiceId);
+    }
+    // The under-voted Human is still surfaced (on its recorded voices) — it just
+    // no longer monopolizes the schedule (see the uniformity test below).
+    expect(humanBattles).toBeGreaterThan(0);
+  });
+
+  it('keeps the source-voice mix ~uniform even when the Human baseline lags (B)', () => {
+    const state = freshState();
+    // A warm, even field with the Human baseline far behind: the exact shape
+    // that used to collapse the schedule onto the Human's two voices
+    // (Clara/Nelliot at ~50/50, Emma/Godfrey at 0).
+    for (const variant of VARIANTS) {
+      const voteCount = variant.modelId === 'human' ? 0 : 100;
+      state.set(variant.id, { ...freshVariantStats(), voteCount });
+    }
+    const draws = 4000;
+    const byVoice = new Map<string, number>();
+    for (let i = 0; i < draws; i += 1) {
+      const [left, right] = chooseBattlePair(state);
+      expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
+      byVoice.set(left.sourceVoiceId, (byVoice.get(left.sourceVoiceId) ?? 0) + 1);
+    }
+    // Every roster voice comes up, none far from the 25% uniform share.
+    for (const voiceId of [
+      'voice-clara',
+      'voice-emma',
+      'voice-godfrey',
+      'voice-nelliot',
+    ]) {
+      const share = (byVoice.get(voiceId) ?? 0) / draws;
+      expect(share).toBeGreaterThan(0.18);
+      expect(share).toBeLessThan(0.32);
     }
   });
 
-  it('prefers pairs touching an under-voted model', () => {
+  it('prefers pairs touching an under-voted model (within each voice it serves)', () => {
     const state = freshState();
-    // Give every variant a vote except those of one lagging model.
+    // Give every variant a vote except those of one lagging model. The lagging
+    // model serves all four voices, so coverage forcing surfaces it whichever
+    // voice is drawn.
     const laggingModelId = VARIANTS[0].modelId;
     for (const variant of VARIANTS) {
       if (variant.modelId === laggingModelId) continue;
       state.set(variant.id, { ...freshVariantStats(), voteCount: 10 });
     }
     let touchedLagging = 0;
-    for (let i = 0; i < 50; i += 1) {
+    for (let i = 0; i < 80; i += 1) {
       const [left, right] = chooseBattlePair(state);
       if (left.modelId === laggingModelId || right.modelId === laggingModelId) {
         touchedLagging += 1;
       }
     }
-    // Coverage forcing means every pick must include the lagging model.
-    expect(touchedLagging).toBe(50);
+    // Per-voice coverage forcing means every pick still includes the lagging model.
+    expect(touchedLagging).toBe(80);
   });
 });

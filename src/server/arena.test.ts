@@ -257,23 +257,30 @@ describe('createBattle', () => {
     }
   });
 
-  it('only pairs the Human baseline on a recorded voice, never emma/godfrey', async () => {
+  it('only pairs the Human baseline on a recorded voice, and keeps the voice mix even', async () => {
     let humanBattles = 0;
-    for (let i = 0; i < 80; i += 1) {
+    const voicesSeen = new Set<string>();
+    for (let i = 0; i < 120; i += 1) {
       const battle = await createBattle();
       const payload = battleTokenDecode(battle.voteToken);
       const left = VARIANTS_BY_ID.get(payload.leftVariantId)!;
       const right = VARIANTS_BY_ID.get(payload.rightVariantId)!;
+      // (A) Same source voice on both sides, always (so both clips resolve).
+      expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
+      voicesSeen.add(left.sourceVoiceId);
       if (left.modelId !== 'human' && right.modelId !== 'human') continue;
       humanBattles += 1;
       const human = left.modelId === 'human' ? left : right;
       expect(['voice-clara', 'voice-nelliot']).toContain(human.sourceVoiceId);
-      // The opponent reads the same recorded voice, so both clips resolve.
-      expect(left.sourceVoiceId).toBe(right.sourceVoiceId);
     }
-    // The Human baseline is unseeded (0 votes), so coverage forcing surfaces it
-    // well within 80 draws — the assertions above are actually exercised.
+    // The Human baseline is unseeded (0 votes), so coverage forcing still
+    // surfaces it (on its recorded voices) well within the draws...
     expect(humanBattles).toBeGreaterThan(0);
+    // ...but (B) the schedule is no longer collapsed onto the Human's two
+    // voices: all four roster voices come up.
+    expect(voicesSeen).toEqual(
+      new Set(['voice-clara', 'voice-emma', 'voice-godfrey', 'voice-nelliot']),
+    );
   });
 });
 
