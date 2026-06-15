@@ -7,7 +7,7 @@ import { CaretDown, CaretUp, Info, MagnifyingGlass } from '@phosphor-icons/react
 import { voiceStats } from '../data/providers';
 import { useReveal } from '../hooks/useReveal';
 import { modelDetailLinkForId, providerDetailLinkForName } from '../lib/detail';
-import { competitorRank, humannessScore } from '../lib/scoring';
+import { humannessScore } from '../lib/scoring';
 import type { ScoredModel, TableSort, TableSortKey } from '../lib/types';
 import { DetailPageLink } from './DetailPageLink';
 import { RankPauseIcon, RankPlayIcon } from './icons';
@@ -235,7 +235,7 @@ export const RankingsSection = ({
         </div>
       </Reveal>
       <Reveal as="p" className="rankings-intro" delay={80}>
-        Humanness against measured latency, the best voices sit top-right.
+        Humanness against measured latency, the highest-scoring voices sit top-right
       </Reveal>
       <Reveal as="div" className="rankings-toolbar" delay={140}>
         <div className="rankings-search">
@@ -282,9 +282,6 @@ export const RankingsSection = ({
         <table className="ranking-table">
           <thead>
             <tr>
-              <th aria-sort={ariaSortFor(sort, 'rank')}>
-                <SortHeader label="Rank" sortKey="rank" sort={sort} onSortChange={onSortChange} />
-              </th>
               <th className="rt-rank">
                 Likely Rank
                 <InfoTip tip="Shown as a range because this model needs more votes to pin down its exact rank. It narrows as more people vote." />
@@ -321,7 +318,6 @@ export const RankingsSection = ({
           </thead>
           <tbody>
             {visibleRows.map((model) => {
-              const rank = competitorRank(model.id, sortedModels);
               const isDimmed = Boolean(focusedModelId) && model.id !== focusedModelId;
               const stats = voiceStats(model);
               // Rows select+play on click; the detail links stop propagation
@@ -348,11 +344,8 @@ export const RankingsSection = ({
                     {model.baseline ? (
                       <span className="rt-baseline-tag">Baseline</span>
                     ) : (
-                      `#${rank}`
+                      model.likelyRank.replace('-', '\u2013')
                     )}
-                  </td>
-                  <td className="rt-rank">
-                    {model.baseline ? '\u2014' : model.likelyRank.replace('-', '\u2013')}
                   </td>
                   <td>
                     {providerLink ? (
