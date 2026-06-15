@@ -56,7 +56,7 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
             <span className="rcard-score-label">Humanness</span>
             <span className="rcard-score-value">{humannessScore(model, allModels)}</span>
           </div>
-          <RankScale model={model} allModels={allModels} />
+          <RankScale model={model} allModels={allModels} fillDelayMs={(rank - 1) * 140} />
           <dl className="fcard-stats">
             <div className="fcard-stat">
               <dt>Latency</dt>

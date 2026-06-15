@@ -21,6 +21,9 @@ type RevealBaseProps = {
   'aria-label'?: string;
   'aria-labelledby'?: string;
   'data-nav-theme'?: string;
+  /** Override the IntersectionObserver trigger point (e.g. reveal earlier). */
+  rootMargin?: string;
+  threshold?: number;
 };
 
 /** A single block that fades + rises into view once. `delay` staggers it. */
@@ -28,11 +31,13 @@ export const Reveal = ({
   as = 'div',
   className = '',
   delay,
+  rootMargin,
+  threshold,
   style,
   children,
   ...rest
 }: RevealBaseProps & { delay?: number }) => {
-  const { ref, inView } = useReveal<HTMLElement>();
+  const { ref, inView } = useReveal<HTMLElement>({ rootMargin, threshold });
   return createElement(
     as,
     {
@@ -54,11 +59,13 @@ export const RevealGroup = ({
   as = 'div',
   className = '',
   stagger,
+  rootMargin,
+  threshold,
   style,
   children,
   ...rest
 }: RevealBaseProps & { stagger?: number }) => {
-  const { ref, inView } = useReveal<HTMLElement>();
+  const { ref, inView } = useReveal<HTMLElement>({ rootMargin, threshold });
   const mergedStyle = stagger
     ? ({ ...style, '--reveal-stagger': `${stagger}ms` } as CSSProperties)
     : style;

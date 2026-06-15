@@ -161,7 +161,7 @@ export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardPr
         <span className="rcard-score-label">Humanness</span>
         <span className="rcard-score-value">{humannessScore(model, allModels)}</span>
       </div>
-      <RankScale model={model} allModels={allModels} />
+      <RankScale model={model} allModels={allModels} fillDelayMs={(rank - 1) * 140} />
       <dl className="rcard-stats">
         <div>
           <dt>Latency</dt>

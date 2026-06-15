@@ -21,7 +21,7 @@ export const LeaderboardSection = ({
     <Reveal as="div" className="section-heading">
       <h2>Most Human Models</h2>
     </Reveal>
-    <RevealGroup as="div" className="top-card-grid">
+    <RevealGroup as="div" className="top-card-grid" rootMargin="0px 0px 0px 0px">
       {topModels.map((model, index) => {
         const CardComponent = index === 0 ? FeaturedCard : RankCard;
         return (

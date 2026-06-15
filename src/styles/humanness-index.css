@@ -1038,22 +1038,42 @@ rendered so scrollbar math stays stable. */
   box-shadow: inset 0 1px 2px rgba(26, 26, 46, 0.06);
 }
 
+/* Fill + thumb are pure GPU transforms driven by --p (= score/100): the fill
+   scales from the left, the thumb rides a full-width rail translated by the
+   score. Default is the final fill (so SSR/no-JS show it filled); the
+   leaderboard cards animate it from 0 on reveal (see the .top-card-grid rules
+   in the scroll-reveal section). */
 .hi-page .rank-meter-fill {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  min-width: 8px;
+  width: 100%;
   border-radius: 999px;
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--mint, #00cd8f) 55%, #ffffff),
     var(--mint, #00cd8f)
   );
+  transform-origin: left center;
+  transform: scaleX(var(--p, 1));
+}
+
+/* Full-width rail so the thumb can be positioned via a track-relative
+   translateX (translate % is relative to this rail's width = the track). */
+.hi-page .rank-meter-thumb-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  transform: translateX(calc(var(--p, 1) * 100%));
+  pointer-events: none;
 }
 
 .hi-page .rank-meter-thumb {
   position: absolute;
+  left: 0;
   top: 50%;
   width: 14px;
   height: 14px;
@@ -3006,6 +3026,8 @@ would clip at its top edge. */
   --row-dur: 0.55s;
   --row-rise: 10px;
   --row-stagger: 70ms;
+  /* Leaderboard Humanness meter fill-on-reveal. */
+  --fill-dur: 0.9s;
 }
 
 /* Pre-promote a compositor layer ONLY while an element is waiting to play its
@@ -3129,6 +3151,45 @@ html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(13) { transition-delay: 
 html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(14) { transition-delay: calc(var(--row-stagger) * 14); }
 /* Cap the stagger so a long (show-all) table still finishes around ~1.6s. */
 html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(n + 15) { transition-delay: calc(var(--row-stagger) * 15); }
+
+/* Leaderboard Humanness meter: the fill (scaleX) + thumb rail (translateX)
+   grow from empty as each card reveals, staggered to match the card cascade
+   (--fill-delay). GPU transforms only; once a card settles (.is-in) the fill
+   transitions to its final value, so live score updates animate to the new
+   value instead of re-filling from 0. will-change is held only pre-reveal. */
+html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-fill {
+  transform: scaleX(0);
+}
+html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-thumb-rail {
+  transform: translateX(0);
+}
+html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-fill,
+html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-thumb-rail {
+  will-change: transform;
+}
+/* Transition stays defined on the card meters (not just .is-in) so the
+   scaleX(0) -> scaleX(--p) change on reveal actually animates, and so live
+   score updates ease to the new value too. */
+html.reveal-ready .top-card-grid .rank-meter-fill,
+html.reveal-ready .top-card-grid .rank-meter-thumb-rail {
+  transition: transform var(--fill-dur, 0.9s) var(--reveal-ease);
+  transition-delay: var(--fill-delay, 0ms);
+}
+
+/* Reduced motion: show the meter filled to its value instantly (no growth),
+   without forcing transform:none (which would flatten scaleX to a full bar). */
+@media (prefers-reduced-motion: reduce) {
+  html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-fill {
+    transform: scaleX(var(--p, 1));
+  }
+  html.reveal-ready .top-card-grid:not(.is-in) .rank-meter-thumb-rail {
+    transform: translateX(calc(var(--p, 1) * 100%));
+  }
+  html.reveal-ready .rank-meter-fill,
+  html.reveal-ready .rank-meter-thumb-rail {
+    transition: none !important;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html.reveal-ready .reveal,
