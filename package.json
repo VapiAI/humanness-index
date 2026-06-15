@@ -24,6 +24,7 @@
     "humanness:human-detap": "bun run src/pipeline/detapTakes.ts",
     "humanness:clone": "bun run src/pipeline/cloneVoices.ts",
     "humanness:verify-clips": "bun run src/pipeline/verifyClips.ts",
+    "humanness:normalize-audio": "bun run src/pipeline/normalizeHostedAudio.ts",
     "humanness:ttfb": "bun run src/pipeline/ttfbBench.ts"
   },
   "dependencies": {
