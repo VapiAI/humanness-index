@@ -155,7 +155,7 @@ export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardPr
         animate={playing}
         onPlay={onPlay}
         squareness={orbSquareness(humannessScore(model, allModels))}
-        enterDelay={(rank - 1) * 80}
+        enterDelay={(rank - 1) * 140}
       />
       <div className="rcard-score">
         <span className="rcard-score-label">Humanness</span>

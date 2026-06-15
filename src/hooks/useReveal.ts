@@ -45,7 +45,7 @@ export const useReveal = <T extends HTMLElement = HTMLElement>(
         }
       },
       {
-        rootMargin: options?.rootMargin ?? '0px 0px -10% 0px',
+        rootMargin: options?.rootMargin ?? '0px 0px -15% 0px',
         threshold: options?.threshold ?? 0.12,
       },
     );

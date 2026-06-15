@@ -47,7 +47,7 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
             onPlay={onPlay}
             featured
             squareness={orbSquareness(humannessScore(model, allModels))}
-            enterDelay={(rank - 1) * 80}
+            enterDelay={(rank - 1) * 140}
           />
         </div>
         <div className="fcard-body">

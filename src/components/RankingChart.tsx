@@ -322,7 +322,7 @@ const EloDistributionChart = ({
           const cy = yForMs(parseLatencyMs(model) as number);
           // Left-to-right sweep: the entrance delay scales with the dot's
           // Humanness (x) position, so the field populates across the chart.
-          const enterDelay = Math.round(((cx - left) / plotW) * 480);
+          const enterDelay = Math.round(((cx - left) / plotW) * 900);
           return (
             <g key={model.id} className="chart-dot-group" opacity={bright ? 1 : 0.25}>
               <circle

@@ -2999,9 +2999,9 @@ would clip at its top edge. */
    state instantly. Driven by useReveal + the <Reveal>/<RevealGroup> wrappers. */
 :root {
   --reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --reveal-dur: 0.62s;
-  --reveal-rise: 16px;
-  --reveal-stagger: 80ms;
+  --reveal-dur: 0.95s;
+  --reveal-rise: 22px;
+  --reveal-stagger: 140ms;
 }
 
 /* A single element rising into place. */
@@ -3046,8 +3046,8 @@ html.reveal-ready .viz-enter {
   opacity: 0;
   transform: scale(0.9);
   transition:
-    opacity 0.6s ease-out,
-    transform 0.66s var(--reveal-ease);
+    opacity 0.9s ease-out,
+    transform 0.95s var(--reveal-ease);
   transition-delay: var(--viz-enter-delay, 0ms);
   will-change: opacity, transform;
 }
@@ -3065,8 +3065,8 @@ html.reveal-ready .ranking-chart-area .chart-point {
   transform-box: fill-box;
   transform-origin: center;
   transition:
-    opacity 0.42s ease-out,
-    transform 0.52s var(--reveal-ease);
+    opacity 0.65s ease-out,
+    transform 0.7s var(--reveal-ease);
 }
 html.reveal-ready .ranking-chart-area.dots-in .chart-point {
   opacity: 1;
@@ -3074,7 +3074,7 @@ html.reveal-ready .ranking-chart-area.dots-in .chart-point {
 }
 html.reveal-ready .ranking-chart-area .chart-better-zone-rect {
   opacity: 0;
-  transition: opacity 0.6s ease-out 0.12s;
+  transition: opacity 0.8s ease-out 0.12s;
 }
 html.reveal-ready .ranking-chart-area.dots-in .chart-better-zone-rect {
   opacity: 1;
