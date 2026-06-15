@@ -302,11 +302,20 @@ export const useArenaAudio = () => {
     [markSidePlayed, markSideStarted, playingId, startClip, stopPlayback],
   );
 
-  /** Reset for the next pair without restarting playback. */
+  /**
+   * Reset for the next pair: stop playback and clear ALL per-round state so the
+   * fresh pair starts clean and non-playing. Bumping the play generation and
+   * clearing playingId is essential — otherwise a post-vote replay still marked
+   * "playing" (its id is a blind side id) would carry its playing flag onto the
+   * next pair's card, and a pending finish callback could fire mid-next-round.
+   */
   const resetRound = useCallback(() => {
     roundActiveRef.current = false;
+    playGenRef.current += 1; // invalidate any in-flight playback callbacks
+    playSourceRef.current = null;
     if (roundTimerRef.current) window.clearTimeout(roundTimerRef.current);
     stopClip();
+    setPlayingId(null);
     setRoundPhase('idle');
     resetSides();
   }, [resetSides, stopClip]);
