@@ -5,6 +5,7 @@ import { useEffect, type FocusEvent } from 'react';
 import { CaretDown, CaretUp, Info, MagnifyingGlass } from '@phosphor-icons/react';
 
 import { voiceStats } from '../data/providers';
+import { useReveal } from '../hooks/useReveal';
 import { modelDetailLinkForId, providerDetailLinkForName } from '../lib/detail';
 import { competitorRank, humannessScore } from '../lib/scoring';
 import type { ScoredModel, TableSort, TableSortKey } from '../lib/types';
@@ -136,6 +137,11 @@ export const RankingsSection = ({
   onClearFocus,
   onTogglePlay,
 }: RankingsSectionProps) => {
+  // One-time "build" trigger: fires once when the table scrolls into view, then
+  // the rows cascade in via CSS. Re-sorting/filtering only reorders the
+  // already-settled rows, so the build never re-animates.
+  const { ref: tableRef, inView: rowsIn } = useReveal<HTMLDivElement>();
+
   // Selection is sticky only on the dots/rows themselves: pressing anywhere
   // else (empty chart space, the toolbar, the rest of the page) deselects and
   // stops the sample. Escape deselects, and Up/Down step the selection to the
@@ -266,7 +272,10 @@ export const RankingsSection = ({
         onClearFocus={onClearFocus}
       />
 
-      <Reveal as="div" className="ranking-table-wrap">
+      <div
+        ref={tableRef}
+        className={`ranking-table-wrap rows-reveal${rowsIn ? ' is-in' : ''}`}
+      >
         <table className="ranking-table">
           <thead>
             <tr>
@@ -393,7 +402,7 @@ export const RankingsSection = ({
             })}
           </tbody>
         </table>
-      </Reveal>
+      </div>
       {rankedFilteredCount > 10 && (
         <button className="ranking-showall" type="button" onClick={onToggleShowAll}>
           {showAll ? 'Show top 10' : `Show all ${rankedFilteredCount}`}

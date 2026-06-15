@@ -3002,6 +3002,10 @@ would clip at its top edge. */
   --reveal-dur: 0.95s;
   --reveal-rise: 22px;
   --reveal-stagger: 140ms;
+  /* Per-row build for the rankings table. */
+  --row-dur: 0.55s;
+  --row-rise: 10px;
+  --row-stagger: 70ms;
 }
 
 /* A single element rising into place. */
@@ -3080,12 +3084,52 @@ html.reveal-ready .ranking-chart-area.dots-in .chart-better-zone-rect {
   opacity: 1;
 }
 
+/* Rankings table "builds" row by row: the header leads, then each body row
+   fades + rises in once the table scrolls into view (useReveal toggles .is-in
+   on .ranking-table-wrap.rows-reveal). The per-row stagger is pure CSS via
+   nth-child, so re-sorting/filtering only reorders already-settled rows
+   (opacity 1) and never re-triggers the build. The hover/background transition
+   is preserved alongside the one-time reveal. */
+html.reveal-ready .rows-reveal thead tr,
+html.reveal-ready .rows-reveal tbody tr {
+  opacity: 0;
+  transform: translateY(var(--row-rise));
+  transition:
+    opacity var(--row-dur) var(--reveal-ease),
+    transform var(--row-dur) var(--reveal-ease),
+    background 0.15s ease;
+}
+html.reveal-ready .rows-reveal.is-in thead tr,
+html.reveal-ready .rows-reveal.is-in tbody tr {
+  opacity: 1;
+  transform: none;
+}
+html.reveal-ready .rows-reveal.is-in thead tr { transition-delay: 0ms; }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(1) { transition-delay: calc(var(--row-stagger) * 1); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(2) { transition-delay: calc(var(--row-stagger) * 2); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(3) { transition-delay: calc(var(--row-stagger) * 3); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(4) { transition-delay: calc(var(--row-stagger) * 4); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(5) { transition-delay: calc(var(--row-stagger) * 5); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(6) { transition-delay: calc(var(--row-stagger) * 6); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(7) { transition-delay: calc(var(--row-stagger) * 7); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(8) { transition-delay: calc(var(--row-stagger) * 8); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(9) { transition-delay: calc(var(--row-stagger) * 9); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(10) { transition-delay: calc(var(--row-stagger) * 10); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(11) { transition-delay: calc(var(--row-stagger) * 11); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(12) { transition-delay: calc(var(--row-stagger) * 12); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(13) { transition-delay: calc(var(--row-stagger) * 13); }
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(14) { transition-delay: calc(var(--row-stagger) * 14); }
+/* Cap the stagger so a long (show-all) table still finishes around ~1.6s. */
+html.reveal-ready .rows-reveal.is-in tbody tr:nth-child(n + 15) { transition-delay: calc(var(--row-stagger) * 15); }
+
 @media (prefers-reduced-motion: reduce) {
   html.reveal-ready .reveal,
   html.reveal-ready .reveal-group > *,
   html.reveal-ready .viz-enter,
   html.reveal-ready .ranking-chart-area .chart-point,
-  html.reveal-ready .ranking-chart-area .chart-better-zone-rect {
+  html.reveal-ready .ranking-chart-area .chart-better-zone-rect,
+  html.reveal-ready .rows-reveal thead tr,
+  html.reveal-ready .rows-reveal tbody tr {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
