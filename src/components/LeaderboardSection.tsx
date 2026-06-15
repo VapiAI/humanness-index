@@ -37,45 +37,65 @@ export const LeaderboardSection = ({
       <Reveal as="div" className="section-heading">
         <h2>Most Human Models</h2>
       </Reveal>
-      <div
-        ref={topRow.ref}
-        className={`lb-cards lb-cards--top reveal-group${topRow.inView ? ' is-in' : ''}`}
-      >
-        {topCards.map((model, index) => {
-          const CardComponent = index === 0 ? FeaturedCard : RankCard;
-          return (
-            <CardComponent
-              key={model.id}
-              model={model}
-              rank={index + 1}
-              revealIndex={index}
-              playing={playingId === model.id}
-              onPlay={() => onTogglePlay(model)}
-              allModels={allModels}
-              animateIn={topRow.inView}
-            />
-          );
-        })}
-      </div>
-      {secondCards.length > 0 && (
-        <div
-          ref={secondRow.ref}
-          className={`lb-cards lb-cards--rest reveal-group${secondRow.inView ? ' is-in' : ''}`}
-        >
-          {secondCards.map((model, index) => (
-            <RankCard
-              key={model.id}
-              model={model}
-              rank={index + 4}
-              revealIndex={index}
-              playing={playingId === model.id}
-              onPlay={() => onTogglePlay(model)}
-              allModels={allModels}
-              animateIn={secondRow.inView}
-            />
-          ))}
+      {/* The podium effectively announces the winners, so while voting is live the
+          cards are blurred behind a labeled scrim. The cards stay in the DOM/SSR
+          (so crawlers still read the standings) but are `inert`: out of the tab
+          order and the accessibility tree, with the veil's copy read in their
+          place. This also intentionally hides the card reveal animations for now. */}
+      <div className="lb-provisional">
+        <div className="lb-provisional-cards" inert>
+          <div
+            ref={topRow.ref}
+            className={`lb-cards lb-cards--top reveal-group${topRow.inView ? ' is-in' : ''}`}
+          >
+            {topCards.map((model, index) => {
+              const CardComponent = index === 0 ? FeaturedCard : RankCard;
+              return (
+                <CardComponent
+                  key={model.id}
+                  model={model}
+                  rank={index + 1}
+                  revealIndex={index}
+                  playing={playingId === model.id}
+                  onPlay={() => onTogglePlay(model)}
+                  allModels={allModels}
+                  animateIn={topRow.inView}
+                />
+              );
+            })}
+          </div>
+          {secondCards.length > 0 && (
+            <div
+              ref={secondRow.ref}
+              className={`lb-cards lb-cards--rest reveal-group${secondRow.inView ? ' is-in' : ''}`}
+            >
+              {secondCards.map((model, index) => (
+                <RankCard
+                  key={model.id}
+                  model={model}
+                  rank={index + 4}
+                  revealIndex={index}
+                  playing={playingId === model.id}
+                  onPlay={() => onTogglePlay(model)}
+                  allModels={allModels}
+                  animateIn={secondRow.inView}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+        <div className="lb-provisional-veil" role="note">
+          <span className="lb-provisional-pill">
+            <span className="lb-provisional-dot" aria-hidden="true" />
+            Voting in progress
+          </span>
+          <p className="lb-provisional-title">Rankings are provisional</p>
+          <p className="lb-provisional-sub">
+            We&apos;re keeping the podium under wraps while the votes come in. Listen and
+            vote above, and the most human models reveal once the standings settle.
+          </p>
+        </div>
+      </div>
     </section>
   );
 };

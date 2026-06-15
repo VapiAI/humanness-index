@@ -1629,6 +1629,112 @@ single row) */
   margin-top: 16px;
 }
 
+/* Provisional veil over "Most Human Models". The podium effectively announces
+   the winners, so while voting is live the cards are blurred behind a labeled
+   scrim. The cards stay rendered (DOM/SSR) and `inert` in the markup; the scale
+   + overflow clip keep the blur from bleeding past the rounded frame. */
+.hi-page .lb-provisional {
+  position: relative;
+  margin-top: 16px;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.hi-page .lb-provisional-cards {
+  filter: blur(15px) saturate(1.03);
+  transform: scale(1.03);
+  transform-origin: center;
+  user-select: none;
+}
+
+/* The first card row's own 16px margin-top would double the gap in the wrap. */
+.hi-page .lb-provisional-cards > .lb-cards:first-child {
+  margin-top: 0;
+}
+
+.hi-page .lb-provisional-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  background:
+    radial-gradient(
+      130% 130% at 50% 50%,
+      rgba(250, 249, 246, 0.58) 0%,
+      rgba(250, 249, 246, 0.76) 55%,
+      rgba(250, 249, 246, 0.9) 100%
+    );
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.hi-page .lb-provisional-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid rgba(0, 163, 113, 0.28);
+  border-radius: 999px;
+  background: rgba(0, 205, 143, 0.12);
+  color: #0a8f66;
+  font-family: var(--font-eyebrow);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hi-page .lb-provisional-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mint, #00cd8f);
+  box-shadow: 0 0 0 0 rgba(0, 205, 143, 0.55);
+  animation: lb-provisional-pulse 1.8s ease-out infinite;
+}
+
+@keyframes lb-provisional-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 205, 143, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(0, 205, 143, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 205, 143, 0);
+  }
+}
+
+.hi-page .lb-provisional-title {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hi-page .lb-provisional-sub {
+  margin: 0;
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hi-page .lb-provisional-dot {
+    animation: none;
+  }
+}
+
 .hi-page .legend {
   flex-wrap: wrap;
   gap: 16px;
