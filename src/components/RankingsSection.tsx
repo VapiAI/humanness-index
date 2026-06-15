@@ -297,11 +297,11 @@ export const RankingsSection = ({
                 <InfoTip tip="Median time to first audio across 50 sequential streaming API requests per model, measured June 2026. Models without a publicly accessible API show a dash." />
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'price')}>
-                <SortHeader label="Price / 1M chars" sortKey="price" sort={sort} onSortChange={onSortChange} />
-                <InfoTip tip="Published pay-as-you-go API pricing, normalized to US dollars per million characters. Open-source models show no price." />
+                <SortHeader label="Price" sortKey="price" sort={sort} onSortChange={onSortChange} />
+                <InfoTip tip="Published pay-as-you-go API pricing, in US dollars per 1 million characters. Open-source models show no price." />
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'votes')}>
-                <SortHeader label="Positive Votes" sortKey="votes" sort={sort} onSortChange={onSortChange} />
+                <SortHeader label="Votes" sortKey="votes" sort={sort} onSortChange={onSortChange} />
                 <InfoTip tip="How many listeners picked this voice as more human in blind battles. Rank is set by Elo, which also weights how strong each opponent was, so more votes doesn't always mean a higher rank." />
               </th>
               <th className="rt-listen">Listen</th>
