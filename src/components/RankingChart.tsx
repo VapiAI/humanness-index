@@ -7,6 +7,7 @@ import { useReveal } from '../hooks/useReveal';
 import { clamp, humannessScore, mean, parseLatencyMs } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
 import { ProviderLogo } from './ProviderLogo';
+import { Reveal } from './Reveal';
 
 const VisualizationLegend = () => (
   <div className="legend">
@@ -26,6 +27,12 @@ type RankingVisualizationPanelProps = {
   /** Select toggle shared with the table: focuses + plays, or deselects + stops. */
   onFocusModel: (model: ScoredModel) => void;
   onClearFocus: () => void;
+  /**
+   * Scroll-reveal stagger (ms). The card fades/rises in as its own step so it
+   * lands just after the toolbar/search field in the section's cascade; the
+   * dot populate sweep still fires off the chart area's own observer.
+   */
+  revealDelay?: number;
 };
 
 export const RankingVisualizationPanel = ({
@@ -34,8 +41,9 @@ export const RankingVisualizationPanel = ({
   focusedModel,
   onFocusModel,
   onClearFocus,
+  revealDelay = 0,
 }: RankingVisualizationPanelProps) => (
-  <div className="rankings-visual-panel">
+  <Reveal as="div" className="rankings-visual-panel" delay={revealDelay}>
     <div className="ranking-chart-heading">
       <div className="ranking-chart-titles">
         <h3>
@@ -65,7 +73,7 @@ export const RankingVisualizationPanel = ({
       <strong>Why latency matters.</strong>{' '}
       A voice that lags breaks the conversation, no matter how human it sounds.
     </p>
-  </div>
+  </Reveal>
 );
 
 type HoverPoint = {

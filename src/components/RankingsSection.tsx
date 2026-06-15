@@ -264,12 +264,15 @@ export const RankingsSection = ({
         </div>
       </Reveal>
 
+      {/* The chart card reveals as its own step ~one stagger after the toolbar
+          (delay 140), so it lands a beat after the search field settles. */}
       <RankingVisualizationPanel
         rows={rankingRows}
         allModels={sortedModels}
         focusedModel={focusedModel}
         onFocusModel={onSelectModel}
         onClearFocus={onClearFocus}
+        revealDelay={300}
       />
 
       <div
