@@ -19,6 +19,7 @@ import { ProviderLogo } from './components/ProviderLogo';
 import { RankScale } from './components/RankScale';
 import {
   breadcrumbsJsonLd,
+  faqJsonLd,
   INDEX_PATH,
   listedModelEntriesOfProvider,
   modelJsonLd,
@@ -82,18 +83,29 @@ export const ModelDetailPage = ({ entry, snapshot }: ModelDetailPageProps) => {
       <div className="app-rails" aria-hidden="true" />
       <JsonLd data={breadcrumbsJsonLd(breadcrumbs)} />
       <JsonLd data={modelJsonLd(entry, provider)} />
+      {entry.faq && entry.faq.length > 0 && (
+        <JsonLd data={faqJsonLd(entry.faq)} />
+      )}
 
       <div className="detail-shell">
         <Breadcrumbs items={breadcrumbs} />
         <header className="detail-hero">
           <div className="detail-hero-copy">
-            <p className="eyebrow">Humanness Index™ {'\u00b7'} TTS model</p>
+            <p className="eyebrow">
+              {`Humanness Index\u2122 \u00b7 ${
+                entry.baseline ? 'Baseline reference' : 'TTS model'
+              }`}
+            </p>
             <div className="detail-hero-id">
               <span className="detail-hero-logo" aria-hidden="true">
                 <ProviderLogo provider={provider.name} />
               </span>
               <div className="detail-hero-name">
-                <h1>{entry.name}</h1>
+                <h1>
+                  {entry.baseline
+                    ? entry.name
+                    : `${provider.name} ${entry.name}`}
+                </h1>
                 <p className="detail-hero-provider">
                   by <Link href={providerPath(provider)}>{provider.name}</Link>
                 </p>

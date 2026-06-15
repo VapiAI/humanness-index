@@ -17,6 +17,7 @@ import {
   listedProviderEntries,
   providerOfModel,
   type CopyBlock,
+  type FaqEntry,
   type ModelEntry,
   type ProviderEntry,
   type Sourced,
@@ -89,34 +90,48 @@ export const providerDetailLinkForName = (
 
 /* ----------------------------- SEO patterns ------------------------------- */
 
-/** "Sonic 3.5 TTS" but "Grok TTS" stays as-is (no "TTS TTS"). */
-const modelNameWithKind = (entry: ModelEntry) =>
-  /tts/i.test(entry.name) ? entry.name : `${entry.name} TTS`;
+/** The Human baseline provider is a reference, not a TTS vendor. */
+const BASELINE_PROVIDER_SLUG = 'human-baseline';
+export const isBaselineProvider = (entry: ProviderEntry): boolean =>
+  entry.slug === BASELINE_PROVIDER_SLUG;
 
+/**
+ * Page titles are returned WITHOUT the brand suffix: app/layout.tsx sets a
+ * `title.template` ('%s | Vapi') that appends it, so every document title ends
+ * the same way. The Human baseline is a reference recording, not a TTS
+ * product, so it gets its own copy instead of the model/provider templates.
+ */
 export const modelPageTitle = (
   entry: ModelEntry,
   provider: ProviderEntry,
 ): string => {
+  if (entry.baseline) return 'Human Baseline: The 100-Point Reference';
   const retired = entry.status === 'retired' ? ' (retired)' : '';
-  return `${provider.name} ${modelNameWithKind(entry)}${retired}: Humanness Score, Latency & Samples | Vapi`;
+  return `${provider.name} ${entry.name}${retired}: Humanness & Latency`;
 };
 
 export const modelPageDescription = (
   entry: ModelEntry,
   provider: ProviderEntry,
 ): string =>
-  `How human does ${provider.name} ${entry.name} sound? Blind-test Humanness score, measured latency, languages, pricing, and audio samples on the Humanness Index™ by Vapi.`;
+  entry.baseline
+    ? 'The Human baseline is a real person reading the same lines every model reads. It anchors the top of the Humanness Index™ by Vapi at 100, the reference every TTS model is scored against.'
+    : `How human does ${provider.name} ${entry.name} sound? Blind-test Humanness score, measured latency, languages, pricing, and audio samples on the Humanness Index™ by Vapi.`;
 
 export const providerPageTitle = (entry: ProviderEntry): string =>
-  `${entry.name} Text to Speech Models: Humanness Rankings | Vapi`;
+  isBaselineProvider(entry)
+    ? 'The Human Baseline on the Humanness Index™'
+    : `${entry.name} Text to Speech Models: Humanness Rankings`;
 
 export const providerPageDescription = (
   entry: ProviderEntry,
   modelCount: number,
 ): string =>
-  `${entry.name} text to speech on the Humanness Index™ by Vapi: ${modelCount} ${
-    modelCount === 1 ? 'model' : 'models'
-  } ranked by blind listener votes, with Humanness scores, measured latency, languages, and pricing.`;
+  isBaselineProvider(entry)
+    ? 'Human is the reference point on the Humanness Index™ by Vapi, not a TTS provider. Real people recorded the same lines every model reads, anchoring the Humanness scale at 100.'
+    : `${entry.name} text to speech on the Humanness Index™ by Vapi: ${modelCount} ${
+        modelCount === 1 ? 'model' : 'models'
+      } ranked by blind listener votes, with Humanness scores, measured latency, languages, and pricing.`;
 
 /**
  * One-line positioning for the hero, lifted from the entry's first copy
@@ -375,11 +390,23 @@ export const breadcrumbsJsonLd = (items: BreadcrumbItem[]) => ({
 });
 
 /**
- * SoftwareApplication for model pages:
- * honest fit for a commercial TTS model/API. No aggregateRating by policy.
- * `offers` only when pricing is sourced and an actual dollar rate.
+ * Model pages: a real TTS model is a SoftwareApplication; the Human baseline
+ * is a real-person reference recording, so it is a CreativeWork (never typed
+ * as software). No aggregateRating by policy. `offers` only when pricing is
+ * sourced and an actual dollar rate.
  */
 export const modelJsonLd = (entry: ModelEntry, provider: ProviderEntry) => {
+  if (entry.baseline) {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWork',
+      name: entry.name,
+      alternateName: 'Human Baseline',
+      url: absoluteUrl(modelPath(entry)),
+      description: modelPageDescription(entry, provider),
+      isPartOf: { '@type': 'WebPage', '@id': absoluteUrl(INDEX_PATH) },
+    };
+  }
   const pricing = entry.stats.pricing ?? provider.stats.pricing;
   const offers =
     pricing && pricing.value.startsWith('$')
@@ -399,6 +426,8 @@ export const modelJsonLd = (entry: ModelEntry, provider: ProviderEntry) => {
     applicationCategory: 'Text-to-speech model',
     operatingSystem: 'Cloud API',
     url: absoluteUrl(modelPath(entry)),
+    image: absoluteUrl(`${modelPath(entry)}/opengraph-image`),
+    ...(entry.releaseDate ? { datePublished: entry.releaseDate.value } : {}),
     description: modelPageDescription(entry, provider),
     provider: {
       '@type': 'Organization',
@@ -410,13 +439,29 @@ export const modelJsonLd = (entry: ModelEntry, provider: ProviderEntry) => {
   };
 };
 
-export const providerJsonLd = (entry: ProviderEntry) => ({
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: entry.name,
-  url: entry.websiteUrl,
-  logo: absoluteUrl(`/marks/${entry.mark}`),
-});
+/**
+ * Provider pages: a real vendor is an Organization; the Human baseline is not
+ * a company, so it is typed as a plain Thing with no Organization claims and
+ * no self-referential url (its registry websiteUrl is the Index itself).
+ */
+export const providerJsonLd = (entry: ProviderEntry) => {
+  if (isBaselineProvider(entry)) {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Thing',
+      name: 'Human Baseline',
+      description:
+        'The real-human reference recording that anchors the Humanness Index™ at 100.',
+    };
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: entry.name,
+    url: entry.websiteUrl,
+    logo: absoluteUrl(`/marks/${entry.mark}`),
+  };
+};
 
 /**
  * The Index page's ranked model list as an ItemList of model page URLs, the
@@ -432,11 +477,14 @@ export const indexModelsItemListJsonLd = () => {
   const ordered = [
     ...ARENA_ROWS.flatMap((row) => listedById.get(row.id) ?? []),
     ...listedModelEntries().filter((entry) => !seedIds.has(entry.id)),
-  ];
+    // The Human baseline is a reference, not a TTS model: keep it out of the
+    // "Text to speech models" list.
+  ].filter((entry) => !entry.baseline);
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Text to speech models on the Humanness Index™',
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
     itemListElement: ordered.map((entry, index) => ({
       '@type': 'ListItem',
       position: index + 1,
@@ -450,16 +498,69 @@ export const indexModelsItemListJsonLd = () => {
 export const providerModelsItemListJsonLd = (
   provider: ProviderEntry,
   models: ModelEntry[],
-) => ({
+) => {
+  // Exclude the Human baseline: the list name claims "models".
+  const listed = models.filter((model) => !model.baseline);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `${provider.name} models on the Humanness Index™`,
+    itemListElement: listed.map((model, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: `${provider.name} ${model.name}`,
+      url: absoluteUrl(modelPath(model)),
+    })),
+  };
+};
+
+/** FAQPage built from a registry FAQ block (render only when non-empty). */
+export const faqJsonLd = (faq: FaqEntry[]) => ({
   '@context': 'https://schema.org',
-  '@type': 'ItemList',
-  name: `${provider.name} models on the Humanness Index™`,
-  itemListElement: models.map((model, index) => ({
-    '@type': 'ListItem',
-    position: index + 1,
-    name: `${provider.name} ${model.name}`,
-    url: absoluteUrl(modelPath(model)),
+  '@type': 'FAQPage',
+  mainEntity: faq.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: { '@type': 'Answer', text: item.answer },
   })),
+});
+
+/* ------------------------- Site-wide entities ----------------------------- */
+
+const ORG_ID = `${SITE_ORIGIN}/#vapi`;
+
+/** Vapi, the publisher behind the Index (rendered once in the root layout). */
+export const organizationJsonLd = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': ORG_ID,
+  name: 'Vapi',
+  url: 'https://vapi.ai',
+  logo: absoluteUrl('/icon.svg'),
+  sameAs: ['https://github.com/VapiAI'],
+});
+
+/** The site itself (rendered once in the root layout). No SearchAction. */
+export const webSiteJsonLd = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': `${SITE_ORIGIN}/#website`,
+  name: 'The Humanness Index™',
+  url: absoluteUrl('/'),
+  publisher: { '@id': ORG_ID },
+});
+
+/** The leaderboard as a licensed Dataset (rendered once on the home page). */
+export const datasetJsonLd = () => ({
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: 'The Humanness Index™ leaderboard',
+  description:
+    'Blind listener rankings of text to speech models by how human they sound, with Humanness scores and measured latency.',
+  url: absoluteUrl('/'),
+  license: 'https://creativecommons.org/licenses/by/4.0/',
+  isAccessibleForFree: true,
+  creator: { '@type': 'Organization', name: 'Vapi', url: 'https://vapi.ai' },
 });
 
 /* --------------------------------- Misc ----------------------------------- */

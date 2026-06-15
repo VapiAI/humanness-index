@@ -3,8 +3,10 @@ import { Instrument_Sans, Tomorrow } from 'next/font/google';
 import Script from 'next/script';
 import type { PropsWithChildren } from 'react';
 
+import { JsonLd } from '@/components/detail/JsonLd';
 import { SiteFooter } from '@/components/shell/SiteFooter';
 import { SiteNav } from '@/components/shell/SiteNav';
+import { organizationJsonLd, webSiteJsonLd } from '@/lib/detail';
 
 import '@/styles/shell.css';
 
@@ -33,7 +35,12 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://humannessindex.vapi.ai'),
-  title: 'The Humanness Index™',
+  // Child routes set a bare title (e.g. "xAI Grok TTS: Humanness & Latency");
+  // the template appends the brand suffix so every document title ends alike.
+  title: {
+    default: 'The Humanness Index™ | Vapi',
+    template: '%s | Vapi',
+  },
   description:
     'The benchmark for how human voice AI sounds. Hear leading text-to-speech models blind against a real human and pick the most human-sounding voice for your agent.',
   robots: {
@@ -60,6 +67,9 @@ const RootLayout = ({ children }: PropsWithChildren) => {
             `}
           </Script>
         )}
+        {/* Publisher + site identity, emitted once for the whole site. */}
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={webSiteJsonLd()} />
       </head>
       <body>
         <SiteNav />

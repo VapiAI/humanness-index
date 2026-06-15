@@ -16,7 +16,9 @@ import { StatsBlock } from './components/detail/StatsBlock';
 import { ProviderLogo } from './components/ProviderLogo';
 import {
   breadcrumbsJsonLd,
+  faqJsonLd,
   INDEX_PATH,
+  isBaselineProvider,
   listedModelEntriesOfProvider,
   modelPath,
   modelQuickStats,
@@ -103,13 +105,22 @@ export const ProviderDetailPage = ({ entry, snapshot }: ProviderDetailPageProps)
       <div className="app-rails" aria-hidden="true" />
       <JsonLd data={breadcrumbsJsonLd(breadcrumbs)} />
       <JsonLd data={providerJsonLd(entry)} />
-      <JsonLd data={providerModelsItemListJsonLd(entry, models)} />
+      {models.some((model) => !model.baseline) && (
+        <JsonLd data={providerModelsItemListJsonLd(entry, models)} />
+      )}
+      {entry.faq && entry.faq.length > 0 && (
+        <JsonLd data={faqJsonLd(entry.faq)} />
+      )}
 
       <div className="detail-shell">
         <Breadcrumbs items={breadcrumbs} />
         <header className="detail-hero">
           <div className="detail-hero-copy">
-            <p className="eyebrow">Humanness Index™ {'\u00b7'} Provider</p>
+            <p className="eyebrow">
+              {`Humanness Index\u2122 \u00b7 ${
+                isBaselineProvider(entry) ? 'Baseline reference' : 'Provider'
+              }`}
+            </p>
             <div className="detail-hero-id">
               <span className="detail-hero-logo" aria-hidden="true">
                 <ProviderLogo provider={entry.name} />
