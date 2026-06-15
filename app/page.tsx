@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
+    site: '@Vapi_AI',
+    creator: '@Vapi_AI',
     title: TITLE,
     description: DESCRIPTION,
     images: [OG_IMAGE.url],

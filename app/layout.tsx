@@ -48,6 +48,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Site-wide default so the Vapi handle rides every route; pages that set
+  // their own `twitter` (home, model + provider detail) repeat it since a
+  // child's twitter object replaces this one rather than merging.
+  twitter: {
+    site: '@Vapi_AI',
+    creator: '@Vapi_AI',
+  },
 };
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
