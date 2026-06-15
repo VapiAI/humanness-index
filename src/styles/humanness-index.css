@@ -2989,3 +2989,105 @@ would clip at its top edge. */
     padding-inline: 20px;
   }
 }
+
+/* ============================== Scroll reveal =============================
+   A reusable entrance system: content fades + rises into place once, when it
+   scrolls into view. The hidden/offset state is gated behind html.reveal-ready
+   (an inline script in the layout adds the class), so with JS disabled or for
+   crawlers EVERYTHING stays visible and in the DOM (no SEO regression).
+   transform/opacity only (no layout shift); reduced-motion shows the settled
+   state instantly. Driven by useReveal + the <Reveal>/<RevealGroup> wrappers. */
+:root {
+  --reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal-dur: 0.62s;
+  --reveal-rise: 16px;
+  --reveal-stagger: 80ms;
+}
+
+/* A single element rising into place. */
+html.reveal-ready .reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-rise));
+  transition:
+    opacity var(--reveal-dur) var(--reveal-ease),
+    transform var(--reveal-dur) var(--reveal-ease);
+  will-change: opacity, transform;
+}
+html.reveal-ready .reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* A container whose direct children cascade in (eyebrow -> heading -> ...). */
+html.reveal-ready .reveal-group > * {
+  opacity: 0;
+  transform: translateY(var(--reveal-rise));
+  transition:
+    opacity var(--reveal-dur) var(--reveal-ease),
+    transform var(--reveal-dur) var(--reveal-ease);
+  will-change: opacity, transform;
+}
+html.reveal-ready .reveal-group.is-in > * {
+  opacity: 1;
+  transform: none;
+}
+html.reveal-ready .reveal-group.is-in > *:nth-child(1) { transition-delay: calc(var(--reveal-stagger) * 0); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(2) { transition-delay: calc(var(--reveal-stagger) * 1); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(3) { transition-delay: calc(var(--reveal-stagger) * 2); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(4) { transition-delay: calc(var(--reveal-stagger) * 3); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(5) { transition-delay: calc(var(--reveal-stagger) * 4); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(6) { transition-delay: calc(var(--reveal-stagger) * 5); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(7) { transition-delay: calc(var(--reveal-stagger) * 6); }
+html.reveal-ready .reveal-group.is-in > *:nth-child(n + 8) { transition-delay: calc(var(--reveal-stagger) * 7); }
+
+/* Orb entrance (VoiceViz): fade + a gentle scale/bloom, once on first view.
+   The amplitude-reactive canvas animation is untouched and resumes normally. */
+html.reveal-ready .viz-enter {
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity 0.6s ease-out,
+    transform 0.66s var(--reveal-ease);
+  transition-delay: var(--viz-enter-delay, 0ms);
+  will-change: opacity, transform;
+}
+html.reveal-ready .viz-enter.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Chart dots: a striking left-to-right pop-in when the chart scrolls in. Each
+   circle scales from its own center (fill-box); the better-zone wash fades in
+   alongside. After settling, dots behave exactly as before. */
+html.reveal-ready .ranking-chart-area .chart-point {
+  opacity: 0;
+  transform: scale(0);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 0.42s ease-out,
+    transform 0.52s var(--reveal-ease);
+}
+html.reveal-ready .ranking-chart-area.dots-in .chart-point {
+  opacity: 1;
+  transform: scale(1);
+}
+html.reveal-ready .ranking-chart-area .chart-better-zone-rect {
+  opacity: 0;
+  transition: opacity 0.6s ease-out 0.12s;
+}
+html.reveal-ready .ranking-chart-area.dots-in .chart-better-zone-rect {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.reveal-ready .reveal,
+  html.reveal-ready .reveal-group > *,
+  html.reveal-ready .viz-enter,
+  html.reveal-ready .ranking-chart-area .chart-point,
+  html.reveal-ready .ranking-chart-area .chart-better-zone-rect {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

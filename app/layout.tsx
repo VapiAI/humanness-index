@@ -55,8 +55,21 @@ const POSTHOG_HOST =
 
 const RootLayout = ({ children }: PropsWithChildren) => {
   return (
-    <html className={`${instrumentSans.variable} ${tomorrow.variable}`} lang="en">
+    <html
+      className={`${instrumentSans.variable} ${tomorrow.variable}`}
+      lang="en"
+      suppressHydrationWarning
+    >
       <head>
+        {/* Gate the scroll-reveal hidden state on JS being active: this runs
+            before paint and adds `reveal-ready` to <html>, so the offset/hidden
+            state only applies with JS. With JS disabled (and for crawlers) the
+            class is absent and ALL content stays visible in the DOM. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('reveal-ready')",
+          }}
+        />
         {/* Analytics is env-gated: without NEXT_PUBLIC_POSTHOG_KEY (forks,
             local dev) nothing loads and lib/analytics.ts no-ops. */}
         {POSTHOG_KEY && (

@@ -32,6 +32,8 @@ type RankCardArtProps = {
   featured?: boolean;
   /** Orb shape from the model's Humanness: 0 round (human) → 1 rounded-square. */
   squareness?: number;
+  /** Stagger (ms) for the orb's one-time entrance, so the grid cascades in. */
+  enterDelay?: number;
 };
 
 /**
@@ -93,6 +95,7 @@ export const RankCardArt = ({
   onPlay,
   featured = false,
   squareness = 0,
+  enterDelay = 0,
 }: RankCardArtProps) => (
   <button
     type="button"
@@ -111,6 +114,7 @@ export const RankCardArt = ({
         size={168}
         animate={animate}
         squareness={squareness}
+        enterDelay={enterDelay}
       />
     </span>
     <span className="rcard-art-cue" aria-hidden="true">
@@ -151,6 +155,7 @@ export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardPr
         animate={playing}
         onPlay={onPlay}
         squareness={orbSquareness(humannessScore(model, allModels))}
+        enterDelay={(rank - 1) * 80}
       />
       <div className="rcard-score">
         <span className="rcard-score-label">Humanness</span>

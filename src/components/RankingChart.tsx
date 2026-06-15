@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { voiceStats } from '../data/providers';
+import { useReveal } from '../hooks/useReveal';
 import { clamp, humannessScore, mean, parseLatencyMs } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
 import { ProviderLogo } from './ProviderLogo';
@@ -118,7 +119,8 @@ const EloDistributionChart = ({
   onClearFocus,
 }: EloDistributionChartProps) => {
   const [hovered, setHovered] = useState<HoverPoint | null>(null);
-  const areaRef = useRef<HTMLDivElement>(null);
+  // Fires once when the chart scrolls into view, driving the dot pop-in.
+  const { ref: areaRef, inView: dotsIn } = useReveal<HTMLDivElement>();
 
   // Anchor the hover card to the dot's real on-screen position and clamp it
   // inside the (non-scrolling) chart area, so it never runs off-screen on
@@ -193,7 +195,11 @@ const EloDistributionChart = ({
   const xAxisTicks = [0, 25, 50, 75, 100];
 
   return (
-    <div className="ranking-chart-area" ref={areaRef} onClick={onClearFocus}>
+    <div
+      className={`ranking-chart-area${dotsIn ? ' dots-in' : ''}`}
+      ref={areaRef}
+      onClick={onClearFocus}
+    >
       <div className="ranking-chart-shell">
       <svg
         viewBox={`0 0 ${width} ${height}`}
@@ -211,6 +217,7 @@ const EloDistributionChart = ({
           </linearGradient>
         </defs>
         <rect
+          className="chart-better-zone-rect"
           x={xFor(avgHum)}
           y={top}
           width={right - xFor(avgHum)}
@@ -313,6 +320,9 @@ const EloDistributionChart = ({
           const dotFill = rankColor(intensity);
           const cx = dotX(model);
           const cy = yForMs(parseLatencyMs(model) as number);
+          // Left-to-right sweep: the entrance delay scales with the dot's
+          // Humanness (x) position, so the field populates across the chart.
+          const enterDelay = Math.round(((cx - left) / plotW) * 480);
           return (
             <g key={model.id} className="chart-dot-group" opacity={bright ? 1 : 0.25}>
               <circle
@@ -320,7 +330,7 @@ const EloDistributionChart = ({
                 cx={cx}
                 cy={cy}
                 r={hoveredThis ? DOT_RADIUS + 2 : DOT_RADIUS}
-                style={{ fill: dotFill }}
+                style={{ fill: dotFill, transitionDelay: `${dotsIn ? enterDelay : 0}ms` }}
                 fillOpacity={0.85}
                 stroke={hoveredThis ? '#1a1a2e' : '#ffffff'}
                 strokeWidth={hoveredThis ? 2.5 : 1.5}

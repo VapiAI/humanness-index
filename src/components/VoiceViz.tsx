@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
+import { useReveal } from '../hooks/useReveal';
 import { sampleAudioLevel } from '../lib/audioLevel';
 import type { Palette, ScoredModel } from '../lib/types';
 import { drawOrb, subscribeViz, voiceFingerprint, voiceStyle } from '../lib/voiceViz';
@@ -18,6 +19,8 @@ type VoiceVizProps = {
   palette?: Palette;
   /** 0 = round/organic, 1 = rounded-square. Bound to Humanness on cards/detail. */
   squareness?: number;
+  /** Stagger (ms) for the one-time fade/scale entrance (card grids cascade). */
+  enterDelay?: number;
 };
 
 /** A model's gradient "voice orb" — calm at rest, pulsing with the live clip amplitude. */
@@ -28,8 +31,15 @@ export const VoiceViz = ({
   animate = true,
   palette: paletteOverride,
   squareness = 0,
+  enterDelay = 0,
 }: VoiceVizProps) => {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  // One-time entrance: the orb fades + scales into place on first reveal, then
+  // the amplitude-reactive loop above takes over untouched.
+  const { ref: enterRef, inView: entered } = useReveal<HTMLSpanElement>({
+    threshold: 0.15,
+    rootMargin: '0px 0px -8% 0px',
+  });
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   // Smoothed amplitude (fast attack, gentle release) and the morph clock value.
   const levelRef = useRef(0);
@@ -119,7 +129,16 @@ export const VoiceViz = ({
   }, [active, onScreen, palette, fingerprint, size, squareness]);
 
   return (
-    <span className="voice-viz" aria-hidden="true">
+    <span
+      ref={enterRef}
+      className={`voice-viz viz-enter${entered ? ' is-in' : ''}`}
+      style={
+        enterDelay
+          ? ({ '--viz-enter-delay': `${enterDelay}ms` } as CSSProperties)
+          : undefined
+      }
+      aria-hidden="true"
+    >
       <canvas ref={ref} className="voice-canvas" style={{ width: size }} />
     </span>
   );
