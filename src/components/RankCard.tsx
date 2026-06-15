@@ -8,7 +8,7 @@ import { trackDetailLinkClicked } from '../lib/analytics';
 import { modelDetailLinkForId } from '../lib/detail';
 import { humannessScore } from '../lib/scoring';
 import type { ScoredModel } from '../lib/types';
-import { voiceStyle } from '../lib/voiceViz';
+import { orbSquareness, voiceStyle } from '../lib/voiceViz';
 import { CueGlyph } from './CueGlyph';
 import { DetailPageLink } from './DetailPageLink';
 import { ProviderLogo } from './ProviderLogo';
@@ -30,6 +30,8 @@ type RankCardArtProps = {
   animate: boolean;
   onPlay: () => void;
   featured?: boolean;
+  /** Orb shape from the model's Humanness: 0 round (human) → 1 rounded-square. */
+  squareness?: number;
 };
 
 /**
@@ -84,7 +86,14 @@ export const useCardNavigation = (model: ScoredModel) => {
  * springs up and a play/stop glyph fades in; while playing the mint ring marks
  * the state and the pulsing orb carries the motion.
  */
-export const RankCardArt = ({ model, playing, animate, onPlay, featured = false }: RankCardArtProps) => (
+export const RankCardArt = ({
+  model,
+  playing,
+  animate,
+  onPlay,
+  featured = false,
+  squareness = 0,
+}: RankCardArtProps) => (
   <button
     type="button"
     className={`rcard-art${featured ? ' fcard-art' : ''}${playing ? ' is-playing' : ''}`}
@@ -96,7 +105,13 @@ export const RankCardArt = ({ model, playing, animate, onPlay, featured = false 
     }
   >
     <span className="rcard-art-viz">
-      <VoiceViz playing={playing} model={model} size={168} animate={animate} />
+      <VoiceViz
+        playing={playing}
+        model={model}
+        size={168}
+        animate={animate}
+        squareness={squareness}
+      />
     </span>
     <span className="rcard-art-cue" aria-hidden="true">
       <CueGlyph paused={playing} />
@@ -130,7 +145,13 @@ export const RankCard = ({ model, rank, playing, onPlay, allModels }: RankCardPr
       <RankCardIdentity model={model} />
       {/* The viz animates only during playback: hover-started animation made
           the canvas spin up right as the pointer crossed cards mid-scroll. */}
-      <RankCardArt model={model} playing={playing} animate={playing} onPlay={onPlay} />
+      <RankCardArt
+        model={model}
+        playing={playing}
+        animate={playing}
+        onPlay={onPlay}
+        squareness={orbSquareness(humannessScore(model, allModels))}
+      />
       <div className="rcard-score">
         <span className="rcard-score-label">Humanness</span>
         <span className="rcard-score-value">{humannessScore(model, allModels)}</span>

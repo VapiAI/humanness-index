@@ -4,7 +4,7 @@ import { useMemo, type CSSProperties } from 'react';
 
 import { modelBlurb, voiceStats } from '../data/providers';
 import { humannessScore } from '../lib/scoring';
-import { voiceStyle } from '../lib/voiceViz';
+import { orbSquareness, voiceStyle } from '../lib/voiceViz';
 import {
   RankCardArt,
   RankCardIdentity,
@@ -46,6 +46,7 @@ export const FeaturedCard = ({ model, rank, playing, onPlay, allModels }: RankCa
             animate={playing}
             onPlay={onPlay}
             featured
+            squareness={orbSquareness(humannessScore(model, allModels))}
           />
         </div>
         <div className="fcard-body">

@@ -7,6 +7,37 @@ import type { ArenaRow, Palette, VoiceFingerprint } from './types';
 
 const TAU = Math.PI * 2;
 
+// Rounded-square (superellipse) radius factors per outline step, normalized so
+// the corners sit on the unit circle and the flat sides pull inward. Blending
+// the orb's outline toward this makes a low-Humanness voice read as a rigid
+// rounded square while a high-Humanness one stays an organic circle. Fixed
+// orientation (it doesn't spin with the wobble) and precomputed once for the
+// 72-step outline so the per-frame draw stays cheap. n=4 keeps it a soft
+// squircle, never a hard square.
+const SQUIRCLE_N = 4;
+const SQUIRCLE = ((): number[] => {
+  const raw: number[] = [];
+  for (let i = 0; i <= 72; i += 1) {
+    const ang = (i / 72) * TAU;
+    raw.push(
+      1 /
+        (Math.abs(Math.cos(ang)) ** SQUIRCLE_N +
+          Math.abs(Math.sin(ang)) ** SQUIRCLE_N) **
+          (1 / SQUIRCLE_N),
+    );
+  }
+  const max = Math.max(...raw);
+  return raw.map((f) => f / max);
+})();
+
+/**
+ * Map a 0..100 Humanness score to the orb's "squareness" (0 = round/organic,
+ * 1 = rounded-square). Higher Humanness reads as rounder/more human; lower
+ * reads as more rigid/synthetic.
+ */
+export const orbSquareness = (humanness: number) =>
+  Math.max(0, Math.min(1, 1 - humanness / 100));
+
 /**
  * The allowed orb colors, all drawn from the site palette: a cohesive
  * green → teal → blue → violet cool arc (the same family as the rankings
@@ -103,11 +134,15 @@ export const drawOrb = (
   pal: Palette,
   level: number,
   fp: Partial<VoiceFingerprint> = {},
+  // 0 = round/organic, 1 = rounded-square. Derived from Humanness on the cards
+  // and the detail page; the blind battle orbs leave it at 0 (no score to bind).
+  squareness = 0,
 ) => {
   const c = size / 2;
   const seed = fp.p ?? 0;
   const sp = fp.speed ?? 1;
   const lvl = Math.max(0, Math.min(1, level));
+  const sq = Math.max(0, Math.min(1, squareness));
   const breathe = 1 + 0.018 * Math.sin(frame * 0.04 + seed);
   // The core swells with amplitude; the slightly smaller base radius leaves
   // headroom so loud peaks (plus the wobble below) never clip the canvas edge.
@@ -141,7 +176,9 @@ export const drawOrb = (
         1 +
         wob * Math.sin(ang * layer.k + spin) +
         wob * 0.5 * Math.sin(ang * (layer.k + 2) - spin * 0.7);
-      const r = lr * m;
+      // Blend the outline toward the fixed rounded-square as squareness rises.
+      const shape = 1 + (SQUIRCLE[i] - 1) * sq;
+      const r = lr * m * shape;
       const x = c + Math.cos(ang) * r;
       const y = c + Math.sin(ang) * r;
       if (i === 0) ctx.moveTo(x, y);

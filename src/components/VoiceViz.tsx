@@ -16,6 +16,8 @@ type VoiceVizProps = {
   size?: number;
   animate?: boolean;
   palette?: Palette;
+  /** 0 = round/organic, 1 = rounded-square. Bound to Humanness on cards/detail. */
+  squareness?: number;
 };
 
 /** A model's gradient "voice orb" — calm at rest, pulsing with the live clip amplitude. */
@@ -25,6 +27,7 @@ export const VoiceViz = ({
   size = VIZ_SIZE,
   animate = true,
   palette: paletteOverride,
+  squareness = 0,
 }: VoiceVizProps) => {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -61,8 +64,8 @@ export const VoiceViz = ({
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctxRef.current = ctx;
     ctx.clearRect(0, 0, size, size);
-    drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint);
-  }, [palette, fingerprint, size]);
+    drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint, squareness);
+  }, [palette, fingerprint, size, squareness]);
 
   // Begin animating when playback starts; the loop keeps running through the
   // fade-out afterwards and ends itself once the level has decayed.
@@ -93,7 +96,7 @@ export const VoiceViz = ({
       if (ctx) {
         levelRef.current = 0;
         ctx.clearRect(0, 0, size, size);
-        drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint);
+        drawOrb(ctx, frameRef.current, size, palette, 0, fingerprint, squareness);
       }
       return undefined;
     }
@@ -106,14 +109,14 @@ export const VoiceViz = ({
       levelRef.current = cur + (target - cur) * (target > cur ? 0.45 : 0.12);
       frameRef.current += 1;
       ctx.clearRect(0, 0, size, size);
-      drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint);
+      drawOrb(ctx, frameRef.current, size, palette, levelRef.current, fingerprint, squareness);
       // Once stopped and faded out, end the release tail and settle calm.
       if (!playingRef.current && levelRef.current < 0.01) {
         levelRef.current = 0;
         setActive(false);
       }
     });
-  }, [active, onScreen, palette, fingerprint, size]);
+  }, [active, onScreen, palette, fingerprint, size, squareness]);
 
   return (
     <span className="voice-viz" aria-hidden="true">

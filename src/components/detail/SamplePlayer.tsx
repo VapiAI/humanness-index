@@ -15,6 +15,8 @@ type SamplePlayerProps = {
   model: ScoredModel;
   /** Deterministic hosted clip precomputed server-side (offline fallback). */
   fallbackUrl: string;
+  /** Orb shape from this model's Humanness: 0 round (human) → 1 rounded-square. */
+  squareness?: number;
 };
 
 /**
@@ -24,7 +26,7 @@ type SamplePlayerProps = {
  * engine; one clip at a time is all this page needs. The RSC renders a
  * plain <audio> inside <noscript> so audio stays reachable without JS.
  */
-export const SamplePlayer = ({ model, fallbackUrl }: SamplePlayerProps) => {
+export const SamplePlayer = ({ model, fallbackUrl, squareness = 0 }: SamplePlayerProps) => {
   const [playing, setPlaying] = useState(false);
   const [caption, setCaption] = useState(IDLE_CAPTION);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -81,7 +83,13 @@ export const SamplePlayer = ({ model, fallbackUrl }: SamplePlayerProps) => {
 
   return (
     <div className="detail-sample">
-      <RankCardArt model={model} playing={playing} animate={playing} onPlay={handleToggle} />
+      <RankCardArt
+        model={model}
+        playing={playing}
+        animate={playing}
+        onPlay={handleToggle}
+        squareness={squareness}
+      />
       <p className="detail-sample-caption">{caption}</p>
       <noscript>
         <audio controls preload="none" src={fallbackUrl} />

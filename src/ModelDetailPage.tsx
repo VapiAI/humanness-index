@@ -30,7 +30,9 @@ import {
   standingForModel,
   type BreadcrumbItem,
 } from './lib/detail';
+import { humannessScore } from './lib/scoring';
 import type { ArenaRow } from './lib/types';
+import { orbSquareness } from './lib/voiceViz';
 import {
   staticSampleUrlFor,
   type StandingsSnapshot,
@@ -113,7 +115,11 @@ export const ModelDetailPage = ({ entry, snapshot }: ModelDetailPageProps) => {
             )}
           </div>
           <div className="detail-hero-side">
-            <SamplePlayer model={vizRow} fallbackUrl={staticSampleUrlFor(entry)} />
+            <SamplePlayer
+              model={vizRow}
+              fallbackUrl={staticSampleUrlFor(entry)}
+              squareness={orbSquareness(humannessScore(vizRow, rows))}
+            />
           </div>
         </header>
       </div>
