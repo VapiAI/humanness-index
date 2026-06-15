@@ -44,13 +44,12 @@ export const PiecesSection = () => (
       <div className="section-heading">
         <div>
           <p className="eyebrow">What we Listen for</p>
-          <h2>What makes a human voice</h2>
+          <h2>What makes a voice sound human?</h2>
         </div>
         <p className="pieces-lead">
-          Humanness isn&apos;t a checklist. It&apos;s whether the whole thing convinces you
-          there&apos;s a person on the other end, which is why we test it blind instead of
-          scoring features. Still, when a voice gives itself away, it&apos;s usually one
-          of&nbsp;these.
+          Humanness doesn&apos;t break down into features. You either believe
+          there&apos;s a person on the other end, or you don&apos;t. When that belief
+          breaks, it&apos;s usually because of one of&nbsp;these.
         </p>
       </div>
       <div className="pieces-grid">
@@ -62,14 +61,12 @@ export const PiecesSection = () => (
         ))}
       </div>
       <div className="pieces-callout section-callout section-callout-dark">
-        <h3 className="section-callout-title">
-          Why we only look at models that support cloning.
-        </h3>
+        <h3 className="section-callout-title">Why trust this benchmark?</h3>
         <p className="section-callout-body">
-          A model can sound human on its own demo voice and robotic on yours. Comparing
-          vendors&apos; hand-picked clips is apples to oranges. So we clone the same
-          conversational voice onto every model and compare only that. Models that
-          can&apos;t clone a voice can&apos;t be tested fairly, so they&apos;re not listed.
+          Any model can sound good on its own demo voice. The real test is how it
+          handles your use case. We clone one voice across every model so the comparison
+          is fair. Models that can&apos;t clone a voice can&apos;t be tested fairly, so
+          they&apos;re not listed.
         </p>
       </div>
     </RevealGroup>

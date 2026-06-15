@@ -9,10 +9,11 @@ export const WhyThisExists = () => (
       </h2>
       <p className="why-exists-body">
         Picking a TTS model for a voice agent comes down to one thing: does it
-        sound human enough that people forget they&apos;re talking to software?
-        That&apos;s hard to judge from demos and vendor claims, so we made it
-        measurable. One voice on every model, judged blind against a real human,
-        scored on humanness and latency.
+        sound human enough that people forget they&apos;re talking to software? You
+        can&apos;t get that from demos or vendor claims. So we made it measurable and
+        took the call out of our own hands: one voice cloned onto every model, played
+        blind with no names attached, scored against a real human by the people who
+        hear it.
       </p>
     </RevealGroup>
   </section>
