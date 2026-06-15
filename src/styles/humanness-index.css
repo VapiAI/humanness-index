@@ -275,8 +275,11 @@ rendered so scrollbar math stays stable. */
 }
 
 .hi-page .lab-copy .hero-title {
-  font-size: clamp(40px, 4.6vw, 58px);
-  line-height: 1.05;
+  /* Capped so the headline lands on exactly two lines in the 400px copy
+     column (50px+ wraps to three); the 4.2vw track keeps it at two lines as
+     the column narrows on smaller desktops too. Mobile size is set below. */
+  font-size: clamp(34px, 4.2vw, 48px);
+  line-height: 1.04;
   letter-spacing: -0.05em;
   color: #0a0a0a;
 }
@@ -1529,6 +1532,12 @@ single row) */
 
   .hi-page .lab-copy {
     max-width: none;
+  }
+
+  /* Single column has the full width back, so the headline can stay large
+     and simply wrap naturally on phones. */
+  .hi-page .lab-copy .hero-title {
+    font-size: clamp(34px, 10vw, 46px);
   }
 
   .hi-page .lab-card {
