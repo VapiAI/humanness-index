@@ -3008,14 +3008,24 @@ would clip at its top edge. */
   --row-stagger: 70ms;
 }
 
-/* A single element rising into place. */
+/* Pre-promote a compositor layer ONLY while an element is waiting to play its
+   one-time entrance; once it settles (.is-in) the hint is dropped so the layer
+   is released. Avoids ~30 persistent will-change layers across the page. */
+html.reveal-ready .reveal:not(.is-in),
+html.reveal-ready .reveal-group:not(.is-in) > *,
+html.reveal-ready .viz-enter:not(.is-in) {
+  will-change: opacity, transform;
+}
+
+/* A single element rising into place. will-change is scoped to the pre-settle
+   state only (below), so the compositor layer is released after the one-time
+   entrance instead of persisting on every revealed element. */
 html.reveal-ready .reveal {
   opacity: 0;
   transform: translateY(var(--reveal-rise));
   transition:
     opacity var(--reveal-dur) var(--reveal-ease),
     transform var(--reveal-dur) var(--reveal-ease);
-  will-change: opacity, transform;
 }
 html.reveal-ready .reveal.is-in {
   opacity: 1;
@@ -3029,7 +3039,6 @@ html.reveal-ready .reveal-group > * {
   transition:
     opacity var(--reveal-dur) var(--reveal-ease),
     transform var(--reveal-dur) var(--reveal-ease);
-  will-change: opacity, transform;
 }
 html.reveal-ready .reveal-group.is-in > * {
   opacity: 1;
@@ -3053,7 +3062,6 @@ html.reveal-ready .viz-enter {
     opacity 0.9s ease-out,
     transform 0.95s var(--reveal-ease);
   transition-delay: var(--viz-enter-delay, 0ms);
-  will-change: opacity, transform;
 }
 html.reveal-ready .viz-enter.is-in {
   opacity: 1;
