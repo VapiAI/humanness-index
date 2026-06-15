@@ -271,13 +271,18 @@ describe('createBattle', () => {
       if (left.modelId !== 'human' && right.modelId !== 'human') continue;
       humanBattles += 1;
       const human = left.modelId === 'human' ? left : right;
-      expect(['voice-clara', 'voice-nelliot']).toContain(human.sourceVoiceId);
+      expect([
+        'voice-clara',
+        'voice-nelliot',
+        'voice-godfrey',
+        'voice-emma',
+      ]).toContain(human.sourceVoiceId);
     }
     // The Human baseline is unseeded (0 votes), so coverage forcing still
     // surfaces it (on its recorded voices) well within the draws...
     expect(humanBattles).toBeGreaterThan(0);
-    // ...but (B) the schedule is no longer collapsed onto the Human's two
-    // voices: all four roster voices come up.
+    // ...but (B) the schedule is no longer collapsed onto the Human baseline's
+    // recorded voices: all four roster voices come up.
     expect(voicesSeen).toEqual(
       new Set(['voice-clara', 'voice-emma', 'voice-godfrey', 'voice-nelliot']),
     );

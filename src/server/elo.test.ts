@@ -100,7 +100,7 @@ describe('chooseBattlePair', () => {
     }
   });
 
-  it('only ever pairs the Human baseline on a recorded voice (clara/nelliot)', () => {
+  it('only ever pairs the Human baseline on a recorded voice (clara/nelliot/godfrey/emma)', () => {
     const state = freshState();
     // Leave the Human baseline under-voted (every other variant is well-voted)
     // so coverage forcing surfaces it — on its recorded voices only.
@@ -117,9 +117,14 @@ describe('chooseBattlePair', () => {
       const human = [left, right].find((v) => v.modelId === 'human');
       if (!human) continue;
       humanBattles += 1;
-      // The Human serves only Clara/Nelliot, so it can never land on emma/godfrey;
-      // the opponent reads that same recorded voice.
-      expect(['voice-clara', 'voice-nelliot']).toContain(human.sourceVoiceId);
+      // The Human now serves all four recorded source voices; the opponent
+      // reads that same recorded voice.
+      expect([
+        'voice-clara',
+        'voice-nelliot',
+        'voice-godfrey',
+        'voice-emma',
+      ]).toContain(human.sourceVoiceId);
     }
     // The under-voted Human is still surfaced (on its recorded voices) — it just
     // no longer monopolizes the schedule (see the uniformity test below).

@@ -477,10 +477,15 @@ describe('server/catalog derivation equality', () => {
     expect([...PROVIDERS_BY_ID.values()]).toEqual(EXPECTED_PROVIDERS);
   });
 
-  it('derives the exact 86-variant matrix (ids feed the audio hashes)', () => {
-    // The Human baseline only has clips for Clara and Nelliot today; every
-    // other model serves the whole roster.
-    const HUMAN_VOICES = ['voice-clara', 'voice-nelliot'];
+  it('derives the exact 88-variant matrix (ids feed the audio hashes)', () => {
+    // The Human baseline now has clips for all four source voices, like every
+    // other model.
+    const HUMAN_VOICES = [
+      'voice-clara',
+      'voice-nelliot',
+      'voice-godfrey',
+      'voice-emma',
+    ];
     const voicesFor = (modelId: string): string[] =>
       modelId === 'human' ? HUMAN_VOICES : SOURCE_VOICE_IDS;
     const expectedVariants = SOURCE_VOICE_IDS.flatMap((voiceId) =>
@@ -493,8 +498,8 @@ describe('server/catalog derivation equality', () => {
         modelId: model.id,
       })),
     );
-    // 21 TTS models x 4 voices + the Human baseline x 2 recorded voices = 86.
-    expect(VARIANTS.length).toBe(86);
+    // 21 TTS models x 4 voices + the Human baseline x 4 recorded voices = 88.
+    expect(VARIANTS.length).toBe(88);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -502,9 +507,14 @@ describe('server/catalog derivation equality', () => {
     const humanVoices = VARIANTS.filter((v) => v.modelId === 'human')
       .map((v) => v.sourceVoiceId)
       .sort();
-    // Clara + Nelliot are recorded; Emma + Godfrey are not, so Human has no
-    // variant (and so no battle) on them.
-    expect(humanVoices).toEqual(['voice-clara', 'voice-nelliot']);
+    // All four source voices are recorded now, so Human has a variant (and so
+    // battles) on each of them.
+    expect(humanVoices).toEqual([
+      'voice-clara',
+      'voice-emma',
+      'voice-godfrey',
+      'voice-nelliot',
+    ]);
   });
 
   it('resolves the frozen audio content hashes (golden URLs)', () => {

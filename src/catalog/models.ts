@@ -1489,9 +1489,9 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     // Recorded source voices only: the arena builds Human variants and battle
     // pairings for these voices alone, so Human is never matched on a voice it
     // has no clips for. Extend this list (one line) as each voice's 20
-    // recordings are uploaded and HEAD-verified. As of 2026-06-13 Clara and
-    // Nelliot are live; add 'voice-emma' and 'voice-godfrey' when they land.
-    sourceVoices: ['voice-clara', 'voice-nelliot'],
+    // recordings are uploaded and HEAD-verified. As of 2026-06-15 all four
+    // source voices are live: Clara + Nelliot first, then Godfrey + Emma.
+    sourceVoices: ['voice-clara', 'voice-nelliot', 'voice-godfrey', 'voice-emma'],
     stats: {
       // No reachable API to measure and no per-character price: a person read
       // the line. Both render as a dash, and the null latency keeps Human off
