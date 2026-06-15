@@ -1,6 +1,12 @@
 'use client';
 
-import { ArrowDown, ArrowsCounterClockwise, Check } from '@phosphor-icons/react';
+import {
+  ArrowDown,
+  ArrowsCounterClockwise,
+  ArrowUpRight,
+  Check,
+  FileText,
+} from '@phosphor-icons/react';
 
 import { revealHeadline } from '../lib/scoring';
 import type {
@@ -124,7 +130,14 @@ export const HeroSection = ({
           rel="noopener noreferrer"
           target="_blank"
         >
+          <FileText size={16} weight="bold" aria-hidden="true" />
           Read the whitepaper
+          <ArrowUpRight
+            size={14}
+            weight="bold"
+            aria-hidden="true"
+            className="hero-cta-ext"
+          />
         </a>
       </div>
 
