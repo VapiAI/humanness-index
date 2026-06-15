@@ -292,7 +292,8 @@ export const HumannessIndexPage = () => {
       }
 
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-        if (revealed) return;
+        // Pre-vote: play/switch a side. Post-vote: replay that side's clip
+        // (handleToggleSide leaves the reveal up since the round isn't idle).
         event.preventDefault();
         handleToggleSide(event.key === 'ArrowLeft' ? 'left' : 'right');
         return;

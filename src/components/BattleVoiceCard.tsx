@@ -137,11 +137,25 @@ export const BattleVoiceCard = ({
               isLeader && <span className="vcard-flag">Ranks higher</span>
             )}
             <div className="vcard-reveal">
-              {/* The provider's mark is the unmasking moment — it takes the
-                  orb's spot as the revealed card's anchor. */}
-              <div className="vcard-brand">
+              {/* The provider's mark is the unmasking moment and the orb's
+                  spot, now doubling as the replay control: post-vote the
+                  identities are public, so the medallion plays this side's real
+                  battle clip on demand (click or keyboard), with a play/pause
+                  badge using the same cue glyph as the blind round. */}
+              <button
+                type="button"
+                className="vcard-brand vcard-replay"
+                onClick={onTogglePlay}
+                // Don't keep focus on click (mirrors the blind card) so Space
+                // still advances to the next pair after a mouse replay.
+                onMouseDown={(event) => event.preventDefault()}
+                aria-label={playing ? `Stop ${revealName}` : `Replay ${revealName}`}
+              >
                 <ProviderLogo provider={model.provider} />
-              </div>
+                <span className="vcard-replay-cue" aria-hidden="true">
+                  <CueGlyph paused={playing} />
+                </span>
+              </button>
               <p className="vcard-reveal-name">
                 {revealLink ? (
                   <DetailPageLink className="vcard-reveal-link" kind="model" link={revealLink}>
