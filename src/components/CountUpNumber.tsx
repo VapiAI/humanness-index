@@ -4,17 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * Shared card-meter timing. The bar fill (RankScale `--fill-delay`) and this
- * count-up both key off the grid's one-time reveal (`is-in`) and use these, so
+ * count-up both key off each row's one-time reveal (`is-in`) and use these, so
  * the number lands exactly with the bar:
- *  - cards fade in FIRST; METER_FILL_BASE_MS is the beat before the bar/number
- *    start, so the fill follows the card rather than racing it;
+ *  - cards fade in FIRST; METER_FILL_BASE_MS is a clear beat (long enough to let
+ *    the card's fade settle and rise comfortably into view) before the bar +
+ *    number start, so the count is actually watched rather than finishing while
+ *    the card is still entering at the bottom edge;
  *  - METER_FILL_STAGGER_MS cascades each card on top of that base;
  *  - duration + easing mirror `--fill-dur` / `--reveal-ease` in
- *    humanness-index.css so the bar and number move as one.
+ *    humanness-index.css so the bar and number move as one, slow enough that the
+ *    digits visibly tick up.
  */
-export const METER_FILL_BASE_MS = 250;
+export const METER_FILL_BASE_MS = 600;
 export const METER_FILL_STAGGER_MS = 140;
-export const METER_FILL_DURATION_MS = 900;
+export const METER_FILL_DURATION_MS = 1200;
 
 /**
  * Per-card delay shared by the bar fill and the number count-up. `rowIndex` is

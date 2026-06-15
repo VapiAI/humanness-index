@@ -3027,8 +3027,9 @@ would clip at its top edge. */
   --row-dur: 0.55s;
   --row-rise: 10px;
   --row-stagger: 70ms;
-  /* Leaderboard Humanness meter fill-on-reveal. */
-  --fill-dur: 0.9s;
+  /* Leaderboard Humanness meter fill-on-reveal. Kept in sync with
+     METER_FILL_DURATION_MS (count-up) so the bar + number move as one. */
+  --fill-dur: 1.2s;
 }
 
 /* Pre-promote a compositor layer ONLY while an element is waiting to play its
@@ -3174,7 +3175,7 @@ html.reveal-ready .lb-cards:not(.is-in) .rank-meter-thumb-rail {
    its own .is-in, so the second row fills when the second row reveals. */
 html.reveal-ready .lb-cards .rank-meter-fill,
 html.reveal-ready .lb-cards .rank-meter-thumb-rail {
-  transition: transform var(--fill-dur, 0.9s) var(--reveal-ease);
+  transition: transform var(--fill-dur, 1.2s) var(--reveal-ease);
   transition-delay: var(--fill-delay, 0ms);
 }
 
