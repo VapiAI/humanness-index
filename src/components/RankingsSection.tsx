@@ -2,7 +2,7 @@
 
 import { useEffect, type FocusEvent } from 'react';
 
-import { CaretDown, CaretUp, Info, MagnifyingGlass } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, Info } from '@phosphor-icons/react';
 
 import { voiceStats } from '../data/providers';
 import { useReveal } from '../hooks/useReveal';
@@ -95,43 +95,34 @@ const ariaSortFor = (
 
 type RankingsSectionProps = {
   sortedModels: ScoredModel[];
-  filteredRows: ScoredModel[];
+  /** Full standings in the active sort order (no text/provider filtering). */
+  sortedRows: ScoredModel[];
   visibleRows: ScoredModel[];
   totalUniqueVotes: number;
-  search: string;
-  provider: string;
-  providerOptions: string[];
   showAll: boolean;
   focusedModel: ScoredModel | null;
   focusedModelId: string | null;
   playingId: string | null;
   sort: TableSort;
   onSortChange: (key: TableSortKey) => void;
-  onSearchChange: (value: string) => void;
-  onProviderChange: (value: string) => void;
   onToggleShowAll: () => void;
   onSelectModel: (model: ScoredModel) => void;
   onClearFocus: () => void;
   onTogglePlay: (model: ScoredModel) => void;
 };
 
-/** "Humanness Rankings" — counts strip, filters, distribution chart, and the full table. */
+/** "Humanness Rankings" — distribution chart (with a live stats line) and the full sortable table. */
 export const RankingsSection = ({
   sortedModels,
-  filteredRows,
+  sortedRows,
   visibleRows,
   totalUniqueVotes,
-  search,
-  provider,
-  providerOptions,
   showAll,
   focusedModel,
   focusedModelId,
   playingId,
   sort,
   onSortChange,
-  onSearchChange,
-  onProviderChange,
   onToggleShowAll,
   onSelectModel,
   onClearFocus,
@@ -143,8 +134,8 @@ export const RankingsSection = ({
   const { ref: tableRef, inView: rowsIn } = useReveal<HTMLDivElement>();
 
   // Selection is sticky only on the dots/rows themselves: pressing anywhere
-  // else (empty chart space, the toolbar, the rest of the page) deselects and
-  // stops the sample. Escape deselects, and Up/Down step the selection to the
+  // else (empty chart space, the rest of the page) deselects and stops the
+  // sample. Escape deselects, and Up/Down step the selection to the
   // previous/next row (which plays it). All scoped to an active selection so
   // normal page interactions and scrolling are untouched otherwise.
   useEffect(() => {
@@ -160,7 +151,7 @@ export const RankingsSection = ({
         return;
       }
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
-      // Don't steal arrows from the search box or provider dropdown.
+      // Don't steal arrows from any focused form control.
       const target = event.target instanceof Element ? event.target : null;
       if (target?.closest('input, select, textarea, [contenteditable]')) return;
       if (!visibleRows.length) return;
@@ -200,79 +191,55 @@ export const RankingsSection = ({
   // Focus only highlights the chosen row/dot and dims the rest — it filters
   // the chart's bright set, never the table.
   const rankingRows = focusedModelId
-    ? filteredRows.filter((model) => model.id === focusedModelId)
-    : filteredRows;
+    ? sortedRows.filter((model) => model.id === focusedModelId)
+    : sortedRows;
   // The Human baseline is a reference, not a competitor: it stays out of the
-  // counts, the "top score", and the show-all total.
+  // counts and the show-all total.
   const rankedModels = sortedModels.filter((m) => !m.baseline);
-  const rankedFilteredCount = filteredRows.filter((m) => !m.baseline).length;
+  const rankedCount = rankedModels.length;
   // No default row highlight: only an explicit selection tints a row, so the
   // baseline's highlight stands alone instead of pairing with an auto-lit #1.
   const tableHighlightId = focusedModelId;
   const providerCount = new Set(rankedModels.map((m) => m.provider)).size;
-  const topScore = rankedModels.length
-    ? humannessScore(rankedModels[0], sortedModels)
-    : 0;
   const allWins = rankedModels.map((m) => m.wins);
+
+  // Live stats line shown as the chart's subtitle (when nothing is focused),
+  // replacing the old standalone counts strip. The (i) tooltip stays on Models.
+  const chartStats = (
+    <p className="ranking-chart-sub ranking-chart-stats">
+      <span className="ranking-chart-stat">
+        {rankedCount} Models
+        <InfoTip tip="Every listed model offers voice cloning, so each battle can play the same cloned source voice through both sides. Models without cloning can't be compared head to head and are left out; new ones join as cloning access lands." />
+      </span>
+      <span className="ranking-chart-sep" aria-hidden="true" />
+      <span className="ranking-chart-stat">{providerCount} providers</span>
+      <span className="ranking-chart-sep" aria-hidden="true" />
+      <span className="ranking-chart-stat">
+        {totalUniqueVotes.toLocaleString()} unique votes
+      </span>
+    </p>
+  );
 
   return (
     <section className="long-tail-section" id="rankings" onBlur={handleSectionBlur}>
-      <Reveal as="div" className="rankings-header">
-        <h2>Humanness Rankings</h2>
-        <div className="rankings-stats">
-          <span className="rankings-stat">
-            {rankedModels.length} Models
-            <InfoTip tip="Every listed model offers voice cloning, so each battle can play the same cloned source voice through both sides. Models without cloning can't be compared head to head and are left out; new ones join as cloning access lands." />
-          </span>
-          <i className="rankings-divider" />
-          <span className="rankings-stat">{providerCount} providers</span>
-          <i className="rankings-divider" />
-          <span className="rankings-stat">Top Humanness Score {topScore}</span>
-          <i className="rankings-divider" />
-          <span className="rankings-stat">
-            <strong>{totalUniqueVotes.toLocaleString()}</strong> unique votes
-          </span>
-        </div>
-      </Reveal>
-      <Reveal as="p" className="rankings-intro" delay={80}>
+      {/* Visually hidden, but kept in the DOM as the section's <h2> so the
+          heading hierarchy stays intact for SEO and screen readers. The visible
+          title and the standalone counts strip were removed by request; the
+          counts now live in the chart's subtitle below. */}
+      <h2 className="sr-only">Humanness Rankings</h2>
+      <Reveal as="p" className="rankings-intro">
         Humanness against measured latency, the highest-scoring voices sit top-right
       </Reveal>
-      <Reveal as="div" className="rankings-toolbar" delay={140}>
-        <div className="rankings-search">
-          <MagnifyingGlass size={16} />
-          <input
-            value={search}
-            aria-label="Search model rankings"
-            placeholder="Search Provider or model"
-            onChange={(event) => onSearchChange(event.target.value)}
-          />
-        </div>
-        <div className="rankings-select">
-          <span className="rankings-select-label">Provider:</span>
-          <select
-            aria-label="Filter by provider"
-            value={provider}
-            onChange={(event) => onProviderChange(event.target.value)}
-          >
-            {providerOptions.map((providerName) => (
-              <option key={providerName} value={providerName}>
-                {providerName === 'All providers' ? 'All' : providerName}
-              </option>
-            ))}
-          </select>
-          <CaretDown size={16} weight="fill" />
-        </div>
-      </Reveal>
 
-      {/* The chart card reveals as its own step ~one stagger after the toolbar
-          (delay 140), so it lands a beat after the search field settles. */}
+      {/* The chart card reveals as its own step a beat after the intro. */}
       <RankingVisualizationPanel
         rows={rankingRows}
         allModels={sortedModels}
         focusedModel={focusedModel}
+        statsLine={chartStats}
         onFocusModel={onSelectModel}
         onClearFocus={onClearFocus}
-        revealDelay={300}
+        revealDelay={140}
       />
 
       <div
@@ -399,9 +366,9 @@ export const RankingsSection = ({
           </tbody>
         </table>
       </div>
-      {rankedFilteredCount > 10 && (
+      {rankedCount > 10 && (
         <button className="ranking-showall" type="button" onClick={onToggleShowAll}>
-          {showAll ? 'Show top 10' : `Show all ${rankedFilteredCount}`}
+          {showAll ? 'Show top 10' : `Show all ${rankedCount}`}
         </button>
       )}
       <p className="ranking-foot">

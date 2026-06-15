@@ -60,10 +60,12 @@ export const HeroSection = ({
   onNext,
 }: HeroSectionProps) => {
   const revealed = reveal !== null;
-  // Read-along: show the shared line once the round is underway (or revealed),
-  // so listeners can follow along while it plays. One caption for both sides —
-  // they read the same prompt — and it never carries any model identity.
-  const showReadAlong = Boolean(promptText) && (revealed || roundPhase !== 'idle');
+  // Read-along: show the shared line as soon as the battle loads — from the
+  // blind/idle state, before any play — and keep it through play and reveal.
+  // One caption for both sides (they read the same prompt); it never carries
+  // any model identity, so it is safe in the blind round. The displayed text is
+  // trimmed to a tidy excerpt in CSS; the audio still plays the full line.
+  const showReadAlong = Boolean(promptText);
   const roundResult: VoteChoice | null = reveal?.winner ?? null;
   const pickedSide: BattleSide | null =
     roundResult === 'tie' ? null : roundResult;
@@ -160,14 +162,12 @@ export const HeroSection = ({
         </header>
 
         {showReadAlong && (
-          <p className="lab-readalong">
-            <span className="lab-readalong-label">Reading</span>
-            <span className="lab-readalong-line">
-              <span aria-hidden="true">&ldquo;</span>
-              {promptText}
-              <span aria-hidden="true">&rdquo;</span>
-            </span>
-          </p>
+          <figure className="lab-readalong">
+            <figcaption className="lab-readalong-label">Read along</figcaption>
+            {/* The full line is in the DOM (announced to screen readers); CSS
+                trims the visible text to a two-line excerpt. */}
+            <blockquote className="lab-readalong-quote">{promptText}</blockquote>
+          </figure>
         )}
 
         <div className="lab-arena">

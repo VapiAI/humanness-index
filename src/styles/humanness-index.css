@@ -187,6 +187,14 @@ rendered so scrollbar math stays stable. */
   scroll-margin-top: 24px;
 }
 
+/* Set the Humanness Rankings apart from the How-it-works strip directly above
+   it (the reorder left them blending): extra breathing room plus a soft
+   content-width hairline rule leading the section. */
+.hi-page .long-tail-section {
+  margin-top: clamp(26px, 4vw, 50px);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
 .hi-page .section-heading,
 .hi-page .legend {
   display: flex;
@@ -409,33 +417,63 @@ rendered so scrollbar math stays stable. */
   line-height: 1.35;
 }
 
-/* Read-along: one shared caption of the line both voices read this round. */
+/* Read-along: one shared, trimmed excerpt of the line both voices read. Shown
+   from the blind/idle state through the reveal; the audio plays the full line. */
 .hi-page .lab-readalong {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 9px;
   width: 100%;
-  max-width: 52ch;
+  max-width: 50ch;
   margin: 0 auto;
   text-align: center;
 }
 
+/* Tasteful eyebrow with short flanking rules, in the brand eyebrow face. */
 .hi-page .lab-readalong-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-family: var(--font-eyebrow);
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--muted);
-  opacity: 0.75;
 }
 
-.hi-page .lab-readalong-line {
-  color: var(--ink);
-  font-size: 14px;
+.hi-page .lab-readalong-label::before,
+.hi-page .lab-readalong-label::after {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.hi-page .lab-readalong-quote {
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 76%, transparent);
+  font-size: 15px;
   font-style: italic;
   line-height: 1.5;
   text-wrap: pretty;
+  /* Trim to a tidy two-line excerpt; the AUDIO still reads the full line. The
+     full text stays in the DOM, so screen readers still get the whole line. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  /* Reserve the two lines so the card never shifts as the prompt changes. */
+  min-height: 3em;
+}
+
+/* Opening quotation mark (decorative; the excerpt's tail is the clamp ellipsis). */
+.hi-page .lab-readalong-quote::before {
+  content: '\201C';
+  margin-right: 1px;
+  color: color-mix(in srgb, var(--ink) 38%, transparent);
 }
 
 
@@ -1611,8 +1649,7 @@ single row) */
   gap: 16px;
 }
 
-.hi-page .section-heading h2,
-.hi-page .rankings-header h2 {
+.hi-page .section-heading h2 {
   font-size: clamp(26px, 2.8vw, 36px);
   line-height: 1.12;
 }
@@ -2064,43 +2101,6 @@ single row) */
   color: #fff;
 }
 
-.hi-page .rankings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  width: 100%;
-}
-
-.hi-page .rankings-stats {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 9px 18px;
-  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04);
-}
-
-.hi-page .rankings-stat {
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.hi-page .rankings-stat strong {
-  font-weight: 700;
-}
-
-.hi-page .rankings-divider {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 14px;
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
-}
-
 .hi-page .ranking-chart-titles {
   display: flex;
   flex-direction: column;
@@ -2111,6 +2111,30 @@ single row) */
   margin: 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* Live stats line that doubles as the chart subtitle (Models / providers /
+   votes), replacing the old standalone counts strip. */
+.hi-page .ranking-chart-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.hi-page .ranking-chart-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.hi-page .ranking-chart-sep {
+  flex: 0 0 auto;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
 }
 
 .hi-page .ranking-chart-clear {
@@ -2194,111 +2218,6 @@ single row) */
 .hi-page .chart-point:focus,
 .hi-page .chart-point:focus-visible {
   outline: none;
-}
-
-.hi-page .rankings-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 18px;
-}
-
-.hi-page .rankings-search {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
-  border-radius: 10px;
-  background: #fff;
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-/* Mint focus ring on the whole field (the input itself is borderless inside). */
-.hi-page .rankings-search:focus-within {
-  border-color: var(--mint, #00cd8f);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint, #00cd8f) 16%, transparent);
-}
-
-.hi-page .rankings-search svg {
-  flex: 0 0 auto;
-  color: #71717a;
-}
-
-.hi-page .rankings-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 14px;
-}
-
-.hi-page .rankings-search input::placeholder {
-  color: #71717a;
-}
-
-.hi-page .rankings-search input:focus {
-  outline: none;
-}
-
-.hi-page .rankings-select {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 40px;
-  padding: 0 8px 0 12px;
-  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
-  border-radius: 10px;
-  background: #fff;
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.hi-page .rankings-select:focus-within {
-  border-color: var(--mint, #00cd8f);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint, #00cd8f) 16%, transparent);
-}
-
-.hi-page .rankings-select-label {
-  color: var(--ink);
-  opacity: 0.6;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.hi-page .rankings-select select {
-  height: 100%;
-  min-height: 0;
-  padding: 0 2px;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.hi-page .rankings-select select:focus {
-  outline: none;
-}
-
-.hi-page .rankings-select svg {
-  flex: 0 0 auto;
-  color: var(--ink);
-  pointer-events: none;
 }
 
 .hi-page input,
@@ -2663,11 +2582,6 @@ would clip at its top edge. */
     flex-direction: column;
   }
 
-  .hi-page .rankings-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   /* Tighter CTA band: trim the tall desktop band and let both actions go
      full-width so they stack evenly with comfortable tap targets. */
   .hi-page .cta-band {
@@ -2701,18 +2615,6 @@ would clip at its top edge. */
    ========================================================================== */
 
 @media (max-width: 680px) {
-  /* Deep-dive header: title above a wrapping counts strip. */
-  .hi-page .rankings-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .hi-page .rankings-stats {
-    flex-wrap: wrap;
-    row-gap: 4px;
-  }
-
   /* Keep the chart readable: fix its drawn width and pan horizontally
      instead of scaling the 1440px viewBox down to a sliver. */
   .hi-page .ranking-chart-shell {
@@ -2936,18 +2838,9 @@ would clip at its top edge. */
   width: min(var(--content-max), calc(100% - var(--gutter) * 2));
   margin: 0 auto;
   padding-inline: var(--pad);
-  /* Pull up into the hero's bottom padding so it reads as part of the hero. */
-  margin-top: clamp(-28px, -2.4vw, -4px);
-}
-
-.hi-page .hiw-heading {
-  margin: 0 0 clamp(16px, 1.8vw, 22px);
-  color: var(--teal-strong, #00a371);
-  font-family: var(--font-eyebrow);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  /* The section <h2> is sr-only, so the step columns lead the strip; a small
+     top gap keeps them reading as their own clean band under the hero. */
+  margin-top: clamp(8px, 1.4vw, 22px);
 }
 
 .hi-page .hiw-grid {
@@ -3087,12 +2980,15 @@ would clip at its top edge. */
   text-wrap: pretty;
 }
 
-/* "Why this exists" manifesto above the CTA band. */
+/* "Why this exists" manifesto above the CTA band. The reorder leaves it abutting
+   the (light) "Most Human Models" podium, so it gets the same soft hairline +
+   breathing room as the rankings to keep the two light sections distinct. */
 .hi-page .why-exists {
   width: min(var(--content-max), calc(100% - var(--gutter) * 2));
-  margin: 0 auto;
+  margin: clamp(26px, 4vw, 50px) auto 0;
   padding-inline: var(--pad);
   padding-block: clamp(28px, 4vw, 48px);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
 }
 
 .hi-page .why-exists-inner {

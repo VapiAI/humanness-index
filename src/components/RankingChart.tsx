@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { voiceStats } from '../data/providers';
 import { useReveal } from '../hooks/useReveal';
@@ -24,13 +24,19 @@ type RankingVisualizationPanelProps = {
   rows: ScoredModel[];
   allModels: ScoredModel[];
   focusedModel: ScoredModel | null;
+  /**
+   * The chart's subtitle when nothing is focused: the section's live stats line
+   * (Models / providers / unique votes). Replaced by "Clear focus" while a
+   * model is focused.
+   */
+  statsLine?: ReactNode;
   /** Select toggle shared with the table: focuses + plays, or deselects + stops. */
   onFocusModel: (model: ScoredModel) => void;
   onClearFocus: () => void;
   /**
    * Scroll-reveal stagger (ms). The card fades/rises in as its own step so it
-   * lands just after the toolbar/search field in the section's cascade; the
-   * dot populate sweep still fires off the chart area's own observer.
+   * lands a beat after the section intro; the dot populate sweep still fires
+   * off the chart area's own observer.
    */
   revealDelay?: number;
 };
@@ -39,6 +45,7 @@ export const RankingVisualizationPanel = ({
   rows,
   allModels,
   focusedModel,
+  statsLine,
   onFocusModel,
   onClearFocus,
   revealDelay = 0,
@@ -58,7 +65,7 @@ export const RankingVisualizationPanel = ({
             Clear focus
           </button>
         ) : (
-          <p className="ranking-chart-sub">Hover for details or click a dot to hear it</p>
+          statsLine
         )}
       </div>
       <VisualizationLegend />

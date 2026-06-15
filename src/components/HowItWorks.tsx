@@ -1,4 +1,4 @@
-import { Reveal, RevealGroup } from './Reveal';
+import { RevealGroup } from './Reveal';
 
 /** Three-step explainer strip directly under the hero: the biggest confusion-killer. */
 const STEPS = [
@@ -21,9 +21,12 @@ const STEPS = [
 
 export const HowItWorks = () => (
   <section className="how-it-works" aria-labelledby="how-it-works-heading">
-    <Reveal as="h2" className="hiw-heading" id="how-it-works-heading">
+    {/* Visually hidden, but kept in the DOM as the section's <h2> so the
+        heading hierarchy (h2 section -> h3 steps) stays intact for SEO and
+        screen readers. The visible title was removed by request. */}
+    <h2 className="sr-only" id="how-it-works-heading">
       How it works
-    </Reveal>
+    </h2>
     <RevealGroup as="ol" className="hiw-grid">
       {STEPS.map((step) => (
         <li className="hiw-step" key={step.n}>

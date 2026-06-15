@@ -27,8 +27,6 @@ import type {
   VoteChoice,
 } from './lib/types';
 
-const ALL_PROVIDERS = 'All providers';
-
 /** Display price ('$15', 'Open source', dash) → sortable number, or null. */
 const parsePriceUsd = (model: ScoredModel): number | null => {
   const match = voiceStats(model).price.match(/\d+(\.\d+)?/);
@@ -126,8 +124,6 @@ export const HumannessIndexPage = () => {
   const voteGate = useVoteGate();
 
   const [reveal, setReveal] = useState<RoundReveal | null>(null);
-  const [search, setSearch] = useState('');
-  const [provider, setProvider] = useState(ALL_PROVIDERS);
   const [showAll, setShowAll] = useState(false);
   const [focusedModelId, setFocusedModelId] = useState<string | null>(null);
   const [tableSort, setTableSort] = useState<TableSort>({ key: 'rank', dir: 'asc' });
@@ -148,13 +144,6 @@ export const HumannessIndexPage = () => {
     [sortedModels],
   );
 
-  const providerOptions = useMemo(
-    () => [
-      ALL_PROVIDERS,
-      ...new Set(models.filter((row) => !row.baseline).map((row) => row.provider)),
-    ],
-    [models],
-  );
   // Two grid rows: the double-width #1 card plus six rank cards.
   const topModels = rankedModels.slice(0, 7);
 
@@ -171,31 +160,22 @@ export const HumannessIndexPage = () => {
   // the model happens to be battling. The client never learns the matchup.
   const battleToken = currentBattle.voteToken;
 
-  const filteredRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    const matches = sortedModels.filter((model) => {
-      const matchesProvider = provider === ALL_PROVIDERS || model.provider === provider;
-      const matchesQuery =
-        !query ||
-        [model.provider, model.model, model.likelyRank]
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-      return matchesProvider && matchesQuery;
-    });
-    return sortTableRows(matches, tableSort);
-  }, [provider, search, sortedModels, tableSort]);
+  // The full standings in the active sort order (no text/provider filtering).
+  const sortedRows = useMemo(
+    () => sortTableRows(sortedModels, tableSort),
+    [sortedModels, tableSort],
+  );
 
   // The table always lists the full standings (top 10, expandable). Focus only
   // highlights the chosen row and dims the rest — it does not filter the table.
   // The Human baseline is pinned on top and always visible; "top 10" counts
   // the ranked competitors below it.
   const visibleRows = useMemo(() => {
-    if (showAll) return filteredRows;
-    const baselineRows = filteredRows.filter((model) => model.baseline);
-    const rankedRows = filteredRows.filter((model) => !model.baseline);
+    if (showAll) return sortedRows;
+    const baselineRows = sortedRows.filter((model) => model.baseline);
+    const rankedRows = sortedRows.filter((model) => !model.baseline);
     return [...baselineRows, ...rankedRows.slice(0, 10)];
-  }, [showAll, filteredRows]);
+  }, [showAll, sortedRows]);
   const focusedModel = focusedModelId
     ? (models.find((model) => model.id === focusedModelId) ?? null)
     : null;
@@ -368,18 +348,6 @@ export const HumannessIndexPage = () => {
     );
   };
 
-  const updateRankingSearch = (value: string) => {
-    setSearch(value);
-    clearRankFocus();
-    setShowAll(false);
-  };
-
-  const updateRankingProvider = (value: string) => {
-    setProvider(value);
-    clearRankFocus();
-    setShowAll(false);
-  };
-
   const focusRankModel = (model: ScoredModel) => {
     setFocusedModelId(model.id);
     // Reveal the focused row if it lives outside the default top-10 view.
@@ -459,20 +427,15 @@ export const HumannessIndexPage = () => {
           follows it. */}
       <RankingsSection
         sortedModels={sortedModels}
-        filteredRows={filteredRows}
+        sortedRows={sortedRows}
         visibleRows={visibleRows}
         totalUniqueVotes={arena.totalUniqueVotes}
-        search={search}
-        provider={provider}
-        providerOptions={providerOptions}
         showAll={showAll}
         focusedModel={focusedModel}
         focusedModelId={focusedModelId}
         playingId={audio.playingId}
         sort={tableSort}
         onSortChange={updateTableSort}
-        onSearchChange={updateRankingSearch}
-        onProviderChange={updateRankingProvider}
         onToggleShowAll={() => setShowAll((value) => !value)}
         onSelectModel={selectRankModel}
         onClearFocus={clearRankFocus}
