@@ -1663,15 +1663,20 @@ single row) */
   gap: 14px;
   padding: 32px 24px;
   text-align: center;
+  /* Frosted-glass scrim tinted to the page's own background (#fbfdfc, the
+     .hi-page base) so it blends seamlessly instead of reading as a warm
+     off-white box. Nearly opaque at the edges to melt into the page, a touch
+     more translucent in the center so the frosted cards still read as an
+     intentional texture under the label. */
   background:
     radial-gradient(
       130% 130% at 50% 50%,
-      rgba(250, 249, 246, 0.58) 0%,
-      rgba(250, 249, 246, 0.76) 55%,
-      rgba(250, 249, 246, 0.9) 100%
+      rgba(251, 253, 252, 0.72) 0%,
+      rgba(251, 253, 252, 0.86) 58%,
+      rgba(251, 253, 252, 0.95) 100%
     );
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
 .hi-page .lb-provisional-pill {

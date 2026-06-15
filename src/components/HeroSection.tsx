@@ -120,7 +120,7 @@ export const HeroSection = ({
     : 'Same voice, different models.';
 
   const handleSeeLeaderboard = () => {
-    // Jump to the Humanness Deep Dive (dot distribution chart + full rankings
+    // Jump to the Humanness Rankings (dot distribution chart + full rankings
     // table), not the highlight cards.
     document.getElementById('rankings')?.scrollIntoView({ behavior: 'smooth' });
   };

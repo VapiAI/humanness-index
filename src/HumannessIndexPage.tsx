@@ -454,15 +454,9 @@ export const HumannessIndexPage = () => {
 
       <HowItWorks />
 
-      <LeaderboardSection
-        topModels={topModels}
-        allModels={sortedModels}
-        playingId={audio.playingId}
-        onTogglePlay={togglePlaySample}
-      />
-
-      <PiecesSection />
-
+      {/* Section order: the Humanness Rankings (chart + full table) come before
+          the dark "what makes a voice human" band; the "Most Human Models" podium
+          follows it. */}
       <RankingsSection
         sortedModels={sortedModels}
         filteredRows={filteredRows}
@@ -483,6 +477,15 @@ export const HumannessIndexPage = () => {
         onSelectModel={selectRankModel}
         onClearFocus={clearRankFocus}
         onTogglePlay={toggleRankSample}
+      />
+
+      <PiecesSection />
+
+      <LeaderboardSection
+        topModels={topModels}
+        allModels={sortedModels}
+        playingId={audio.playingId}
+        onTogglePlay={togglePlaySample}
       />
 
       <WhyThisExists />

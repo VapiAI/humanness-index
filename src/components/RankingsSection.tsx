@@ -115,7 +115,7 @@ type RankingsSectionProps = {
   onTogglePlay: (model: ScoredModel) => void;
 };
 
-/** "Humanness Deep Dive" — counts strip, filters, distribution chart, and the full table. */
+/** "Humanness Rankings" — counts strip, filters, distribution chart, and the full table. */
 export const RankingsSection = ({
   sortedModels,
   filteredRows,
@@ -218,7 +218,7 @@ export const RankingsSection = ({
   return (
     <section className="long-tail-section" id="rankings" onBlur={handleSectionBlur}>
       <Reveal as="div" className="rankings-header">
-        <h2>Humanness Deep Dive</h2>
+        <h2>Humanness Rankings</h2>
         <div className="rankings-stats">
           <span className="rankings-stat">
             {rankedModels.length} Models
