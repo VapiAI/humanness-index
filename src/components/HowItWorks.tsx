@@ -18,7 +18,10 @@ const STEPS = [
 ];
 
 export const HowItWorks = () => (
-  <section className="how-it-works" aria-label="How it works">
+  <section className="how-it-works" aria-labelledby="how-it-works-heading">
+    <h2 className="hiw-heading" id="how-it-works-heading">
+      How it works
+    </h2>
     <ol className="hiw-grid">
       {STEPS.map((step) => (
         <li className="hiw-step" key={step.n}>

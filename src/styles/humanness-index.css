@@ -2779,6 +2779,16 @@ would clip at its top edge. */
   margin-top: clamp(-28px, -2.4vw, -4px);
 }
 
+.hi-page .hiw-heading {
+  margin: 0 0 clamp(16px, 1.8vw, 22px);
+  color: var(--teal-strong, #00a371);
+  font-family: var(--font-eyebrow);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .hi-page .hiw-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
