@@ -4,6 +4,7 @@ import { FileText } from '@phosphor-icons/react';
 
 import { trackCtaClicked } from '../lib/analytics';
 import { GitHubIcon } from './icons';
+import { RevealGroup } from './Reveal';
 import { GITHUB_URL, METHODOLOGY_URL } from './shell/SiteNav';
 
 const ADD_YOUR_MODEL_MAILTO =
@@ -19,7 +20,7 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
   return (
     <section aria-label="Get involved" className="cta-band" data-nav-theme="dark">
       <div className="band-rails" aria-hidden="true" />
-      <div className="cta-inner">
+      <RevealGroup as="div" className="cta-inner">
         <h2 className="cta-title">Find the most human-sounding voice for your agent.</h2>
         <p className="cta-sub">
           Compare the models in blind tests, read the methodology, or get in
@@ -58,7 +59,7 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
             Add yours to the Index.
           </a>
         </p>
-      </div>
+      </RevealGroup>
     </section>
   );
 };

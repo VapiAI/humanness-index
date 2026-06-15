@@ -1,7 +1,9 @@
+import { RevealGroup } from './Reveal';
+
 /** Short manifesto placed above the CTA band: why the benchmark exists. */
 export const WhyThisExists = () => (
   <section className="why-exists" aria-labelledby="why-exists-heading">
-    <div className="why-exists-inner">
+    <RevealGroup as="div" className="why-exists-inner">
       <h2 className="why-exists-eyebrow" id="why-exists-heading">
         Why this exists
       </h2>
@@ -12,6 +14,6 @@ export const WhyThisExists = () => (
         measurable. One voice on every model, judged blind against a real human,
         scored on humanness and latency.
       </p>
-    </div>
+    </RevealGroup>
   </section>
 );

@@ -12,6 +12,7 @@ import { DetailPageLink } from './DetailPageLink';
 import { RankPauseIcon, RankPlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { RankingVisualizationPanel } from './RankingChart';
+import { Reveal } from './Reveal';
 import { VotesCount } from './VotesCount';
 
 /**
@@ -210,7 +211,7 @@ export const RankingsSection = ({
 
   return (
     <section className="long-tail-section" id="rankings" onBlur={handleSectionBlur}>
-      <div className="rankings-header">
+      <Reveal as="div" className="rankings-header">
         <h2>Humanness Deep Dive</h2>
         <div className="rankings-stats">
           <span className="rankings-stat">
@@ -226,11 +227,11 @@ export const RankingsSection = ({
             <strong>{totalUniqueVotes.toLocaleString()}</strong> unique votes
           </span>
         </div>
-      </div>
-      <p className="rankings-intro">
+      </Reveal>
+      <Reveal as="p" className="rankings-intro" delay={80}>
         Humanness against measured latency, the best voices sit top-right.
-      </p>
-      <div className="rankings-toolbar">
+      </Reveal>
+      <Reveal as="div" className="rankings-toolbar" delay={140}>
         <div className="rankings-search">
           <MagnifyingGlass size={16} />
           <input
@@ -255,7 +256,7 @@ export const RankingsSection = ({
           </select>
           <CaretDown size={16} weight="fill" />
         </div>
-      </div>
+      </Reveal>
 
       <RankingVisualizationPanel
         rows={rankingRows}
@@ -265,7 +266,7 @@ export const RankingsSection = ({
         onClearFocus={onClearFocus}
       />
 
-      <div className="ranking-table-wrap">
+      <Reveal as="div" className="ranking-table-wrap">
         <table className="ranking-table">
           <thead>
             <tr>
@@ -392,7 +393,7 @@ export const RankingsSection = ({
             })}
           </tbody>
         </table>
-      </div>
+      </Reveal>
       {rankedFilteredCount > 10 && (
         <button className="ranking-showall" type="button" onClick={onToggleShowAll}>
           {showAll ? 'Show top 10' : `Show all ${rankedFilteredCount}`}

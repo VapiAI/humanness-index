@@ -1,10 +1,11 @@
+import { RevealGroup } from '../Reveal';
 import { GITHUB_URL, METHODOLOGY_URL } from './SiteNav';
 
 /** Site footer: methodology, contact, attribution, licensing pointers. */
 export const SiteFooter = () => {
   return (
     <footer className="site-footer">
-      <div className="site-footer-inner">
+      <RevealGroup as="div" className="site-footer-inner">
         <div className="site-footer-brand">
           <p className="site-footer-wordmark">The Humanness Index™</p>
           <p className="site-footer-tagline">
@@ -31,7 +32,7 @@ export const SiteFooter = () => {
           nominatively. &ldquo;The Humanness Index™&rdquo; name and logo are
           Vapi trademarks; see TRADEMARKS.md.
         </p>
-      </div>
+      </RevealGroup>
     </footer>
   );
 };

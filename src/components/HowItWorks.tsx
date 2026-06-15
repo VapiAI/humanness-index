@@ -1,3 +1,5 @@
+import { Reveal, RevealGroup } from './Reveal';
+
 /** Three-step explainer strip directly under the hero: the biggest confusion-killer. */
 const STEPS = [
   {
@@ -19,10 +21,10 @@ const STEPS = [
 
 export const HowItWorks = () => (
   <section className="how-it-works" aria-labelledby="how-it-works-heading">
-    <h2 className="hiw-heading" id="how-it-works-heading">
+    <Reveal as="h2" className="hiw-heading" id="how-it-works-heading">
       How it works
-    </h2>
-    <ol className="hiw-grid">
+    </Reveal>
+    <RevealGroup as="ol" className="hiw-grid">
       {STEPS.map((step) => (
         <li className="hiw-step" key={step.n}>
           <span className="hiw-ghost" aria-hidden="true">
@@ -35,6 +37,6 @@ export const HowItWorks = () => (
           </div>
         </li>
       ))}
-    </ol>
+    </RevealGroup>
   </section>
 );

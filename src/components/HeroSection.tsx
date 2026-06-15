@@ -18,6 +18,7 @@ import type {
 } from '../lib/types';
 import { BattleVoiceCard } from './BattleVoiceCard';
 import { PlayIcon } from './icons';
+import { Reveal, RevealGroup } from './Reveal';
 import { METHODOLOGY_URL } from './shell/SiteNav';
 
 type HeroSectionProps = {
@@ -116,7 +117,7 @@ export const HeroSection = ({
 
   return (
     <section className="lab-hero">
-      <div className="lab-copy">
+      <RevealGroup as="div" className="lab-copy">
         <p className="hero-eyebrow">The Humanness Index™</p>
         <h1 className="hero-title">Which voice model is most human?</h1>
         <p className="hero-note">
@@ -139,9 +140,9 @@ export const HeroSection = ({
             className="hero-cta-ext"
           />
         </a>
-      </div>
+      </RevealGroup>
 
-      <div className="lab-card">
+      <Reveal as="div" className="lab-card" delay={140}>
         <header className="lab-head">
           <h2 className="lab-question">{headingText}</h2>
           <p className="lab-hint">{hintText}</p>
@@ -231,7 +232,7 @@ export const HeroSection = ({
             <kbd>→</kbd> play each side · <kbd>space</kbd> vote, then next pair
           </p>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 };

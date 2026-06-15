@@ -1,6 +1,7 @@
 import type { ScoredModel } from '../lib/types';
 import { FeaturedCard } from './FeaturedCard';
 import { RankCard } from './RankCard';
+import { Reveal, RevealGroup } from './Reveal';
 
 type LeaderboardSectionProps = {
   topModels: ScoredModel[];
@@ -17,10 +18,10 @@ export const LeaderboardSection = ({
   onTogglePlay,
 }: LeaderboardSectionProps) => (
   <section className="leaderboard-section" id="leaderboard">
-    <div className="section-heading">
+    <Reveal as="div" className="section-heading">
       <h2>Most Human Models</h2>
-    </div>
-    <div className="top-card-grid">
+    </Reveal>
+    <RevealGroup as="div" className="top-card-grid">
       {topModels.map((model, index) => {
         const CardComponent = index === 0 ? FeaturedCard : RankCard;
         return (
@@ -34,6 +35,6 @@ export const LeaderboardSection = ({
           />
         );
       })}
-    </div>
+    </RevealGroup>
   </section>
 );

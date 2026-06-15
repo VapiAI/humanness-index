@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { RevealGroup } from './Reveal';
+
 const PIECES: Array<{ title: string; body: ReactNode }> = [
   {
     title: 'Expressiveness',
@@ -38,7 +40,7 @@ export const PiecesSection = () => (
     data-nav-theme="dark"
   >
     <div className="band-rails" aria-hidden="true" />
-    <div className="pieces-inner">
+    <RevealGroup as="div" className="pieces-inner">
       <div className="section-heading">
         <div>
           <p className="eyebrow">What we Listen for</p>
@@ -70,6 +72,6 @@ export const PiecesSection = () => (
           can&apos;t clone a voice can&apos;t be tested fairly, so they&apos;re not listed.
         </p>
       </div>
-    </div>
+    </RevealGroup>
   </section>
 );
