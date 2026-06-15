@@ -48,7 +48,7 @@ export const trackDetailLinkClicked = (props: {
 
 /** A click on the CTA band ("Add your model" / "Star on GitHub"). */
 export const trackCtaClicked = (props: {
-  action: 'add-your-model' | 'star-on-github';
+  action: 'add-your-model' | 'star-on-github' | 'read-methodology';
   /** Which page hosts the band: 'index' | 'model' | 'provider'. */
   surface: string;
 }) => capture(HUMANNESS_EVENT.CTA_CLICKED, props);

@@ -1873,6 +1873,24 @@ single row) */
   border-color: #fff;
 }
 
+/* Secondary provider ask under the builder-first actions: a quiet one-liner. */
+.hi-page .cta-provider-note {
+  margin: 20px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13.5px;
+}
+
+.hi-page .cta-provider-note a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hi-page .cta-provider-note a:hover,
+.hi-page .cta-provider-note a:focus-visible {
+  color: #fff;
+}
+
 .hi-page .rankings-header {
   display: flex;
   align-items: center;

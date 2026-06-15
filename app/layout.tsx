@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://humannessindex.vapi.ai'),
   title: 'The Humanness Index™',
   description:
-    'The benchmark for how human voice AI sounds. Vote in blind voice-vs-voice tests and explore the rankings of leading text-to-speech models.',
+    'The benchmark for how human voice AI sounds. Hear leading text-to-speech models blind against a real human and pick the most human-sounding voice for your agent.',
   robots: {
     index: true,
     follow: true,

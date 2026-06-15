@@ -1,10 +1,10 @@
 'use client';
 
-import { EnvelopeSimple } from '@phosphor-icons/react';
+import { FileText } from '@phosphor-icons/react';
 
 import { trackCtaClicked } from '../lib/analytics';
 import { GitHubIcon } from './icons';
-import { GITHUB_URL } from './shell/SiteNav';
+import { GITHUB_URL, METHODOLOGY_URL } from './shell/SiteNav';
 
 const ADD_YOUR_MODEL_MAILTO =
   'mailto:humannessindex@vapi.ai?subject=Add%20my%20model%20to%20the%20Humanness%20Index';
@@ -20,20 +20,21 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
     <section aria-label="Get involved" className="cta-band" data-nav-theme="dark">
       <div className="band-rails" aria-hidden="true" />
       <div className="cta-inner">
-        <h2 className="cta-title">How human does your model really sound?</h2>
+        <h2 className="cta-title">Find the most human-sounding voice for your agent.</h2>
         <p className="cta-sub">
-          We built this to push voice AI toward sounding human. Add your model,
-          read the methodology, or get your voice in the arena.
+          Compare the models in blind tests, read the methodology, or get in
+          touch.
         </p>
         <div className="cta-actions">
-          {/* A mailto, not a form — the envelope sets that expectation. */}
           <a
             className="cta-btn cta-btn-primary"
-            href={ADD_YOUR_MODEL_MAILTO}
-            onClick={() => trackCtaClicked({ action: 'add-your-model', surface })}
+            href={METHODOLOGY_URL}
+            onClick={() => trackCtaClicked({ action: 'read-methodology', surface })}
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <EnvelopeSimple size={17} weight="bold" aria-hidden="true" />
-            Add your model
+            <FileText size={17} weight="bold" aria-hidden="true" />
+            Read the methodology
           </a>
           <a
             className="cta-btn cta-btn-ghost"
@@ -46,6 +47,17 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
             Star on GitHub
           </a>
         </div>
+        {/* Secondary, provider-facing ask, deliberately demoted below the
+            builder actions. Same contact mailto as before. */}
+        <p className="cta-provider-note">
+          Build a TTS model?{' '}
+          <a
+            href={ADD_YOUR_MODEL_MAILTO}
+            onClick={() => trackCtaClicked({ action: 'add-your-model', surface })}
+          >
+            Add yours to the Index.
+          </a>
+        </p>
       </div>
     </section>
   );

@@ -118,10 +118,10 @@ export const HeroSection = ({
     <section className="lab-hero">
       <div className="lab-copy">
         <p className="hero-eyebrow">The Humanness Index™</p>
-        <h1 className="hero-title">How human does your voice AI really sound?</h1>
+        <h1 className="hero-title">Which voice model is most human?</h1>
         <p className="hero-note">
-          Sounding human is hard to measure. So we clone one voice onto every model and
-          play them blind against a real human.
+          Sounding human is hard to measure. We clone one voice onto every model and
+          play them blind against a real human, so you can hear which ones actually pass.
         </p>
         {/* Until a formal whitepaper ships, the methodology doc is the source. */}
         <a

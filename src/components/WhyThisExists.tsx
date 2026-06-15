@@ -4,10 +4,11 @@ export const WhyThisExists = () => (
     <div className="why-exists-inner">
       <p className="why-exists-eyebrow">Why this exists</p>
       <p className="why-exists-body">
-        We&apos;ve spent years pushing TTS vendors to sound more human. Most measure it
-        mechanically and miss the one thing that matters in a live call: can it pass? This
-        benchmark sets that bar at a real human, keeps it honest on latency, and makes it
-        quantitative instead of vibes.
+        Picking a TTS model for a voice agent comes down to one thing: does it
+        sound human enough that people forget they&apos;re talking to software?
+        That&apos;s hard to judge from demos and vendor claims, so we made it
+        measurable. One voice on every model, judged blind against a real human,
+        scored on humanness and latency.
       </p>
     </div>
   </section>
