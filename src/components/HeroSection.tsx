@@ -25,6 +25,11 @@ type HeroSectionProps = {
   /** The post-vote reveal, or null while the round is blind. */
   reveal: RoundReveal | null;
   roundPhase: RoundPhase;
+  /**
+   * The line both voices read this round. Identity-free (same prompt on both
+   * sides), so it is safe to show in the blind round as a read-along caption.
+   */
+  promptText: string;
   playedSides: Record<BattleSide, boolean>;
   /** Which side is currently playing (blind side tracking, no identities). */
   playingSide: BattleSide | null;
@@ -45,6 +50,7 @@ type HeroSectionProps = {
 export const HeroSection = ({
   reveal,
   roundPhase,
+  promptText,
   playedSides,
   playingSide,
   canVote,
@@ -54,6 +60,10 @@ export const HeroSection = ({
   onNext,
 }: HeroSectionProps) => {
   const revealed = reveal !== null;
+  // Read-along: show the shared line once the round is underway (or revealed),
+  // so listeners can follow along while it plays. One caption for both sides —
+  // they read the same prompt — and it never carries any model identity.
+  const showReadAlong = Boolean(promptText) && (revealed || roundPhase !== 'idle');
   const roundResult: VoteChoice | null = reveal?.winner ?? null;
   const pickedSide: BattleSide | null =
     roundResult === 'tie' ? null : roundResult;
@@ -147,6 +157,17 @@ export const HeroSection = ({
           <h2 className="lab-question">{headingText}</h2>
           <p className="lab-hint">{hintText}</p>
         </header>
+
+        {showReadAlong && (
+          <p className="lab-readalong">
+            <span className="lab-readalong-label">Reading</span>
+            <span className="lab-readalong-line">
+              <span aria-hidden="true">&ldquo;</span>
+              {promptText}
+              <span aria-hidden="true">&rdquo;</span>
+            </span>
+          </p>
+        )}
 
         <div className="lab-arena">
           <BattleVoiceCard

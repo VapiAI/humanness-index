@@ -113,6 +113,13 @@ const blindSide = (id: string, voiceProfile: number): ScoredModel => ({
 const BLIND_LEFT = blindSide('battle-left', 7);
 const BLIND_RIGHT = blindSide('battle-right', 13);
 
+/**
+ * Rapid-fire pacing: after a vote, hold the reveal this long, then auto-advance
+ * to the next pair and auto-play it (no "Next Pair" click needed). Long enough
+ * to read the reveal and replay, short enough to keep the loop moving.
+ */
+const REVEAL_HOLD_MS = 1500;
+
 export const HumannessIndexPage = () => {
   const arena = useArenaData();
   const audio = useArenaAudio();
@@ -280,6 +287,26 @@ export const HumannessIndexPage = () => {
     playRoundRef.current();
   }, [currentBattle]);
 
+  // Rapid-fire: once a vote lands the reveal, hold it for REVEAL_HOLD_MS, then
+  // advance to the next pair AND auto-play it (autoStartRef drives the auto-play
+  // when the new battle arrives, exactly like the keyboard "Space on reveal"
+  // path). The vote is the user gesture browser autoplay policies require. A
+  // manual/keyboard advance flips `revealed` off first, so the effect cleanup
+  // cancels this timer before it can double-fire. Reduced-motion is unaffected:
+  // this advances/plays, it adds no motion.
+  const nextComparisonRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    nextComparisonRef.current = handleNextComparison;
+  });
+  useEffect(() => {
+    if (!revealed) return undefined;
+    const timer = window.setTimeout(() => {
+      autoStartRef.current = true;
+      nextComparisonRef.current();
+    }, REVEAL_HOLD_MS);
+    return () => window.clearTimeout(timer);
+  }, [revealed]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
@@ -415,6 +442,7 @@ export const HumannessIndexPage = () => {
       <HeroSection
         reveal={reveal}
         roundPhase={audio.roundPhase}
+        promptText={currentBattle.prompt}
         playedSides={audio.playedSides}
         playingSide={playingSide}
         canVote={audio.bothStarted}

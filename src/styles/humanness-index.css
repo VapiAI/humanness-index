@@ -409,6 +409,35 @@ rendered so scrollbar math stays stable. */
   line-height: 1.35;
 }
 
+/* Read-along: one shared caption of the line both voices read this round. */
+.hi-page .lab-readalong {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  max-width: 52ch;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hi-page .lab-readalong-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.hi-page .lab-readalong-line {
+  color: var(--ink);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
 
 .hi-page .lab-arena {
   display: grid;
