@@ -1,10 +1,10 @@
 # Upload-exclusion list for `vercel --prod` (CLI deploys from this local dir).
 #
-# Vercel falls back to .gitignore for uploads ONLY when no .vercelignore exists.
-# This file exists specifically so the licensed brand fonts under
-# public/fonts/brand/ (which ARE gitignored) still get UPLOADED to production:
-# they are deliberately NOT listed here. Everything else mirrors .gitignore so
-# the upload stays lean and never ships secrets.
+# Mirrors .gitignore so a CLI upload matches a clean Git checkout: it never
+# ships secrets or licensed binaries. (Vercel falls back to .gitignore only when
+# no .vercelignore exists.) The licensed brand fonts are no longer uploaded with
+# the build -- they're served from the project's Vercel Blob store (see
+# src/styles/brand-fonts.css), so every deploy renders them the same way.
 
 # dependencies / build output (Vercel installs + builds fresh)
 node_modules
@@ -36,5 +36,5 @@ public/marks/local/
 # maintainer-local holding area
 private/
 
-# NOTE: public/fonts/brand/*.woff2 + *.otf are intentionally NOT excluded here,
-# so the licensed brand fonts upload to production even though git ignores them.
+# licensed brand fonts: hosted on Vercel Blob, never uploaded with the build
+public/fonts/brand/
