@@ -14,10 +14,10 @@ const DESCRIPTION =
   'The benchmark for how human voice AI sounds. Hear leading text-to-speech models blind against a real human and pick the most human-sounding voice for your agent.';
 
 const OG_IMAGE = {
-  url: '/og/og-v3.jpg',
+  url: '/og/og-v4.jpg',
   width: 1200,
   height: 630,
-  alt: 'The Humanness Index™. Which voice model is most human?',
+  alt: 'The Humanness Index™. Which voice model sounds the most human?',
 };
 
 export const metadata: Metadata = {
