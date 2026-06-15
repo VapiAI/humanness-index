@@ -24,7 +24,10 @@ html {
 body {
   margin: 0;
   line-height: inherit;
+  /* Body: licensed Season Sans, then bundled open Instrument Sans, then system. */
   font-family:
+    'Season Sans',
+    var(--font-instrument-sans),
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -153,7 +156,9 @@ video {
   --shell-content-max: 1296px;
   --shell-gutter: clamp(20px, 5vw, 72px);
   --shell-pad: clamp(20px, 2.6vw, 40px);
+  /* Nav/footer wordmark: licensed Avantt, then Instrument Sans, then system. */
   --shell-font-display:
+    'Avantt',
     var(--font-instrument-sans),
     Inter,
     ui-sans-serif,

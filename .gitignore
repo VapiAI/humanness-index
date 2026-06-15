@@ -36,3 +36,11 @@ public/marks/local/
 
 # Maintainer-local holding area (never shipped)
 /private/
+
+# Licensed Vapi brand fonts (Avantt, Season Sans, Foundry Gridnik): commercial
+# typefaces, never committed to this open-source repo. Forks fall back to the
+# bundled open fonts (Instrument Sans, Tomorrow) via the token stacks. The CLI
+# uploads these to production via .vercelignore. The README is kept as docs;
+# only the binaries are ignored.
+public/fonts/brand/*.woff2
+public/fonts/brand/*.otf

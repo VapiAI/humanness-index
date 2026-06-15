@@ -8,6 +8,7 @@ import { SiteFooter } from '@/components/shell/SiteFooter';
 import { SiteNav } from '@/components/shell/SiteNav';
 import { organizationJsonLd, webSiteJsonLd } from '@/lib/detail';
 
+import '@/styles/brand-fonts.css';
 import '@/styles/shell.css';
 
 // The display font behind the module's `--font-display` token (tokens.css).

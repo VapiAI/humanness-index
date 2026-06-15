@@ -1,0 +1,116 @@
+/*
+ * Vapi brand fonts (Avantt, Season Sans, Foundry Gridnik).
+ *
+ * LICENSING: these are COMMERCIAL, licensed typefaces. The font binaries are
+ * gitignored (see .gitignore) and are NEVER committed to this open-source repo.
+ * They are uploaded to production by the Vercel CLI (`vercel --prod`), which is
+ * told to include them via .vercelignore. Forks / clones (and any build without
+ * the files) simply 404 these URLs and fall back to the bundled open fonts
+ * (Instrument Sans for display/body, Tomorrow for eyebrows) declared after each
+ * brand family in the token stacks (src/styles/tokens.css, src/styles/shell.css).
+ *
+ * Absolute /fonts/brand/* URLs are intentional: Next/webpack treats them as
+ * runtime public-dir paths and does NOT resolve them at build time, so a
+ * missing file just 404s at runtime instead of failing the build. (A relative
+ * url('./...') would be bundled and would break the build if absent.)
+ *
+ * font-display: swap everywhere, so text paints immediately in the fallback and
+ * upgrades to the brand face once it loads.
+ */
+
+/* Avantt: display / headings. Weights 100-700. */
+@font-face {
+  font-family: 'Avantt';
+  src: url('/fonts/brand/Avantt-Thin.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Avantt';
+  src: url('/fonts/brand/Avantt-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Avantt';
+  src: url('/fonts/brand/Avantt-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Avantt';
+  src: url('/fonts/brand/Avantt-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Avantt';
+  src: url('/fonts/brand/Avantt-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Avantt';
+  src: url('/fonts/brand/Avantt-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Season Sans: body. Weights 300-900. */
+@font-face {
+  font-family: 'Season Sans';
+  src: url('/fonts/brand/SeasonSans-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Season Sans';
+  src: url('/fonts/brand/SeasonSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Season Sans';
+  src: url('/fonts/brand/SeasonSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Season Sans';
+  src: url('/fonts/brand/SeasonSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Season Sans';
+  src: url('/fonts/brand/SeasonSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Season Sans';
+  src: url('/fonts/brand/SeasonSans-Heavy.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Foundry Gridnik: eyebrows / uppercase labels. Medium only. */
+@font-face {
+  font-family: 'Foundry Gridnik';
+  src: url('/fonts/brand/FoundryGridnik-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
