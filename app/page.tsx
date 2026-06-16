@@ -8,6 +8,7 @@ import {
   INDEX_PATH,
   indexModelsItemListJsonLd,
 } from '@/lib/detail';
+import { getStandingsSnapshot } from '@/server/standingsSnapshot';
 
 const TITLE = 'Humanness Index™: Which TTS Voice Is Most Human? | Vapi';
 const DESCRIPTION =
@@ -43,14 +44,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HumannessIndex() {
+export default async function HumannessIndex() {
+  // First-paint standings from the same hourly snapshot the detail pages use
+  // (and the same `getModels` source as /api/models), so the client hydrates
+  // from the live model set/order instead of the bundled static export and the
+  // table doesn't reshuffle when the on-mount fetch lands.
+  const { models, totalUniqueVotes } = await getStandingsSnapshot();
   return (
     <>
       {/* The hub-to-detail ItemList (registry seed order) rides the server
-          shell — the page body itself is fully client-rendered. */}
+          shell; the page body itself stays client-rendered, just seeded with
+          the server snapshot for first paint. */}
       <JsonLd data={indexModelsItemListJsonLd()} />
       <JsonLd data={datasetJsonLd()} />
-      <HumannessIndexPage />
+      <HumannessIndexPage initialStandings={{ models, totalUniqueVotes }} />
     </>
   );
 }

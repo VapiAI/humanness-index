@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { HERO_BATTLES } from '../data/battles';
 import { ARENA_ROWS, mergeStandings, SEED_TOTAL_UNIQUE_VOTES } from '../data/models';
-import { getBattle, getModels, submitVote } from '../lib/api';
+import { type ArenaModelRow, getBattle, getModels, submitVote } from '../lib/api';
 import {
   competitorRank,
   eloExpectation,
@@ -25,20 +25,36 @@ import type {
 const VOTE_K = 32;
 
 /**
+ * Server-rendered first-paint standings (the hourly `getStandingsSnapshot`),
+ * handed to the hook so the table/chart hydrate from the SAME data the live
+ * `/api/models` fetch returns. Without it the hook falls back to the bundled
+ * static export, which can list a different model set/order and visibly
+ * reshuffle the moment the live fetch lands.
+ */
+export type ArenaStandingsSeed = {
+  models: ArenaModelRow[];
+  totalUniqueVotes: number;
+};
+
+/**
  * The arena's data layer, backed by /api/*:
  *
- * - Standings render instantly from the static export snapshot, then refresh
- *   from the live leaderboard on mount.
+ * - Standings render instantly from the server snapshot (or the static export
+ *   when none is supplied), then refresh from the live leaderboard on mount.
+ *   Seeding from the snapshot makes that refresh a no-op in the common case, so
+ *   the rankings don't reshuffle under the reveal animation.
  * - Battles come from the server (signed vote token + hosted clip URLs); the
  *   next pairing is prefetched while the reveal is on screen, and the
  *   hardcoded pairs remain as offline fallbacks.
  * - Votes apply optimistically (local pairwise Elo) and POST to the backend,
  *   whose response — the post-vote leaderboard — reconciles local state.
  */
-export const useArenaData = () => {
-  const [models, setModels] = useState<ScoredModel[]>(ARENA_ROWS);
+export const useArenaData = (seed?: ArenaStandingsSeed) => {
+  const [models, setModels] = useState<ScoredModel[]>(() =>
+    seed ? mergeStandings(seed.models) : ARENA_ROWS,
+  );
   const [totalUniqueVotes, setTotalUniqueVotes] = useState(
-    SEED_TOTAL_UNIQUE_VOTES,
+    () => seed?.totalUniqueVotes ?? SEED_TOTAL_UNIQUE_VOTES,
   );
   const [battle, setBattle] = useState<HeroBattle>(HERO_BATTLES[0]);
 

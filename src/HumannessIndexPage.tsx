@@ -13,7 +13,7 @@ import { PiecesSection } from './components/PiecesSection';
 import { RankingsSection } from './components/RankingsSection';
 import { WhyThisExists } from './components/WhyThisExists';
 import { useArenaAudio } from './hooks/useArenaAudio';
-import { useArenaData } from './hooks/useArenaData';
+import { useArenaData, type ArenaStandingsSeed } from './hooks/useArenaData';
 import { useVoteGate } from './hooks/useVoteGate';
 import { voiceStats } from './data/providers';
 import { trackRoundStarted, trackVote } from './lib/analytics';
@@ -121,8 +121,18 @@ const REVEAL_HOLD_MS = 5000;
 /** Whole seconds shown in the Next button's countdown (REVEAL_HOLD_MS / 1000). */
 const AUTO_ADVANCE_SECONDS = Math.round(REVEAL_HOLD_MS / 1000);
 
-export const HumannessIndexPage = () => {
-  const arena = useArenaData();
+export const HumannessIndexPage = ({
+  initialStandings,
+}: {
+  /**
+   * Server-rendered standings snapshot for first paint. When present the table,
+   * chart, and leaderboard hydrate from the same data the live fetch returns,
+   * so they don't reshuffle on mount. Omitted (e.g. in isolation) falls back to
+   * the bundled static export.
+   */
+  initialStandings?: ArenaStandingsSeed;
+}) => {
+  const arena = useArenaData(initialStandings);
   const audio = useArenaAudio();
   const voteGate = useVoteGate();
 
