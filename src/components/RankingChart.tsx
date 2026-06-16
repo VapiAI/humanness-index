@@ -166,7 +166,6 @@ const EloDistributionChart = ({
   // The Human baseline anchors the Humanness scale at 100 but has no latency,
   // so it is never plotted; the chart's field is the ranked competitors.
   const ranked = allModels.filter((m) => !m.baseline);
-  const hasBaseline = allModels.length > ranked.length;
 
   // Only models with a measured TTFB can sit honestly on a latency axis;
   // models without one are simply not plotted.
@@ -285,37 +284,25 @@ const EloDistributionChart = ({
           ))}
         </g>
 
-        {/* Stage 4: reference lines (the better-zone boundaries + baseline).
-            Average humanness (vertical, top-to-bottom), average latency
-            (horizontal, left-to-right), and the Human-100 baseline (vertical). */}
+        {/* Stage 4: the average reference lines (the better-zone boundaries):
+            average humanness (vertical) and average latency (horizontal). They
+            are dotted in their settled state and fade in as a group here — a
+            stroke-dash draw-on on a dotted line would read as marching dots. */}
         <g className="chart-refs">
           <line
-            className="chart-avg-line chart-draw-v"
-            pathLength={1}
+            className="chart-avg-line"
             x1={xFor(avgHum)}
             x2={xFor(avgHum)}
             y1={top}
             y2={bottom}
           />
           <line
-            className="chart-avg-line chart-draw-h"
-            pathLength={1}
+            className="chart-avg-line"
             x1={left}
             x2={right}
             y1={yForMs(avgLatMs)}
             y2={yForMs(avgLatMs)}
           />
-          {hasBaseline && (
-            <line
-              className="chart-baseline-line chart-draw-v"
-              pathLength={1}
-              x1={xFor(100)}
-              x2={xFor(100)}
-              y1={top}
-              y2={bottom}
-              aria-hidden="true"
-            />
-          )}
         </g>
 
         {/* Stage 1: axes. x-axis draws left-to-right, y-axis top-to-bottom. */}
@@ -400,17 +387,6 @@ const EloDistributionChart = ({
           <text className="chart-better" x={right - 8} y={top + 16} textAnchor="end" aria-hidden="true">
             Better
           </text>
-          {hasBaseline && (
-            <text
-              className="chart-baseline-label"
-              x={xFor(100)}
-              y={top - 8}
-              textAnchor="end"
-              aria-hidden="true"
-            >
-              Human {'\u00b7'} 100
-            </text>
-          )}
         </g>
 
         {plottable.map((model) => {

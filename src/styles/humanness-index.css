@@ -1841,7 +1841,7 @@ single row) */
 .hi-page .legend-line {
   width: 24px;
   height: 2px;
-  border-top: 2px solid var(--mint, #00cd8f);
+  border-top: 2px dotted var(--mint, #00cd8f);
 }
 
 .hi-page .legend-gradient {
@@ -2230,11 +2230,14 @@ single row) */
   font-weight: 800;
 }
 
-/* Solid (not dashed) so the stage-4 stroke-dash draw-on reveals them cleanly;
-   the mint color already sets them apart from the gray axes/grid. */
+/* Dotted in the settled state (round-cap dots). They fade in at stage 4 rather
+   than a stroke-dash draw-on, which on a dotted line would read as marching
+   dots; the mint color sets them apart from the gray axes/grid. */
 .hi-page .chart-avg-line {
   stroke: var(--mint, #00cd8f);
-  stroke-width: 1;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 0.01 7;
 }
 
 .hi-page .chart-avg-label {
@@ -2242,20 +2245,6 @@ single row) */
   font-size: 10px;
   font-weight: 600;
   letter-spacing: -0.02em;
-}
-
-/* The Human baseline anchors the right edge at 100; a faint reference line
-   plus label, since Human itself is never plotted (it has no latency). */
-.hi-page .chart-baseline-line {
-  stroke: var(--mint, #00cd8f);
-  stroke-width: 1.5;
-  opacity: 0.7;
-}
-
-.hi-page .chart-baseline-label {
-  fill: var(--mint, #00cd8f);
-  font-size: 11px;
-  font-weight: 700;
 }
 
 .hi-page .chart-end-label {
@@ -3237,16 +3226,16 @@ html.reveal-ready .ranking-chart-area .chart-grid .chart-draw-v {
   transition: stroke-dashoffset 0.42s var(--reveal-ease) 0.55s;
 }
 
-/* Stage 4 — reference lines draw on; wash + reference labels fade in. */
-html.reveal-ready .ranking-chart-area .chart-refs .chart-draw-h,
-html.reveal-ready .ranking-chart-area .chart-refs .chart-draw-v {
-  transition: stroke-dashoffset 0.42s var(--reveal-ease) 0.85s;
-}
+/* Stage 4 — the dotted average lines, the better-zone wash, and the reference
+   labels all fade in together (the dotted lines fade rather than draw-on so they
+   never read as marching dots). */
+html.reveal-ready .ranking-chart-area .chart-refs,
 html.reveal-ready .ranking-chart-area .chart-better-zone-rect,
 html.reveal-ready .ranking-chart-area .chart-ref-labels {
   opacity: 0;
   transition: opacity 0.4s ease-out 0.85s;
 }
+html.reveal-ready .ranking-chart-area.dots-in .chart-refs,
 html.reveal-ready .ranking-chart-area.dots-in .chart-better-zone-rect,
 html.reveal-ready .ranking-chart-area.dots-in .chart-ref-labels {
   opacity: 1;
@@ -3351,6 +3340,7 @@ html.reveal-ready .lb-cards .rank-meter-thumb-rail {
   html.reveal-ready .viz-enter,
   html.reveal-ready .ranking-chart-area .chart-axis-labels,
   html.reveal-ready .ranking-chart-area .chart-ref-labels,
+  html.reveal-ready .ranking-chart-area .chart-refs,
   html.reveal-ready .ranking-chart-area .chart-better-zone-rect,
   html.reveal-ready .ranking-chart-area .chart-draw-h,
   html.reveal-ready .ranking-chart-area .chart-draw-v,
