@@ -5,7 +5,7 @@ import { FileText } from '@phosphor-icons/react';
 import { trackCtaClicked } from '../lib/analytics';
 import { GitHubIcon } from './icons';
 import { RevealGroup } from './Reveal';
-import { GITHUB_URL, METHODOLOGY_URL } from './shell/SiteNav';
+import { GITHUB_URL, WHITEPAPER_URL } from './shell/SiteNav';
 
 const ADD_YOUR_MODEL_MAILTO =
   'mailto:humannessindex@vapi.ai?subject=Add%20my%20model%20to%20the%20Humanness%20Index';
@@ -29,7 +29,7 @@ export const CtaBand = ({ surface = 'index' }: CtaBandProps) => {
         <div className="cta-actions">
           <a
             className="cta-btn cta-btn-primary"
-            href={METHODOLOGY_URL}
+            href={WHITEPAPER_URL}
             onClick={() => trackCtaClicked({ action: 'read-methodology', surface })}
             rel="noopener noreferrer"
             target="_blank"

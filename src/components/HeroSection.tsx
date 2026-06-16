@@ -21,7 +21,7 @@ import type {
 import { BattleVoiceCard } from './BattleVoiceCard';
 import { PlayIcon } from './icons';
 import { Reveal, RevealGroup } from './Reveal';
-import { METHODOLOGY_URL } from './shell/SiteNav';
+import { WHITEPAPER_URL } from './shell/SiteNav';
 
 type HeroSectionProps = {
   /** The post-vote reveal, or null while the round is blind. */
@@ -148,10 +148,9 @@ export const HeroSection = ({
           works. We clone one voice onto every model and play them blind against a real
           human, so you can hear which ones pass.
         </p>
-        {/* Until a formal whitepaper ships, the methodology doc is the source. */}
         <a
           className="vapi-btn hero-cta"
-          href={METHODOLOGY_URL}
+          href={WHITEPAPER_URL}
           rel="noopener noreferrer"
           target="_blank"
         >

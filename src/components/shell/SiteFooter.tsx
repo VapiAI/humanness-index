@@ -1,5 +1,5 @@
 import { RevealGroup } from '../Reveal';
-import { GITHUB_URL, METHODOLOGY_URL } from './SiteNav';
+import { GITHUB_URL, WHITEPAPER_URL } from './SiteNav';
 
 /** Site footer: methodology, contact, attribution, licensing pointers. */
 export const SiteFooter = () => {
@@ -14,7 +14,7 @@ export const SiteFooter = () => {
           </p>
         </div>
         <nav aria-label="Footer" className="site-footer-links">
-          <a href={METHODOLOGY_URL} rel="noopener noreferrer" target="_blank">
+          <a href={WHITEPAPER_URL} rel="noopener noreferrer" target="_blank">
             Methodology
           </a>
           <a href={GITHUB_URL} rel="noopener noreferrer" target="_blank">

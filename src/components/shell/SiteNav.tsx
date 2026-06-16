@@ -4,6 +4,8 @@ import { GitHubIcon } from '../icons';
 
 export const GITHUB_URL = 'https://github.com/VapiAI/humanness-index';
 export const METHODOLOGY_URL = `${GITHUB_URL}/blob/main/docs/METHODOLOGY.md`;
+/** The canonical, user-facing whitepaper (shipped from public/). */
+export const WHITEPAPER_URL = '/the-humanness-index-whitepaper.pdf';
 
 /** The standalone site's slim top bar: wordmark, GitHub, Vapi attribution. */
 export const SiteNav = () => {
