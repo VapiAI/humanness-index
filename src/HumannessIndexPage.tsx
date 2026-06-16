@@ -143,6 +143,10 @@ export const HumannessIndexPage = ({
   // Seconds left on the post-vote auto-advance, shown as a Next-button countdown
   // (null when no countdown is running).
   const [advanceCountdown, setAdvanceCountdown] = useState<number | null>(null);
+  // Whether the blind picker is on screen. The post-vote auto-advance (and its
+  // autoplay) only runs while it's visible, so the arena stops cueing up — and
+  // playing — new pairs once the listener scrolls down to the rankings.
+  const [battleInView, setBattleInView] = useState(true);
 
   const revealed = reveal !== null;
 
@@ -150,6 +154,29 @@ export const HumannessIndexPage = ({
   useEffect(() => {
     if (revealed) audio.stopPlayback();
   }, [revealed, audio.stopPlayback]);
+
+  // Track the picker's visibility so the auto-advance loop can pause when it
+  // scrolls off screen (it resumes when scrolled back into view).
+  useEffect(() => {
+    const picker = document.querySelector('.lab-card');
+    if (!picker || typeof IntersectionObserver === 'undefined') return undefined;
+    const io = new IntersectionObserver(
+      ([entry]) => setBattleInView(entry.isIntersecting),
+      { threshold: 0 },
+    );
+    io.observe(picker);
+    return () => io.disconnect();
+  }, []);
+
+  // If the picker scrolls away mid-clip, stop the blind pair so it doesn't keep
+  // playing out loud off screen. A model sample playing in the rankings below is
+  // left alone — its id isn't a blind-side id.
+  useEffect(() => {
+    if (battleInView) return;
+    if (audio.playingId === BLIND_LEFT.id || audio.playingId === BLIND_RIGHT.id) {
+      audio.stopPlayback();
+    }
+  }, [battleInView, audio.playingId, audio.stopPlayback]);
 
   const { models, sortedModels, battle: currentBattle, standingsReady } = arena;
 
@@ -295,7 +322,9 @@ export const HumannessIndexPage = ({
     nextComparisonRef.current = handleNextComparison;
   });
   useEffect(() => {
-    if (!revealed) {
+    // Only auto-advance while the reveal is up AND the picker is on screen —
+    // scrolling away pauses the loop so pairs don't keep playing off screen.
+    if (!revealed || !battleInView) {
       setAdvanceCountdown(null);
       return undefined;
     }
@@ -315,7 +344,7 @@ export const HumannessIndexPage = ({
       window.clearInterval(interval);
       window.clearTimeout(timer);
     };
-  }, [revealed]);
+  }, [revealed, battleInView]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
