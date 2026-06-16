@@ -1571,13 +1571,59 @@ single row) */
   opacity: 0.7;
 }
 
-/* Post-reveal control pair: Next Pair + jump to the leaderboard. */
+/* Post-reveal control pair: Next pair + jump to the leaderboard. */
 .hi-page .lab-after {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+/* The Next button doubles as the auto-advance countdown: a teal fill grows
+   left-to-right over the auto-advance window (behind the label), and the label
+   ticks "Next pair (5..1)". A click/space advances immediately (the timer is
+   cancelled in the page). */
+.hi-page .lab-next {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hi-page .lab-next-label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hi-page .lab-next-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.hi-page .lab-next-progress {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--teal, #00cd8f) 48%, transparent),
+    color-mix(in srgb, var(--teal, #00cd8f) 30%, transparent)
+  );
+  animation: lab-next-fill var(--auto-advance-ms, 5000ms) linear forwards;
+}
+
+@keyframes lab-next-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .hi-page .lab-ghost {
@@ -2751,6 +2797,12 @@ single row) */
   .hi-page .lab-pick-btn:active,
   .hi-page .lab-tie-btn:hover {
     transform: none;
+  }
+
+  /* No progress-fill motion; the numeric "Next pair (n)" countdown still ticks
+     and the auto-advance still fires. */
+  .hi-page .lab-next-progress {
+    animation: none;
   }
 }
 

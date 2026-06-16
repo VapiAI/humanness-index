@@ -113,10 +113,13 @@ const BLIND_RIGHT = blindSide('battle-right', 13);
 
 /**
  * Rapid-fire pacing: after a vote, hold the reveal this long, then auto-advance
- * to the next pair and auto-play it (no "Next Pair" click needed). Long enough
- * to read the reveal and replay, short enough to keep the loop moving.
+ * to the next pair and auto-play it (no "Next pair" click needed). The "Next"
+ * button shows a live countdown of the remaining seconds; clicking it (or
+ * pressing space) advances immediately and cancels the timer.
  */
-const REVEAL_HOLD_MS = 1500;
+const REVEAL_HOLD_MS = 5000;
+/** Whole seconds shown in the Next button's countdown (REVEAL_HOLD_MS / 1000). */
+const AUTO_ADVANCE_SECONDS = Math.round(REVEAL_HOLD_MS / 1000);
 
 export const HumannessIndexPage = () => {
   const arena = useArenaData();
@@ -127,6 +130,9 @@ export const HumannessIndexPage = () => {
   const [showAll, setShowAll] = useState(false);
   const [focusedModelId, setFocusedModelId] = useState<string | null>(null);
   const [tableSort, setTableSort] = useState<TableSort>({ key: 'rank', dir: 'asc' });
+  // Seconds left on the post-vote auto-advance, shown as a Next-button countdown
+  // (null when no countdown is running).
+  const [advanceCountdown, setAdvanceCountdown] = useState<number | null>(null);
 
   const revealed = reveal !== null;
 
@@ -279,12 +285,26 @@ export const HumannessIndexPage = () => {
     nextComparisonRef.current = handleNextComparison;
   });
   useEffect(() => {
-    if (!revealed) return undefined;
+    if (!revealed) {
+      setAdvanceCountdown(null);
+      return undefined;
+    }
+    setAdvanceCountdown(AUTO_ADVANCE_SECONDS);
+    // Tick the visible countdown down (floored at 1); the timeout below fires
+    // the actual advance at REVEAL_HOLD_MS.
+    const interval = window.setInterval(() => {
+      setAdvanceCountdown((seconds) =>
+        seconds && seconds > 1 ? seconds - 1 : seconds,
+      );
+    }, 1000);
     const timer = window.setTimeout(() => {
       autoStartRef.current = true;
       nextComparisonRef.current();
     }, REVEAL_HOLD_MS);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(timer);
+    };
   }, [revealed]);
 
   useEffect(() => {
@@ -414,6 +434,8 @@ export const HumannessIndexPage = () => {
         playedSides={audio.playedSides}
         playingSide={playingSide}
         canVote={audio.bothStarted}
+        autoAdvanceIn={advanceCountdown}
+        autoAdvanceMs={REVEAL_HOLD_MS}
         onPlayRound={handlePlayRound}
         onToggleSide={handleToggleSide}
         onVote={handleVote}

@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+
 import {
   ArrowDown,
   ArrowsCounterClockwise,
@@ -35,6 +37,13 @@ type HeroSectionProps = {
   playingSide: BattleSide | null;
   /** Both voices have started playing — voting is enabled. */
   canVote: boolean;
+  /**
+   * Seconds left before the post-vote auto-advance (shown counting down in the
+   * Next button), or null when no countdown is running.
+   */
+  autoAdvanceIn?: number | null;
+  /** Total auto-advance window in ms — drives the Next button's progress bar. */
+  autoAdvanceMs?: number;
   onPlayRound: () => void;
   onToggleSide: (side: BattleSide) => void;
   onVote: (choice: VoteChoice) => void;
@@ -54,6 +63,8 @@ export const HeroSection = ({
   playedSides,
   playingSide,
   canVote,
+  autoAdvanceIn = null,
+  autoAdvanceMs,
   onPlayRound,
   onToggleSide,
   onVote,
@@ -207,8 +218,34 @@ export const HeroSection = ({
         <div className="lab-controls">
           {revealed ? (
             <div className="lab-after">
-              <button className="lab-primary lab-next" type="button" onClick={onNext}>
-                <ArrowsCounterClockwise size={18} weight="bold" /> Next Pair
+              {/* Auto-advances at 0; a click (or space) advances immediately and
+                  cancels the countdown. The label keeps a stable accessible name
+                  ("Next pair") so the per-second tick doesn't spam screen
+                  readers; the (n) and the progress fill are decorative. */}
+              <button
+                className="lab-primary lab-next"
+                type="button"
+                onClick={onNext}
+                aria-label="Next pair"
+                style={
+                  autoAdvanceMs
+                    ? ({ '--auto-advance-ms': `${autoAdvanceMs}ms` } as CSSProperties)
+                    : undefined
+                }
+              >
+                {autoAdvanceMs != null && (
+                  <span className="lab-next-progress" aria-hidden="true" />
+                )}
+                <span className="lab-next-label">
+                  <ArrowsCounterClockwise size={18} weight="bold" aria-hidden="true" />
+                  Next pair
+                  {autoAdvanceIn != null && (
+                    <span className="lab-next-count" aria-hidden="true">
+                      {' '}
+                      ({autoAdvanceIn})
+                    </span>
+                  )}
+                </span>
               </button>
               <button className="lab-ghost" type="button" onClick={handleSeeLeaderboard}>
                 <ArrowDown size={16} weight="bold" /> See the leaderboard
