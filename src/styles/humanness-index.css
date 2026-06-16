@@ -188,11 +188,10 @@ rendered so scrollbar math stays stable. */
 }
 
 /* Set the Humanness Rankings apart from the How-it-works strip directly above
-   it (the reorder left them blending): extra breathing room plus a soft
-   content-width hairline rule leading the section. */
+   it (the reorder left them blending): extra breathing room leading the
+   section. */
 .hi-page .long-tail-section {
   margin-top: clamp(26px, 4vw, 50px);
-  border-top: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
 }
 
 .hi-page .section-heading,
@@ -2129,6 +2128,20 @@ single row) */
   white-space: nowrap;
 }
 
+/* Keeps each count and its label as one inline unit (so only the (i) sits apart
+   in the flex gap). */
+.hi-page .ranking-chart-statlabel {
+  white-space: nowrap;
+}
+
+/* Reveal count-up number: tabular figures + a final-width `ch` reservation (set
+   inline from the value's digit count) so the line never reflows as it ticks. */
+.hi-page .ranking-chart-statnum {
+  display: inline-block;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .hi-page .ranking-chart-sep {
   flex: 0 0 auto;
   width: 3px;
@@ -2329,35 +2342,37 @@ single row) */
   color: rgba(17, 16, 19, 0.8);
 }
 
-/* Opens downward: the table wrap is a scroll container, so an upward bubble
-would clip at its top edge. */
-.hi-page .rt-info-tip {
-  position: absolute;
-  top: calc(100% + 9px);
-  left: 50%;
-  z-index: 6;
-  width: min(240px, calc(100vw - 40px));
+/* The definition bubble is portaled to <body> (see InfoTip in
+   RankingsSection.tsx) and positioned `fixed` at the icon, so no overflow/clip
+   ancestor — the rounded chart panel, the table's horizontal scroller — can cut
+   it off. Its center is clamped to the viewport in JS so the full text always
+   shows. Unprefixed (not under .hi-page) because it lives outside that subtree. */
+.info-tip-pop {
+  position: fixed;
+  z-index: 60;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--ink);
+  background: #1a1a2e;
   color: rgba(255, 255, 255, 0.94);
+  font-family: inherit;
   font-size: 12px;
   font-weight: 400;
   line-height: 1.45;
   text-align: left;
   white-space: normal;
-  /* --tip-shift is set in JS (clampTip) to keep the bubble on-screen near a
-     scroll edge; defaults to 0 so it stays centered when it already fits. */
-  transform: translateX(calc(-50% + var(--tip-shift, 0px)));
+  transform: translateX(-50%);
   box-shadow: 0 12px 28px -12px rgba(26, 26, 46, 0.45);
-  opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
+  animation: info-tip-pop-in 120ms ease both;
 }
 
-.hi-page .rt-info:hover .rt-info-tip,
-.hi-page .rt-info:focus-visible .rt-info-tip {
-  opacity: 1;
+@keyframes info-tip-pop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .hi-page .ranking-table td {
@@ -2970,25 +2985,14 @@ would clip at its top edge. */
   margin-top: 36px;
 }
 
-/* Deep Dive orienting intro above the chart. */
-.hi-page .rankings-intro {
-  max-width: 78ch;
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
-  text-wrap: pretty;
-}
-
 /* "Why this exists" manifesto above the CTA band. The reorder leaves it abutting
-   the (light) "Most Human Models" podium, so it gets the same soft hairline +
-   breathing room as the rankings to keep the two light sections distinct. */
+   the (light) "Most Human Models" podium, so it keeps generous breathing room to
+   stay distinct from the section above. */
 .hi-page .why-exists {
   width: min(var(--content-max), calc(100% - var(--gutter) * 2));
   margin: clamp(26px, 4vw, 50px) auto 0;
   padding-inline: var(--pad);
   padding-block: clamp(28px, 4vw, 48px);
-  border-top: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
 }
 
 .hi-page .why-exists-inner {

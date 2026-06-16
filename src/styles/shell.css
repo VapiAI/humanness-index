@@ -231,6 +231,26 @@ main:focus {
   opacity: 0.8;
 }
 
+/* Logomark in a subtle rounded-square chip to the left of the wordmark. */
+.site-nav-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  padding: 3px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--shell-border);
+  box-shadow: 0 1px 2px rgba(16, 16, 19, 0.05);
+}
+
+.site-nav-mark img {
+  width: 100%;
+  height: 100%;
+}
+
 .site-nav-tm {
   font-size: 0.55em;
   font-weight: 500;
@@ -295,6 +315,12 @@ main:focus {
   .site-nav-wordmark {
     font-size: 15px;
     gap: 8px;
+  }
+
+  .site-nav-mark {
+    width: 33px;
+    height: 33px;
+    border-radius: 9px;
   }
 
   .site-nav-vapi-prefix {

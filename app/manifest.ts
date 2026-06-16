@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 /**
  * Web app manifest for the Humanness Index. Distinct from Vapi's own app
- * manifest: this names the Index itself. Icons reuse the Vapi favicon set
+ * manifest: this names the Index itself. Icons are the Humanness Index logomark
  * (app/icon.svg, app/apple-icon.png, app/favicon.ico); theme_color matches the
  * viewport themeColor in app/layout.tsx.
  */

@@ -14,6 +14,9 @@ export const SiteNav = () => {
       </a>
       <div className="site-nav-inner">
         <Link className="site-nav-wordmark" href="/">
+          <span className="site-nav-mark" aria-hidden="true">
+            <img src="/marks/humanness.svg" alt="" width={32} height={32} />
+          </span>
           <span>
             The Humanness Index
             <span className="site-nav-tm">™</span>

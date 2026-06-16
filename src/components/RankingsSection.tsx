@@ -1,57 +1,150 @@
 'use client';
 
-import { useEffect, type FocusEvent } from 'react';
+import { useEffect, useRef, useState, type FocusEvent } from 'react';
+import { createPortal } from 'react-dom';
 
 import { CaretDown, CaretUp, Info } from '@phosphor-icons/react';
 
 import { voiceStats } from '../data/providers';
 import { useReveal } from '../hooks/useReveal';
 import { modelDetailLinkForId, providerDetailLinkForName } from '../lib/detail';
-import { humannessScore } from '../lib/scoring';
+import { clamp, humannessScore } from '../lib/scoring';
 import type { ScoredModel, TableSort, TableSortKey } from '../lib/types';
+import { CountUpNumber } from './CountUpNumber';
 import { DetailPageLink } from './DetailPageLink';
 import { RankPauseIcon, RankPlayIcon } from './icons';
 import { ProviderLogo } from './ProviderLogo';
 import { RankingVisualizationPanel } from './RankingChart';
-import { Reveal } from './Reveal';
 import { VotesCount } from './VotesCount';
 
+const TIP_GAP = 9;
+const TIP_VIEWPORT_PAD = 8;
+const TIP_MAX_WIDTH = 240;
+
 /**
- * Nudge the bubble horizontally so it never clips: the table is a horizontal
- * scroll container on mobile, so a bubble centered on an edge icon would run
- * off-screen. Clamps within the scroller's visible box (else the viewport).
+ * Hover/focus (i) bubble for definitions. The bubble is rendered in a portal to
+ * <body> and positioned `fixed` at the icon, so no overflow/clip ancestor (the
+ * rounded chart panel, the table's horizontal scroller) can cut it off. Its
+ * center is clamped to the viewport on both sides so the full text always shows.
  */
-const clampTip = (host: HTMLElement) => {
-  const bubble = host.querySelector<HTMLElement>('.rt-info-tip');
-  if (!bubble) return;
-  bubble.style.setProperty('--tip-shift', '0px');
-  const scroller = host.closest('.ranking-table-wrap');
-  const bounds: { left: number; right: number } = scroller
-    ? scroller.getBoundingClientRect()
-    : { left: 0, right: window.innerWidth };
-  const pad = 8;
-  const rect = bubble.getBoundingClientRect();
-  let shift = 0;
-  if (rect.left < bounds.left + pad) shift = bounds.left + pad - rect.left;
-  else if (rect.right > bounds.right - pad) shift = bounds.right - pad - rect.right;
-  if (shift) bubble.style.setProperty('--tip-shift', `${shift}px`);
+const InfoTip = ({ tip }: { tip: string }) => {
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const [box, setBox] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const show = () => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const width = Math.min(TIP_MAX_WIDTH, window.innerWidth - TIP_VIEWPORT_PAD * 2 - 24);
+    const half = width / 2;
+    const center = clamp(
+      rect.left + rect.width / 2,
+      TIP_VIEWPORT_PAD + half,
+      window.innerWidth - TIP_VIEWPORT_PAD - half,
+    );
+    setBox({ top: rect.bottom + TIP_GAP, left: center, width });
+  };
+  const hide = () => setBox(null);
+
+  // A `fixed` bubble would drift off its anchor on scroll/resize, so dismiss it
+  // rather than chase a moving icon.
+  useEffect(() => {
+    if (!box) return undefined;
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+    return () => {
+      window.removeEventListener('scroll', hide, true);
+      window.removeEventListener('resize', hide);
+    };
+  }, [box]);
+
+  return (
+    <span
+      ref={triggerRef}
+      className="rt-info"
+      tabIndex={0}
+      aria-label={tip}
+      onMouseEnter={show}
+      onMouseLeave={hide}
+      onFocus={show}
+      onBlur={hide}
+    >
+      <Info size={14} weight="bold" aria-hidden="true" />
+      {box &&
+        createPortal(
+          <span
+            className="info-tip-pop"
+            aria-hidden="true"
+            style={{ top: box.top, left: box.left, width: box.width }}
+          >
+            {tip}
+          </span>,
+          document.body,
+        )}
+    </span>
+  );
 };
 
-/** Hover/focus (i) bubble for table-header definitions. */
-const InfoTip = ({ tip }: { tip: string }) => (
-  <span
-    className="rt-info"
-    tabIndex={0}
-    aria-label={tip}
-    onMouseEnter={(event) => clampTip(event.currentTarget)}
-    onFocus={(event) => clampTip(event.currentTarget)}
-  >
-    <Info size={14} weight="bold" aria-hidden="true" />
-    <span className="rt-info-tip" aria-hidden="true">
-      {tip}
-    </span>
+// The three subtitle counts ease 0 -> value once the line reveals, then settle
+// on later live updates (CountUpNumber handles the once-only + reduced-motion +
+// SSR/sr-only fallbacks). A small beat after the card's fade so the tick is
+// watched, not finished while the panel is still entering.
+const CHART_STAT_COUNT_DELAY_MS = 200;
+const CHART_STAT_COUNT_DURATION_MS = 1200;
+
+/**
+ * A counting subtitle number. Reserves its final digit width (tabular figures +
+ * a `ch` min-width) so the line never reflows as the digits grow.
+ */
+const ChartStatNumber = ({ value, inView }: { value: number; inView: boolean }) => (
+  <span className="ranking-chart-statnum" style={{ minWidth: `${String(value).length}ch` }}>
+    <CountUpNumber
+      value={value}
+      inView={inView}
+      delayMs={CHART_STAT_COUNT_DELAY_MS}
+      durationMs={CHART_STAT_COUNT_DURATION_MS}
+    />
   </span>
 );
+
+/**
+ * Live stats line under the chart heading (Models / providers / unique votes).
+ * The counts fire once off this line's own reveal — the same useReveal entrance
+ * the chart card fades on — so they tick up in sync with the section appearing.
+ */
+const ChartStats = ({
+  modelCount,
+  providerCount,
+  totalUniqueVotes,
+}: {
+  modelCount: number;
+  providerCount: number;
+  totalUniqueVotes: number;
+}) => {
+  const { ref, inView } = useReveal<HTMLParagraphElement>();
+  return (
+    <p ref={ref} className="ranking-chart-sub ranking-chart-stats">
+      <span className="ranking-chart-stat">
+        <span className="ranking-chart-statlabel">
+          <ChartStatNumber value={modelCount} inView={inView} /> Models
+        </span>
+        <InfoTip tip="Every listed model offers voice cloning, so each battle can play the same cloned source voice through both sides. Models without cloning can't be compared head to head and are left out; new ones join as cloning access lands." />
+      </span>
+      <span className="ranking-chart-sep" aria-hidden="true" />
+      <span className="ranking-chart-stat">
+        <span className="ranking-chart-statlabel">
+          <ChartStatNumber value={providerCount} inView={inView} /> providers
+        </span>
+      </span>
+      <span className="ranking-chart-sep" aria-hidden="true" />
+      <span className="ranking-chart-stat">
+        <span className="ranking-chart-statlabel">
+          <ChartStatNumber value={totalUniqueVotes} inView={inView} /> unique votes
+        </span>
+      </span>
+    </p>
+  );
+};
 
 /** Clickable column header: first click sorts, second flips direction. */
 const SortHeader = ({
@@ -204,20 +297,14 @@ export const RankingsSection = ({
   const allWins = rankedModels.map((m) => m.wins);
 
   // Live stats line shown as the chart's subtitle (when nothing is focused),
-  // replacing the old standalone counts strip. The (i) tooltip stays on Models.
+  // replacing the old standalone counts strip. The counts ease up on reveal; the
+  // (i) tooltip stays on Models.
   const chartStats = (
-    <p className="ranking-chart-sub ranking-chart-stats">
-      <span className="ranking-chart-stat">
-        {rankedCount} Models
-        <InfoTip tip="Every listed model offers voice cloning, so each battle can play the same cloned source voice through both sides. Models without cloning can't be compared head to head and are left out; new ones join as cloning access lands." />
-      </span>
-      <span className="ranking-chart-sep" aria-hidden="true" />
-      <span className="ranking-chart-stat">{providerCount} providers</span>
-      <span className="ranking-chart-sep" aria-hidden="true" />
-      <span className="ranking-chart-stat">
-        {totalUniqueVotes.toLocaleString()} unique votes
-      </span>
-    </p>
+    <ChartStats
+      modelCount={rankedCount}
+      providerCount={providerCount}
+      totalUniqueVotes={totalUniqueVotes}
+    />
   );
 
   return (
@@ -227,11 +314,8 @@ export const RankingsSection = ({
           title and the standalone counts strip were removed by request; the
           counts now live in the chart's subtitle below. */}
       <h2 className="sr-only">Humanness Rankings</h2>
-      <Reveal as="p" className="rankings-intro">
-        Humanness against measured latency, the highest-scoring voices sit top-right
-      </Reveal>
 
-      {/* The chart card reveals as its own step a beat after the intro. */}
+      {/* The chart card leads the section, revealing as its own step. */}
       <RankingVisualizationPanel
         rows={rankingRows}
         allModels={sortedModels}
