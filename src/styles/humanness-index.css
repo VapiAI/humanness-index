@@ -2444,6 +2444,28 @@ single row) */
   font-variant-numeric: tabular-nums;
 }
 
+/* Super-human Humanness (>100): listeners rate the voice as more human than the
+   real person. It reads in the brand "positive" green with a leading (i) whose
+   tooltip spells out what crossing 100 means. */
+.hi-page .ranking-table .rt-humanness-super {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  color: #0a9d6c;
+  font-weight: 700;
+}
+
+.hi-page .ranking-table .rt-humanness-super .rt-info {
+  margin-left: 0;
+  color: #0a9d6c;
+}
+
+.hi-page .ranking-table .rt-humanness-super .rt-info:hover,
+.hi-page .ranking-table .rt-humanness-super .rt-info:focus-visible {
+  color: #077a53;
+}
+
 /* Elo reads as the secondary figure next to the headline Humanness score. */
 .hi-page .ranking-table .rt-elo {
   color: var(--muted);

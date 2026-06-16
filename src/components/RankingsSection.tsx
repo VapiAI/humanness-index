@@ -383,6 +383,10 @@ export const RankingsSection = ({
             {visibleRows.map((model) => {
               const isDimmed = Boolean(focusedModelId) && model.id !== focusedModelId;
               const stats = voiceStats(model);
+              const score = humannessScore(model, sortedModels);
+              // A score above 100 means listeners rate the voice as MORE human
+              // than the real person — flag it so it reads as the milestone it is.
+              const superHuman = score > 100;
               // Rows select+play on click; the detail links stop propagation
               // so navigating never toggles selection. Unlisted/unknown rows
               // render as plain text.
@@ -432,7 +436,16 @@ export const RankingsSection = ({
                       model.model
                     )}
                   </td>
-                  <td className="rt-num">{humannessScore(model, sortedModels)}</td>
+                  <td className="rt-num">
+                    {superHuman ? (
+                      <span className="rt-humanness-super">
+                        <InfoTip tip="Yes, this means it beats human beings at being human." />
+                        {score}
+                      </span>
+                    ) : (
+                      score
+                    )}
+                  </td>
                   <td className="rt-num rt-elo">{Math.round(model.elo)}</td>
                   <td className="rt-num">{stats.latency}</td>
                   <td className="rt-num">{stats.price}</td>
