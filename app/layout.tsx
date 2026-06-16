@@ -6,6 +6,7 @@ import type { PropsWithChildren } from 'react';
 import { JsonLd } from '@/components/detail/JsonLd';
 import { SiteFooter } from '@/components/shell/SiteFooter';
 import { SiteNav } from '@/components/shell/SiteNav';
+import { WhitepaperGateProvider } from '@/components/WhitepaperGate';
 import { organizationJsonLd, webSiteJsonLd } from '@/lib/detail';
 
 import '@/styles/brand-fonts.css';
@@ -93,11 +94,13 @@ const RootLayout = ({ children }: PropsWithChildren) => {
         <JsonLd data={webSiteJsonLd()} />
       </head>
       <body>
-        <SiteNav />
-        <main id="main-content" tabIndex={-1}>
-          {children}
-        </main>
-        <SiteFooter />
+        <WhitepaperGateProvider>
+          <SiteNav />
+          <main id="main-content" tabIndex={-1}>
+            {children}
+          </main>
+          <SiteFooter />
+        </WhitepaperGateProvider>
       </body>
     </html>
   );
