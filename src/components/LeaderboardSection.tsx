@@ -8,6 +8,8 @@ type LeaderboardSectionProps = {
   topModels: ScoredModel[];
   allModels: ScoredModel[];
   playingId: string | null;
+  /** Hold the card entrance until the live standings reconcile (see useReveal). */
+  standingsReady: boolean;
   onTogglePlay: (model: ScoredModel) => void;
 };
 
@@ -25,6 +27,7 @@ export const LeaderboardSection = ({
   topModels,
   allModels,
   playingId,
+  standingsReady,
   onTogglePlay,
 }: LeaderboardSectionProps) => {
   // Two reveal rows, each its own reveal group + IntersectionObserver, so on
@@ -35,8 +38,11 @@ export const LeaderboardSection = ({
   //
   // On mobile the second row is hidden in CSS (the podium shows the top 3), so
   // this naturally collapses to a single cascade with no awkward split.
-  const topRow = useReveal<HTMLDivElement>({ rootMargin: '0px 0px 0px 0px' });
-  const secondRow = useReveal<HTMLDivElement>();
+  const topRow = useReveal<HTMLDivElement>({
+    rootMargin: '0px 0px 0px 0px',
+    enabled: standingsReady,
+  });
+  const secondRow = useReveal<HTMLDivElement>({ enabled: standingsReady });
 
   const topCards = topModels.slice(0, 3);
   // Provisional shows only the top row; the rest are omitted (not just hidden) so

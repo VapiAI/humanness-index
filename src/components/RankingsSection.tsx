@@ -116,12 +116,17 @@ const ChartStats = ({
   modelCount,
   providerCount,
   totalUniqueVotes,
+  standingsReady,
 }: {
   modelCount: number;
   providerCount: number;
   totalUniqueVotes: number;
+  /** Hold the count-up until the live standings reconcile. */
+  standingsReady: boolean;
 }) => {
-  const { ref, inView } = useReveal<HTMLParagraphElement>();
+  const { ref, inView } = useReveal<HTMLParagraphElement>({
+    enabled: standingsReady,
+  });
   return (
     <p ref={ref} className="ranking-chart-sub ranking-chart-stats">
       <span className="ranking-chart-stat">
@@ -192,6 +197,8 @@ type RankingsSectionProps = {
   sortedRows: ScoredModel[];
   visibleRows: ScoredModel[];
   totalUniqueVotes: number;
+  /** Hold the chart/table entrance until the live standings reconcile. */
+  standingsReady: boolean;
   showAll: boolean;
   focusedModel: ScoredModel | null;
   focusedModelId: string | null;
@@ -210,6 +217,7 @@ export const RankingsSection = ({
   sortedRows,
   visibleRows,
   totalUniqueVotes,
+  standingsReady,
   showAll,
   focusedModel,
   focusedModelId,
@@ -224,7 +232,9 @@ export const RankingsSection = ({
   // One-time "build" trigger: fires once when the table scrolls into view, then
   // the rows cascade in via CSS. Re-sorting/filtering only reorders the
   // already-settled rows, so the build never re-animates.
-  const { ref: tableRef, inView: rowsIn } = useReveal<HTMLDivElement>();
+  const { ref: tableRef, inView: rowsIn } = useReveal<HTMLDivElement>({
+    enabled: standingsReady,
+  });
 
   // Selection is sticky only on the dots/rows themselves: pressing anywhere
   // else (empty chart space, the rest of the page) deselects and stops the
@@ -304,6 +314,7 @@ export const RankingsSection = ({
       modelCount={rankedCount}
       providerCount={providerCount}
       totalUniqueVotes={totalUniqueVotes}
+      standingsReady={standingsReady}
     />
   );
 
@@ -321,6 +332,7 @@ export const RankingsSection = ({
         allModels={sortedModels}
         focusedModel={focusedModel}
         statsLine={chartStats}
+        standingsReady={standingsReady}
         onFocusModel={onSelectModel}
         onClearFocus={onClearFocus}
         revealDelay={140}

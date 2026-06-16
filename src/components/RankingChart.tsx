@@ -39,6 +39,8 @@ type RankingVisualizationPanelProps = {
    * off the chart area's own observer.
    */
   revealDelay?: number;
+  /** Hold the dot entrance until the live standings reconcile (see useReveal). */
+  standingsReady?: boolean;
 };
 
 export const RankingVisualizationPanel = ({
@@ -49,6 +51,7 @@ export const RankingVisualizationPanel = ({
   onFocusModel,
   onClearFocus,
   revealDelay = 0,
+  standingsReady = true,
 }: RankingVisualizationPanelProps) => (
   <Reveal as="div" className="rankings-visual-panel" delay={revealDelay}>
     <div className="ranking-chart-heading">
@@ -73,6 +76,7 @@ export const RankingVisualizationPanel = ({
     <EloDistributionChart
       models={rows}
       allModels={allModels}
+      standingsReady={standingsReady}
       onFocusModel={onFocusModel}
       onClearFocus={onClearFocus}
     />
@@ -115,6 +119,8 @@ const logMsScaleFor = (min: number, max: number) => {
 type EloDistributionChartProps = {
   models: ScoredModel[];
   allModels: ScoredModel[];
+  /** Hold the dot entrance until the live standings reconcile. */
+  standingsReady?: boolean;
   onFocusModel: (model: ScoredModel) => void;
   onClearFocus: () => void;
 };
@@ -131,12 +137,17 @@ type EloDistributionChartProps = {
 const EloDistributionChart = ({
   models,
   allModels,
+  standingsReady = true,
   onFocusModel,
   onClearFocus,
 }: EloDistributionChartProps) => {
   const [hovered, setHovered] = useState<HoverPoint | null>(null);
-  // Fires once when the chart scrolls into view, driving the dot pop-in.
-  const { ref: areaRef, inView: dotsIn } = useReveal<HTMLDivElement>();
+  // Fires once when the chart scrolls into view, driving the dot pop-in. Held
+  // until the live standings reconcile so the dots land at their live positions
+  // instead of the cached snapshot's and then sliding.
+  const { ref: areaRef, inView: dotsIn } = useReveal<HTMLDivElement>({
+    enabled: standingsReady,
+  });
 
   // Anchor the hover card to the dot's real on-screen position and clamp it
   // inside the (non-scrolling) chart area, so it never runs off-screen on

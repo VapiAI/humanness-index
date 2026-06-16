@@ -57,6 +57,11 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
     () => seed?.totalUniqueVotes ?? SEED_TOTAL_UNIQUE_VOTES,
   );
   const [battle, setBattle] = useState<HeroBattle>(HERO_BATTLES[0]);
+  // False until the on-mount live fetch has reconciled (or a safety timeout
+  // elapses). The standings reveals gate their entrance on this so the table,
+  // chart, and cards animate to the LIVE numbers rather than the cached
+  // snapshot and then jumping when the fetch lands.
+  const [standingsReady, setStandingsReady] = useState(false);
 
   // Once the listener has voted, optimistic/server-reconciled standings win
   // over the late-resolving mount refresh.
@@ -93,7 +98,17 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
       })
       .catch(() => {
         // Static snapshot stays.
+      })
+      .finally(() => {
+        // Arm the standings reveals once we've reconciled (or failed) — the
+        // animation now reflects live data.
+        if (active) setStandingsReady(true);
       });
+    // Safety net: never hold the reveal indefinitely if the network is slow or
+    // wedged; fall back to revealing the snapshot after a short beat.
+    const readyFallback = window.setTimeout(() => {
+      if (active) setStandingsReady(true);
+    }, 2500);
     void fetchBattle().then((fetched) => {
       if (!active) return;
       if (roundActiveRef.current) upcomingBattleRef.current = fetched;
@@ -101,6 +116,7 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
     });
     return () => {
       active = false;
+      window.clearTimeout(readyFallback);
     };
   }, [fetchBattle]);
 
@@ -243,6 +259,7 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
     sortedModels,
     battle,
     totalUniqueVotes,
+    standingsReady,
     markRoundStarted,
     advanceBattle,
     applyVote,

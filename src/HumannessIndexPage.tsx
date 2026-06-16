@@ -151,7 +151,7 @@ export const HumannessIndexPage = ({
     if (revealed) audio.stopPlayback();
   }, [revealed, audio.stopPlayback]);
 
-  const { models, sortedModels, battle: currentBattle } = arena;
+  const { models, sortedModels, battle: currentBattle, standingsReady } = arena;
 
   // The Human baseline is a reference, not a competitor: keep it out of the
   // provider filter, the highlight cards, and the default battle fallback.
@@ -462,6 +462,7 @@ export const HumannessIndexPage = ({
         sortedRows={sortedRows}
         visibleRows={visibleRows}
         totalUniqueVotes={arena.totalUniqueVotes}
+        standingsReady={standingsReady}
         showAll={showAll}
         focusedModel={focusedModel}
         focusedModelId={focusedModelId}
@@ -480,6 +481,7 @@ export const HumannessIndexPage = ({
         topModels={topModels}
         allModels={sortedModels}
         playingId={audio.playingId}
+        standingsReady={standingsReady}
         onTogglePlay={togglePlaySample}
       />
 
