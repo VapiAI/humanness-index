@@ -184,10 +184,10 @@ const EloDistributionChart = ({
   const scoreOf = (model: ScoredModel) => humannessScore(model, allModels);
 
   const DOT_RADIUS = 7;
-  // Entrance sequence: axes draw on, then the grid/labels fade, then the dots
-  // populate. The dots wait this long (after the axes/grid land) before their
-  // own left-to-right sweep begins. Kept in step with the CSS line/grid timing.
-  const DOT_ENTER_BASE_MS = 620;
+  // Staged entrance: axes -> labels -> grid -> reference lines -> dots. The dots
+  // are the last stage, so they wait until after the reference lines land before
+  // their own left-to-right sweep begins. Kept in step with the CSS stage delays.
+  const DOT_ENTER_BASE_MS = 1200;
 
   // Color = rank: rank 1 (best) = mint #00cd8f, last = ocean #2d6bff. t: 1 = best, 0 = worst.
   const rankColor = (t: number) => {
@@ -236,55 +236,122 @@ const EloDistributionChart = ({
           </linearGradient>
         </defs>
 
-        {/* Chrome (better-zone wash, grid, ticks, reference lines, labels) fades
-            in as one layer, a beat after the axes start drawing. It starts
-            hidden, so a live-standings re-render before the reveal repositions
-            these marks invisibly (no visible shift). */}
-        <g className="chart-grid-layer">
-          <rect
-            className="chart-better-zone-rect"
-            x={xFor(avgHum)}
-            y={top}
-            width={right - xFor(avgHum)}
-            height={yForMs(avgLatMs) - top}
-            fill="url(#chart-better-zone)"
-          />
+        {/* Entrance is staged via CSS (gated on .dots-in), all BEFORE the dots:
+            (1) axes draw on, (2) axis labels fade in, (3) grid lines draw on,
+            (4) reference lines draw on + the better-zone wash/labels fade, then
+            (5) the dots populate. Lines draw on with a normalized stroke-dash
+            (pathLength=1); direction is set by each <line>'s start point
+            (x1/y1): chart-draw-h reveals left-to-right (x1 = left),
+            chart-draw-v reveals top-to-bottom (y1 = top). Everything starts
+            hidden so a live-standings re-render before the reveal repositions
+            the marks invisibly (no visible shift). */}
 
+        {/* Stage 4 (painted at the back): the winning-quadrant wash. */}
+        <rect
+          className="chart-better-zone-rect"
+          x={xFor(avgHum)}
+          y={top}
+          width={right - xFor(avgHum)}
+          height={yForMs(avgLatMs) - top}
+          fill="url(#chart-better-zone)"
+        />
+
+        {/* Stage 3: grid lines. Vertical (x ticks) draw top-to-bottom;
+            horizontal (y ticks) draw left-to-right. */}
+        <g className="chart-grid">
           {xAxisTicks.map((tick) => (
-            <g key={`x${tick}`}>
-              <line x1={xFor(tick)} x2={xFor(tick)} y1={top} y2={bottom} stroke="#eef2f7" />
-              <text x={xFor(tick)} y={bottom + 20} textAnchor="middle">
-                {tick}
-              </text>
-            </g>
+            <line
+              key={`xg${tick}`}
+              className="chart-grid-line chart-draw-v"
+              pathLength={1}
+              x1={xFor(tick)}
+              x2={xFor(tick)}
+              y1={top}
+              y2={bottom}
+              stroke="#eef2f7"
+            />
           ))}
           {msTicks.map((tick) => (
-            <g key={`y${tick}`}>
-              <line x1={left} x2={right} y1={yForMs(tick)} y2={yForMs(tick)} stroke="#eef2f7" />
-              <text x={left - 12} y={yForMs(tick) + 4} textAnchor="end">
-                {tick}
-              </text>
-            </g>
+            <line
+              key={`yg${tick}`}
+              className="chart-grid-line chart-draw-h"
+              pathLength={1}
+              x1={left}
+              x2={right}
+              y1={yForMs(tick)}
+              y2={yForMs(tick)}
+              stroke="#eef2f7"
+            />
           ))}
+        </g>
 
-          <line className="chart-avg-line" x1={xFor(avgHum)} x2={xFor(avgHum)} y1={top} y2={bottom} />
-          <text className="chart-avg-label" x={xFor(avgHum) + 6} y={top + 11}>
-            Above Average
-          </text>
-
-          {/* Labels the winning corner (more human, faster); the green quadrant
-              wash already carries the direction, so no arrow needed. */}
-          <text className="chart-better" x={right - 8} y={top + 16} textAnchor="end" aria-hidden="true">
-            Better
-          </text>
+        {/* Stage 4: reference lines (the better-zone boundaries + baseline).
+            Average humanness (vertical, top-to-bottom), average latency
+            (horizontal, left-to-right), and the Human-100 baseline (vertical). */}
+        <g className="chart-refs">
           <line
-            className="chart-avg-line"
+            className="chart-avg-line chart-draw-v"
+            pathLength={1}
+            x1={xFor(avgHum)}
+            x2={xFor(avgHum)}
+            y1={top}
+            y2={bottom}
+          />
+          <line
+            className="chart-avg-line chart-draw-h"
+            pathLength={1}
             x1={left}
             x2={right}
             y1={yForMs(avgLatMs)}
             y2={yForMs(avgLatMs)}
           />
+          {hasBaseline && (
+            <line
+              className="chart-baseline-line chart-draw-v"
+              pathLength={1}
+              x1={xFor(100)}
+              x2={xFor(100)}
+              y1={top}
+              y2={bottom}
+              aria-hidden="true"
+            />
+          )}
+        </g>
 
+        {/* Stage 1: axes. x-axis draws left-to-right, y-axis top-to-bottom. */}
+        <g className="chart-axes">
+          <line
+            className="chart-axis chart-draw-v"
+            pathLength={1}
+            x1={left}
+            x2={left}
+            y1={top}
+            y2={bottom}
+            stroke="#cdd7d3"
+          />
+          <line
+            className="chart-axis chart-draw-h"
+            pathLength={1}
+            x1={left}
+            x2={right}
+            y1={bottom}
+            y2={bottom}
+            stroke="#cdd7d3"
+          />
+        </g>
+
+        {/* Stage 2: axis labels (tick numbers, axis titles, end labels) fade in. */}
+        <g className="chart-axis-labels">
+          {xAxisTicks.map((tick) => (
+            <text key={`xt${tick}`} x={xFor(tick)} y={bottom + 20} textAnchor="middle">
+              {tick}
+            </text>
+          ))}
+          {msTicks.map((tick) => (
+            <text key={`yt${tick}`} x={left - 12} y={yForMs(tick) + 4} textAnchor="end">
+              {tick}
+            </text>
+          ))}
           <text className="chart-axis-label" x={left + plotW / 2} y={bottom + 46} textAnchor="middle">
             Humanness
           </text>
@@ -321,38 +388,29 @@ const EloDistributionChart = ({
           >
             Slower
           </text>
-
-          {hasBaseline && (
-            <g className="chart-baseline-ref" aria-hidden="true">
-              <line x1={xFor(100)} x2={xFor(100)} y1={top} y2={bottom} />
-              <text x={xFor(100)} y={top - 8} textAnchor="end">
-                Human {'\u00b7'} 100
-              </text>
-            </g>
-          )}
         </g>
 
-        {/* Axes draw on FIRST (pathLength=1 normalizes the stroke-dash): the
-            x-axis sweeps left-to-right, the y-axis draws bottom-to-top. */}
-        <g className="chart-axes">
-          <line
-            className="chart-axis chart-axis-y"
-            pathLength={1}
-            x1={left}
-            x2={left}
-            y1={bottom}
-            y2={top}
-            stroke="#cdd7d3"
-          />
-          <line
-            className="chart-axis chart-axis-x"
-            pathLength={1}
-            x1={left}
-            x2={right}
-            y1={bottom}
-            y2={bottom}
-            stroke="#cdd7d3"
-          />
+        {/* Stage 4 labels: the reference-line labels fade in with their lines. */}
+        <g className="chart-ref-labels">
+          <text className="chart-avg-label" x={xFor(avgHum) + 6} y={top + 11}>
+            Above Average
+          </text>
+          {/* Labels the winning corner (more human, faster); the green quadrant
+              wash already carries the direction, so no arrow needed. */}
+          <text className="chart-better" x={right - 8} y={top + 16} textAnchor="end" aria-hidden="true">
+            Better
+          </text>
+          {hasBaseline && (
+            <text
+              className="chart-baseline-label"
+              x={xFor(100)}
+              y={top - 8}
+              textAnchor="end"
+              aria-hidden="true"
+            >
+              Human {'\u00b7'} 100
+            </text>
+          )}
         </g>
 
         {plottable.map((model) => {
@@ -368,7 +426,7 @@ const EloDistributionChart = ({
           const cy = yForMs(parseLatencyMs(model) as number);
           // Left-to-right sweep: the entrance delay scales with the dot's
           // Humanness (x) position, so the field populates across the chart.
-          const enterDelay = Math.round(((cx - left) / plotW) * 900);
+          const enterDelay = Math.round(((cx - left) / plotW) * 550);
           return (
             <g key={model.id} className="chart-dot-group" opacity={bright ? 1 : 0.25}>
               <circle

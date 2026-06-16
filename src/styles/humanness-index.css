@@ -1841,7 +1841,7 @@ single row) */
 .hi-page .legend-line {
   width: 24px;
   height: 2px;
-  border-top: 2px dashed var(--mint, #00cd8f);
+  border-top: 2px solid var(--mint, #00cd8f);
 }
 
 .hi-page .legend-gradient {
@@ -2230,10 +2230,11 @@ single row) */
   font-weight: 800;
 }
 
+/* Solid (not dashed) so the stage-4 stroke-dash draw-on reveals them cleanly;
+   the mint color already sets them apart from the gray axes/grid. */
 .hi-page .chart-avg-line {
   stroke: var(--mint, #00cd8f);
   stroke-width: 1;
-  stroke-dasharray: 3 4;
 }
 
 .hi-page .chart-avg-label {
@@ -2245,14 +2246,13 @@ single row) */
 
 /* The Human baseline anchors the right edge at 100; a faint reference line
    plus label, since Human itself is never plotted (it has no latency). */
-.hi-page .chart-baseline-ref line {
+.hi-page .chart-baseline-line {
   stroke: var(--mint, #00cd8f);
   stroke-width: 1.5;
-  stroke-dasharray: 3 4;
   opacity: 0.7;
 }
 
-.hi-page .chart-baseline-ref text {
+.hi-page .chart-baseline-label {
   fill: var(--mint, #00cd8f);
   font-size: 11px;
   font-weight: 700;
@@ -3191,38 +3191,76 @@ html.reveal-ready .viz-enter.is-in {
   transform: none;
 }
 
-/* Chart entrance, once on scroll-in (dots-in), sequenced: (1) the axes DRAW ON
-   — x-axis left-to-right, y-axis bottom-to-top, via a normalized stroke-dash;
-   (2) the grid/labels/reference-line layer fades in a beat later; (3) the dots
-   populate in a left-to-right sweep (their base delay lives inline in the SVG).
-   Everything starts hidden, so a live-standings re-render before the reveal
-   repositions the marks invisibly (no visible shift); the SVG's fixed viewBox
-   locks the chart's dimensions so the box itself never reflows. */
-html.reveal-ready .ranking-chart-area .chart-axis {
+/* Chart entrance, once on scroll-in (.dots-in), staged so each step starts after
+   the previous (with tasteful overlap), all BEFORE the dots:
+     1. axes draw on            (delay 0)
+     2. axis labels fade in      (delay ~0.30s)
+     3. grid lines draw on       (delay ~0.55s)
+     4. reference lines draw on + better-zone wash & labels fade (delay ~0.85s)
+     5. dots populate            (base delay ~1.20s inline + left-to-right sweep)
+   Lines draw via a normalized stroke-dash (pathLength=1): .chart-draw-h reveals
+   left-to-right (start x1 = left), .chart-draw-v reveals top-to-bottom
+   (start y1 = top). Everything starts hidden, so a live-standings re-render
+   before the reveal repositions the marks invisibly (no visible shift); the
+   SVG's fixed viewBox/aspect-ratio locks the box so it never reflows. */
+
+/* Line draw-on: hidden until .dots-in. Per-stage transition delays are set on
+   the group rules below; the target (offset 0) is shared. */
+html.reveal-ready .ranking-chart-area .chart-draw-h,
+html.reveal-ready .ranking-chart-area .chart-draw-v {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  transition: stroke-dashoffset 0.55s var(--reveal-ease);
 }
-html.reveal-ready .ranking-chart-area.dots-in .chart-axis {
+html.reveal-ready .ranking-chart-area.dots-in .chart-draw-h,
+html.reveal-ready .ranking-chart-area.dots-in .chart-draw-v {
   stroke-dashoffset: 0;
 }
 
-html.reveal-ready .ranking-chart-area .chart-grid-layer {
-  opacity: 0;
-  transition: opacity 0.5s ease-out 0.3s;
+/* Stage 1 — axes draw on first. */
+html.reveal-ready .ranking-chart-area .chart-axes .chart-draw-h,
+html.reveal-ready .ranking-chart-area .chart-axes .chart-draw-v {
+  transition: stroke-dashoffset 0.42s var(--reveal-ease) 0ms;
 }
-html.reveal-ready .ranking-chart-area.dots-in .chart-grid-layer {
+
+/* Stage 2 — axis labels (ticks, titles, end labels) fade in. */
+html.reveal-ready .ranking-chart-area .chart-axis-labels {
+  opacity: 0;
+  transition: opacity 0.32s ease-out 0.3s;
+}
+html.reveal-ready .ranking-chart-area.dots-in .chart-axis-labels {
   opacity: 1;
 }
 
+/* Stage 3 — grid lines draw on. */
+html.reveal-ready .ranking-chart-area .chart-grid .chart-draw-h,
+html.reveal-ready .ranking-chart-area .chart-grid .chart-draw-v {
+  transition: stroke-dashoffset 0.42s var(--reveal-ease) 0.55s;
+}
+
+/* Stage 4 — reference lines draw on; wash + reference labels fade in. */
+html.reveal-ready .ranking-chart-area .chart-refs .chart-draw-h,
+html.reveal-ready .ranking-chart-area .chart-refs .chart-draw-v {
+  transition: stroke-dashoffset 0.42s var(--reveal-ease) 0.85s;
+}
+html.reveal-ready .ranking-chart-area .chart-better-zone-rect,
+html.reveal-ready .ranking-chart-area .chart-ref-labels {
+  opacity: 0;
+  transition: opacity 0.4s ease-out 0.85s;
+}
+html.reveal-ready .ranking-chart-area.dots-in .chart-better-zone-rect,
+html.reveal-ready .ranking-chart-area.dots-in .chart-ref-labels {
+  opacity: 1;
+}
+
+/* Stage 5 — dots populate (base delay + per-dot sweep live inline in the SVG). */
 html.reveal-ready .ranking-chart-area .chart-point {
   opacity: 0;
   transform: scale(0);
   transform-box: fill-box;
   transform-origin: center;
   transition:
-    opacity 0.65s ease-out,
-    transform 0.7s var(--reveal-ease);
+    opacity 0.6s ease-out,
+    transform 0.65s var(--reveal-ease);
 }
 html.reveal-ready .ranking-chart-area.dots-in .chart-point {
   opacity: 1;
@@ -3311,8 +3349,11 @@ html.reveal-ready .lb-cards .rank-meter-thumb-rail {
   html.reveal-ready .reveal,
   html.reveal-ready .reveal-group > *,
   html.reveal-ready .viz-enter,
-  html.reveal-ready .ranking-chart-area .chart-grid-layer,
-  html.reveal-ready .ranking-chart-area .chart-axis,
+  html.reveal-ready .ranking-chart-area .chart-axis-labels,
+  html.reveal-ready .ranking-chart-area .chart-ref-labels,
+  html.reveal-ready .ranking-chart-area .chart-better-zone-rect,
+  html.reveal-ready .ranking-chart-area .chart-draw-h,
+  html.reveal-ready .ranking-chart-area .chart-draw-v,
   html.reveal-ready .ranking-chart-area .chart-point,
   html.reveal-ready .rows-reveal thead tr,
   html.reveal-ready .rows-reveal tbody tr {
@@ -3320,8 +3361,9 @@ html.reveal-ready .lb-cards .rank-meter-thumb-rail {
     transform: none !important;
     transition: none !important;
   }
-  /* Show the axes fully drawn (no stroke-dash draw-on). */
-  html.reveal-ready .ranking-chart-area .chart-axis {
+  /* Show every drawn line fully (no stroke-dash draw-on). */
+  html.reveal-ready .ranking-chart-area .chart-draw-h,
+  html.reveal-ready .ranking-chart-area .chart-draw-v {
     stroke-dashoffset: 0 !important;
   }
 }
