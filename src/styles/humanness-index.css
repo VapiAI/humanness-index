@@ -2215,6 +2215,9 @@ single row) */
   display: block;
   width: 100%;
   height: auto;
+  /* Lock the height to the viewBox aspect up front so the chart reserves its
+     final size immediately and never reflows when live data lands. */
+  aspect-ratio: 1440 / 380;
 }
 
 .hi-page .ranking-chart-shell text {
@@ -3184,9 +3187,30 @@ html.reveal-ready .viz-enter.is-in {
   transform: none;
 }
 
-/* Chart dots: a striking left-to-right pop-in when the chart scrolls in. Each
-   circle scales from its own center (fill-box); the better-zone wash fades in
-   alongside. After settling, dots behave exactly as before. */
+/* Chart entrance, once on scroll-in (dots-in), sequenced: (1) the axes DRAW ON
+   — x-axis left-to-right, y-axis bottom-to-top, via a normalized stroke-dash;
+   (2) the grid/labels/reference-line layer fades in a beat later; (3) the dots
+   populate in a left-to-right sweep (their base delay lives inline in the SVG).
+   Everything starts hidden, so a live-standings re-render before the reveal
+   repositions the marks invisibly (no visible shift); the SVG's fixed viewBox
+   locks the chart's dimensions so the box itself never reflows. */
+html.reveal-ready .ranking-chart-area .chart-axis {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.55s var(--reveal-ease);
+}
+html.reveal-ready .ranking-chart-area.dots-in .chart-axis {
+  stroke-dashoffset: 0;
+}
+
+html.reveal-ready .ranking-chart-area .chart-grid-layer {
+  opacity: 0;
+  transition: opacity 0.5s ease-out 0.3s;
+}
+html.reveal-ready .ranking-chart-area.dots-in .chart-grid-layer {
+  opacity: 1;
+}
+
 html.reveal-ready .ranking-chart-area .chart-point {
   opacity: 0;
   transform: scale(0);
@@ -3199,13 +3223,6 @@ html.reveal-ready .ranking-chart-area .chart-point {
 html.reveal-ready .ranking-chart-area.dots-in .chart-point {
   opacity: 1;
   transform: scale(1);
-}
-html.reveal-ready .ranking-chart-area .chart-better-zone-rect {
-  opacity: 0;
-  transition: opacity 0.8s ease-out 0.12s;
-}
-html.reveal-ready .ranking-chart-area.dots-in .chart-better-zone-rect {
-  opacity: 1;
 }
 
 /* Rankings table "builds" row by row: the header leads, then each body row
@@ -3290,12 +3307,17 @@ html.reveal-ready .lb-cards .rank-meter-thumb-rail {
   html.reveal-ready .reveal,
   html.reveal-ready .reveal-group > *,
   html.reveal-ready .viz-enter,
+  html.reveal-ready .ranking-chart-area .chart-grid-layer,
+  html.reveal-ready .ranking-chart-area .chart-axis,
   html.reveal-ready .ranking-chart-area .chart-point,
-  html.reveal-ready .ranking-chart-area .chart-better-zone-rect,
   html.reveal-ready .rows-reveal thead tr,
   html.reveal-ready .rows-reveal tbody tr {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+  /* Show the axes fully drawn (no stroke-dash draw-on). */
+  html.reveal-ready .ranking-chart-area .chart-axis {
+    stroke-dashoffset: 0 !important;
   }
 }
