@@ -187,11 +187,13 @@ rendered so scrollbar math stays stable. */
   scroll-margin-top: 24px;
 }
 
-/* Set the Humanness Rankings apart from the How-it-works strip directly above
-   it (the reorder left them blending): extra breathing room leading the
-   section. */
+/* Set the Humanness Rankings apart from the How-it-works strip above it with a
+   reasonable inter-section gap (margin-top), while trimming the in-section top
+   padding: the section title/intro were removed, so the chart card now leads
+   and should sit cleanly near the top rather than below a void. */
 .hi-page .long-tail-section {
-  margin-top: clamp(26px, 4vw, 50px);
+  margin-top: clamp(24px, 3.5vw, 44px);
+  padding-top: clamp(4px, 0.8vw, 10px);
 }
 
 .hi-page .section-heading,
@@ -1856,7 +1858,9 @@ single row) */
 }
 
 .hi-page .rankings-visual-panel {
-  margin-top: 18px;
+  /* No top margin: the chart card leads the section now, so the section's own
+     (trimmed) top padding sets the spacing — avoids a stacked gap. */
+  margin-top: 0;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
   border-radius: 14px;
