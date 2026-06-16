@@ -31,9 +31,11 @@ const SQUIRCLE = ((): number[] => {
 })();
 
 /**
- * Map a 0..100 Humanness score to the orb's "squareness" (0 = round/organic,
+ * Map a Humanness score (0 = field floor, 100 = Human baseline, and above 100
+ * for a super-human voice) to the orb's "squareness" (0 = round/organic,
  * 1 = rounded-square). Higher Humanness reads as rounder/more human; lower
- * reads as more rigid/synthetic.
+ * reads as more rigid/synthetic. Clamped, so a super-human score (>100) simply
+ * reads as fully round.
  */
 export const orbSquareness = (humanness: number) =>
   Math.max(0, Math.min(1, 1 - humanness / 100));

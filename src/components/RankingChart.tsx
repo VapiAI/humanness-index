@@ -121,11 +121,12 @@ type EloDistributionChartProps = {
 
 /**
  * Humanness (x) vs. Latency (y, fast = up): the score against the one
- * independent spec. Humanness is min-max normalized to a 0–100 score
- * (left→right, worse→better); latency plots at its exact measured value in
- * real milliseconds on an inverted log axis (fastest at the top), so dot
- * positions always agree with the hover card. Uniform dots at rest; hover
- * any dot for that model's card, click to focus.
+ * independent spec. Humanness runs 0 (field floor) → 100 (the Human baseline,
+ * left→right, worse→better) with the top left open, so a super-human voice can
+ * sit past 100 (the domain widens to fit it); latency plots at its exact
+ * measured value in real milliseconds on an inverted log axis (fastest at the
+ * top), so dot positions always agree with the hover card. Uniform dots at
+ * rest; hover any dot for that model's card, click to focus.
  */
 const EloDistributionChart = ({
   models,
@@ -197,9 +198,15 @@ const EloDistributionChart = ({
   const avgHum = mean(ranked.map(scoreOf));
   const avgLatMs = mean(lats);
 
-  const xFor = (score: number) => left + (score / 100) * plotW;
+  // The scale runs 0 (field floor) → 100 (the Human baseline), but the top is
+  // open: a super-human voice can exceed 100. The domain grows in steps of 25
+  // to keep such a dot at its true value instead of pinning it on the 100 mark.
+  const topScore = Math.max(100, ...ranked.map(scoreOf));
+  const xMax = Math.ceil(topScore / 25) * 25;
+  const superHuman = xMax > 100;
+  const xFor = (score: number) => left + (score / xMax) * plotW;
   // Clamp by a radius so the extremes never clip the axis or run past the
-  // Human anchor at the right edge.
+  // right edge.
   const dotX = (model: ScoredModel) =>
     clamp(xFor(scoreOf(model)), left + DOT_RADIUS, right - DOT_RADIUS);
   // Inverted log ms axis: fastest (lowest ms) at the top, slowest at the bottom.
@@ -210,7 +217,7 @@ const EloDistributionChart = ({
     return top + t * plotH;
   };
 
-  const xAxisTicks = [0, 25, 50, 75, 100];
+  const xAxisTicks = Array.from({ length: xMax / 25 + 1 }, (_, i) => i * 25);
 
   return (
     <div
@@ -303,6 +310,18 @@ const EloDistributionChart = ({
             y1={yForMs(avgLatMs)}
             y2={yForMs(avgLatMs)}
           />
+          {/* The Human baseline (100). Only drawn once the domain runs past it,
+              i.e. when a voice has gone super-human — to its right is "more
+              human than the real person". */}
+          {superHuman && (
+            <line
+              className="chart-human-line"
+              x1={xFor(100)}
+              x2={xFor(100)}
+              y1={top}
+              y2={bottom}
+            />
+          )}
         </g>
 
         {/* Stage 1: axes. x-axis draws left-to-right, y-axis top-to-bottom. */}
@@ -382,6 +401,16 @@ const EloDistributionChart = ({
           <text className="chart-avg-label" x={xFor(avgHum) + 6} y={top + 11}>
             Above Average
           </text>
+          {superHuman && (
+            <text
+              className="chart-human-label"
+              x={xFor(100) - 6}
+              y={top + 11}
+              textAnchor="end"
+            >
+              Human 100
+            </text>
+          )}
           {/* Labels the winning corner (more human, faster); the green quadrant
               wash already carries the direction, so no arrow needed. */}
           <text className="chart-better" x={right - 8} y={top + 16} textAnchor="end" aria-hidden="true">

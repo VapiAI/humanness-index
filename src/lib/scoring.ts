@@ -10,16 +10,19 @@ export const mean = (values: number[]) =>
     : 0;
 
 /**
- * The published Humanness transform: 0–100.
+ * The published Humanness transform: 0 at the field floor, 100 at the Human
+ * baseline, and ABOVE 100 for any voice listeners judge more human than the
+ * real person.
  *
- * When a Human baseline is in the field it anchors the top of the scale: the
- * baseline always reads 100, and every competitor is normalized against
- * [minElo, anchorElo] and clamped to 0..100, so scores read as a share of the
- * human mark. The anchor is max(baselineElo, topCompetitorElo): with Human
- * seeded above the field (see server/seed-standings.json) this yields a clean
- * gap below 100 from day one, and if a competitor ever overtakes Human it
- * maps to 100 rather than overshooting (Human itself stays pinned to 100).
- * With no baseline present it falls back to a plain min-max over the field.
+ * When a Human baseline is in the field it anchors the scale: the baseline
+ * always reads 100, and every competitor is normalized against
+ * [minElo, baselineElo], so a score reads as a share of the human mark. With
+ * Human seeded above the field (see server/seed-standings.json) the top TTS
+ * lands a clean gap below 100 from day one; but the top is left OPEN, so a
+ * competitor that out-rates the baseline reads above 100 (super-human) rather
+ * than being capped. The Human itself stays pinned to 100 as the reference.
+ * With no baseline present it falls back to a plain min-max over the field
+ * (the strongest competitor anchors the top at 100).
  */
 export const humannessScore = (
   model: Pick<ScoredModel, 'elo' | 'baseline'>,
@@ -30,20 +33,18 @@ export const humannessScore = (
   const elos = allModels.map((m) => m.elo);
   const minElo = Math.min(...elos);
   const baseline = allModels.find((m) => m.baseline);
-  const topCompetitorElo = Math.max(
-    ...allModels.filter((m) => !m.baseline).map((m) => m.elo),
-  );
-  // Anchor never below the strongest competitor, so a TTS that overtakes the
-  // baseline still tops out at 100 instead of overshooting.
-  const maxElo = baseline
-    ? Math.max(baseline.elo, topCompetitorElo)
-    : topCompetitorElo;
+  // The Human baseline anchors 100, so a competitor that overtakes it reads
+  // above 100. Without a baseline, the strongest competitor anchors the top.
+  const anchorElo = baseline
+    ? baseline.elo
+    : Math.max(...allModels.filter((m) => !m.baseline).map((m) => m.elo));
   // A single-model or fully tied field has no spread to normalize against.
-  if (maxElo === minElo) return 100;
-  return clamp(
-    Math.round(((model.elo - minElo) / (maxElo - minElo)) * 100),
+  if (anchorElo === minElo) return 100;
+  // Floor at 0 (the field's worst); the top is intentionally uncapped so a
+  // super-human voice can exceed 100.
+  return Math.max(
     0,
-    100,
+    Math.round(((model.elo - minElo) / (anchorElo - minElo)) * 100),
   );
 };
 

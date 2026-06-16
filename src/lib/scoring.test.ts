@@ -95,15 +95,17 @@ describe('humannessScore with a Human baseline', () => {
     }
   });
 
-  it('anchors at the top competitor (no overshoot) if one overtakes the baseline', () => {
-    // Edge case: a competitor's Elo exceeds the baseline. The anchor follows
-    // the competitor so it tops out at exactly 100, and the baseline stays 100.
+  it('lets a competitor exceed 100 (super-human) when it overtakes the baseline', () => {
+    // A competitor's Elo exceeds the baseline. It is normalized against the
+    // baseline anchor [minElo, baselineElo], so it reads ABOVE 100 instead of
+    // being capped; the baseline itself stays pinned at 100 as the reference.
     const f = [
       { elo: 1200, baseline: true as const },
       { elo: 1307 },
       { elo: 1028 },
     ];
-    expect(humannessScore(f[1], f)).toBe(100); // overtaking competitor, capped at 100
+    // (1307 - 1028) / (1200 - 1028) * 100 = 162.2 -> 162
+    expect(humannessScore(f[1], f)).toBe(162); // super-human, uncapped
     expect(humannessScore(f[0], f)).toBe(100); // baseline still pinned
     expect(humannessScore(f[2], f)).toBe(0);
   });

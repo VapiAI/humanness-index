@@ -93,7 +93,8 @@ Models carry a few status-shaping fields:
   content hash (`sha256("variant:{voiceId}:{providerId}:{arenaApiId}|{promptId}|settings-v3")[:32]`).
 - Each (voice, model) variant carries an Elo rating (initial 1200, K = 32). A
   model's displayed rating is the mean of its variants. The Humanness score
-  normalizes the field's Elo so the anchor reads 100 and the lowest reads 0
+  normalizes the field's Elo so the anchor reads 100 and the lowest reads 0;
+  the top is left open, so a voice that out-rates the baseline can exceed 100
   (see section 7 for the anchor).
 - Pairing is convergence-weighted: under-voted models are forced into coverage
   first, then pairs are weighted toward information gain. The shared voice is
@@ -132,11 +133,11 @@ its clips share the frozen content-hash scheme (`variant:voice-X:human:human`).
 - It anchors the Humanness scale at **100**, the human reference point the
   field is measured against rather than a perfect-score ceiling. Its anchor
   Elo is seeded above the field in `seed-standings.json`, and `humannessScore`
-  normalizes competitors against `max(baselineElo, topCompetitorElo)` so the
-  human reads a clean 100 with a gap below it. The Elo that votes actually move
-  is uncapped, so a model that listeners judge more human than the real person
-  out-rates it and reaches the 100 mark (the human stays pinned at 100 as the
-  reference).
+  normalizes competitors against the baseline Elo so the human reads a clean
+  100 with a gap below it. The top of the scale is left open: the Elo that
+  votes move is uncapped, so a model that listeners judge more human than the
+  real person out-rates the baseline and scores **above 100** (super-human),
+  while the human itself stays pinned to 100 as the reference.
 - It is presentation-special: a distinct pinned top "baseline" row, excluded
   from the model/provider counts and from sort reordering, with dashes for
   latency/price, and excluded from the latency distribution chart.

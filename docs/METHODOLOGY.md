@@ -50,8 +50,9 @@ editorial weighting, no panel, and no vendor input.
 - A model's displayed rating is the mean of its variants' Elo ratings; its
   win/loss/tie counts are summed across variants.
 - The displayed Humanness score normalizes the field's Elo so the anchor reads
-  100 and the lowest model reads 0. With the Human baseline present it is the
-  anchor (see below); without a baseline, the top model reads 100.
+  100 and the lowest model reads 0, leaving the top open so a voice that
+  out-rates the baseline can score above 100. With the Human baseline present
+  it is the anchor (see below); without a baseline, the top model reads 100.
 - Uncertainty is the standard error of an Elo estimate after n votes
   (160 divided by the square root of n). The "likely rank" range shows
   every rank consistent with each model's rating plus or minus its
@@ -83,9 +84,10 @@ battle turns on the voice itself, not on recording quality.
   against, not a perfect-score ceiling. The human is pinned to a Humanness of
   100 and every model is normalized against it, so a score reads as a share of
   the human mark. Its anchor Elo is seeded above the field so the top TTS lands
-  a clear gap below 100, and because the Elo that votes move is uncapped, a
-  model that listeners ever judge more human than the real person out-rates it
-  and reaches the 100 mark (the human stays pinned at 100 as the reference).
+  a clear gap below 100, but the top of the scale is open: because the Elo that
+  votes move is uncapped, a model that listeners ever judge more human than the
+  real person out-rates it and scores above 100 (super-human), while the human
+  stays pinned at 100 as the reference.
 - It is a reference, not a competitor: a distinct pinned top "baseline" row,
   excluded from the model and provider counts and from latency plots, with no
   latency or price.

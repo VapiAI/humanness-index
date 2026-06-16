@@ -2247,6 +2247,22 @@ single row) */
   letter-spacing: -0.02em;
 }
 
+/* The Human baseline (100) marker, shown only when a voice has gone
+   super-human and the x domain extends past it. */
+.hi-page .chart-human-line {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0.35;
+}
+
+.hi-page .chart-human-label {
+  fill: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
 .hi-page .chart-end-label {
   fill: var(--ink);
   font-size: 11px;
@@ -2697,7 +2713,8 @@ single row) */
     font-size: 18px;
   }
 
-  .hi-page .chart-avg-label {
+  .hi-page .chart-avg-label,
+  .hi-page .chart-human-label {
     font-size: 16px;
   }
 
