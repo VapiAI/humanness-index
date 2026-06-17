@@ -105,7 +105,7 @@ describe('submitVote', () => {
     expect(response.correct).toBe(true);
   });
 
-  it('moves Elo the other way when the right side wins', async () => {
+  it('tallies the win/loss when the right side wins', async () => {
     const left = variantOf('canopy-orpheus');
     const right = variantOf('cartesia-sonic-2');
     const store = arenaStore();
@@ -116,39 +116,33 @@ describe('submitVote', () => {
     await submitVote(tokenFor(left.id, right.id), 'right');
 
     const after = await store.load();
-    expect(after.state.get(left.id)!.elo).toBeLessThan(leftBefore.elo);
-    expect(after.state.get(right.id)!.elo).toBeGreaterThan(rightBefore.elo);
     expect(after.state.get(right.id)!.wins).toBe(rightBefore.wins + 1);
     expect(after.state.get(left.id)!.losses).toBe(leftBefore.losses + 1);
+    expect(after.state.get(right.id)!.voteCount).toBe(rightBefore.voteCount + 1);
+    expect(after.state.get(left.id)!.voteCount).toBe(leftBefore.voteCount + 1);
   });
 
-  it('on a tie, pulls ratings toward each other and increments tie counts', async () => {
+  it('on a tie, increments only the tie counts on both sides', async () => {
     const left = variantOf('xai-xai-tts', 1);
     const right = variantOf('cartesia-sonic', 1);
     const store = arenaStore();
     const before = await store.load();
     const leftBefore = before.state.get(left.id)!;
     const rightBefore = before.state.get(right.id)!;
-    // Seeded ~1306 vs ~1027; the handful of suite votes can't close the gap.
-    expect(leftBefore.elo).toBeGreaterThan(rightBefore.elo);
 
     await submitVote(tokenFor(left.id, right.id), 'tie');
 
     const after = await store.load();
     const leftAfter = after.state.get(left.id)!;
     const rightAfter = after.state.get(right.id)!;
-    expect(leftAfter.elo).toBeLessThan(leftBefore.elo);
-    expect(rightAfter.elo).toBeGreaterThan(rightBefore.elo);
-    expect(leftAfter.elo + rightAfter.elo).toBeCloseTo(
-      leftBefore.elo + rightBefore.elo,
-      1,
-    );
     expect(leftAfter.ties).toBe(leftBefore.ties + 1);
     expect(rightAfter.ties).toBe(rightBefore.ties + 1);
     expect(leftAfter.wins).toBe(leftBefore.wins);
     expect(leftAfter.losses).toBe(leftBefore.losses);
     expect(rightAfter.wins).toBe(rightBefore.wins);
     expect(rightAfter.losses).toBe(rightBefore.losses);
+    expect(leftAfter.voteCount).toBe(leftBefore.voteCount + 1);
+    expect(rightAfter.voteCount).toBe(rightBefore.voteCount + 1);
   });
 
   it('rejects winners that are not left/right/tie (you cannot vote a model id)', async () => {

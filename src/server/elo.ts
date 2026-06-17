@@ -1,92 +1,60 @@
 /**
- * Arena vote folding + convergence-weighted battle pairing.
+ * Arena vote counts + convergence-weighted battle pairing.
  *
- * The PUBLISHED rating is Bradley–Terry (see bradleyTerry.ts) — fit over the
+ * The one and only rating is Bradley–Terry (see bradleyTerry.ts) — fit over the
  * full vote log and cached. This module owns the per-variant win/loss/tie fold
  * the fit and the "Votes" column read from, plus the pairing that schedules the
  * next blind matchup (coverage, uncertainty reduction, and BT-rating closeness).
- * The Elo math here is the audit trail folded alongside the counts; it no longer
- * feeds the leaderboard, pairing, or crowd-judgment.
+ * There is no Elo here: votes are tallied as counts, ratings come from the fit.
  */
 import { VARIANTS, type CatalogVariant } from './catalog';
+import { BT_CENTER } from './bradleyTerry';
 
 export type VoteWinner = 'left' | 'right' | 'tie';
 
 export type VariantStats = {
-  elo: number;
   wins: number;
   losses: number;
   ties: number;
   voteCount: number;
 };
 
-/** variant id → stats; the entire mutable state of the arena. */
+/** variant id → win/loss/tie counts; the mutable tally the BT fit reads. */
 export type StandingsState = Map<string, VariantStats>;
 
-export const INITIAL_ELO = 1200;
-const K_FACTOR = 32;
-
 export const freshVariantStats = (): VariantStats => ({
-  elo: INITIAL_ELO,
   wins: 0,
   losses: 0,
   ties: 0,
   voteCount: 0,
 });
 
-const expectedScore = (leftElo: number, rightElo: number) =>
-  1 / (1 + 10 ** ((rightElo - leftElo) / 400));
-
-const round2 = (value: number) => Math.round(value * 100) / 100;
-
-export const calculateElo = (
-  leftElo: number,
-  rightElo: number,
-  leftScore: number,
-  rightScore: number,
-): [number, number] => {
-  const expectedLeft = expectedScore(leftElo, rightElo);
-  const expectedRight = 1 - expectedLeft;
-  return [
-    round2(leftElo + K_FACTOR * (leftScore - expectedLeft)),
-    round2(rightElo + K_FACTOR * (rightScore - expectedRight)),
-  ];
-};
-
-const scoresForWinner = (winner: VoteWinner): [number, number] => {
-  if (winner === 'left') return [1, 0];
-  if (winner === 'right') return [0, 1];
-  return [0.5, 0.5];
-};
-
-/** Apply one head-to-head outcome, returning fresh stats for both variants. */
-export const applyVoteToStats = (
+/** Tally one head-to-head outcome into both variants' counts. */
+export const applyVoteToCounts = (
   left: VariantStats,
   right: VariantStats,
   winner: VoteWinner,
-): { left: VariantStats; right: VariantStats } => {
-  const [leftScore, rightScore] = scoresForWinner(winner);
-  const [leftElo, rightElo] = calculateElo(left.elo, right.elo, leftScore, rightScore);
-  return {
-    left: {
-      elo: leftElo,
-      wins: left.wins + (winner === 'left' ? 1 : 0),
-      losses: left.losses + (winner === 'right' ? 1 : 0),
-      ties: left.ties + (winner === 'tie' ? 1 : 0),
-      voteCount: left.voteCount + 1,
-    },
-    right: {
-      elo: rightElo,
-      wins: right.wins + (winner === 'right' ? 1 : 0),
-      losses: right.losses + (winner === 'left' ? 1 : 0),
-      ties: right.ties + (winner === 'tie' ? 1 : 0),
-      voteCount: right.voteCount + 1,
-    },
-  };
-};
+): { left: VariantStats; right: VariantStats } => ({
+  left: {
+    wins: left.wins + (winner === 'left' ? 1 : 0),
+    losses: left.losses + (winner === 'right' ? 1 : 0),
+    ties: left.ties + (winner === 'tie' ? 1 : 0),
+    voteCount: left.voteCount + 1,
+  },
+  right: {
+    wins: right.wins + (winner === 'right' ? 1 : 0),
+    losses: right.losses + (winner === 'left' ? 1 : 0),
+    ties: right.ties + (winner === 'tie' ? 1 : 0),
+    voteCount: right.voteCount + 1,
+  },
+});
 
-/** Standard error of an Elo estimate after `voteCount` votes (160/√n). */
-const eloStandardError = (voteCount: number) => 160 / Math.sqrt(Math.max(1, voteCount));
+/** Logistic win expectation for the left side on the (Elo-scale) BT ratings. */
+const expectedScore = (leftRating: number, rightRating: number) =>
+  1 / (1 + 10 ** ((rightRating - leftRating) / 400));
+
+/** Standard error of a rating estimate after `voteCount` votes (160/√n). */
+const standardError = (voteCount: number) => 160 / Math.sqrt(Math.max(1, voteCount));
 
 /* --------------------------------------------------------------------------
  * Convergence-weighted battle pairing (port of
@@ -113,7 +81,7 @@ const variantVoteCounts = (state: StandingsState): Map<string, number> =>
   new Map(VARIANTS.map((variant) => [variant.id, statsFor(state, variant.id).voteCount]));
 
 const uncertaintyGain = (voteCount: number) =>
-  eloStandardError(voteCount) - eloStandardError(voteCount + 1);
+  standardError(voteCount) - standardError(voteCount + 1);
 
 /**
  * All same-voice, different-model pairs, grouped by their shared source voice.
@@ -206,7 +174,7 @@ export const chooseBattlePair = (
   }
 
   const variantVotes = variantVoteCounts(state);
-  const ratingOf = (modelId: string) => ratings?.get(modelId) ?? INITIAL_ELO;
+  const ratingOf = (modelId: string) => ratings?.get(modelId) ?? BT_CENTER;
 
   const weights = pairs.map(([left, right]) => {
     const leftVotes = modelVotes.get(left.modelId) ?? 0;

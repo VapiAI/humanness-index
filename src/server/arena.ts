@@ -22,7 +22,6 @@ import {
   variantsOfModel,
 } from './catalog';
 import {
-  applyVoteToStats,
   chooseBattlePair,
   freshVariantStats,
   type StandingsState,
@@ -63,7 +62,8 @@ const SEED_ANCHORS = new Map<string, AnchorRecord>(
 );
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
-const eloStandardError = (voteCount: number) =>
+/** Rough rating uncertainty after `voteCount` votes (160/√n), for the table. */
+const ratingStandardError = (voteCount: number) =>
   Math.round(160 / Math.sqrt(Math.max(1, voteCount)));
 
 /**
@@ -119,7 +119,7 @@ const computeStandings = (
         provider: PROVIDERS_BY_ID.get(model.providerId)!.name,
         model: model.name,
         elo: round2(ratings.get(id) ?? BT_CENTER),
-        uncertainty: eloStandardError(counts.voteCount),
+        uncertainty: ratingStandardError(counts.voteCount),
         // The baseline shows "Baseline"/dash in the UI, so its range is cosmetic.
         rankRange: id === BASELINE_ID ? '#1' : formatRankRange(ranges.get(id)!),
         ...counts,
@@ -246,12 +246,10 @@ export const submitVote = async (
   if (!left || !right) throw new VoteError('Unknown battle variants');
 
   const store = arenaStore();
-  const [{ state, totalVotes }, standings] = await Promise.all([
+  const [{ totalVotes }, standings] = await Promise.all([
     store.load(),
     store.loadStandings(),
   ]);
-  const leftBefore = state.get(left.id) ?? freshVariantStats();
-  const rightBefore = state.get(right.id) ?? freshVariantStats();
 
   // "Correct" = the pick agreed with the crowd, judged on the cached
   // Bradley–Terry model ratings (the same numbers the leaderboard shows) so the
@@ -265,19 +263,13 @@ export const submitVote = async (
     winner,
   );
 
-  const updated = applyVoteToStats(leftBefore, rightBefore, winner);
-
   try {
     await store.recordVote({
-      id: `elo:${randomUUID().replaceAll('-', '')}`,
+      id: `vote:${randomUUID().replaceAll('-', '')}`,
       battleId: payload.id,
       winner,
       leftVariantId: left.id,
       rightVariantId: right.id,
-      leftEloBefore: leftBefore.elo,
-      rightEloBefore: rightBefore.elo,
-      leftEloAfter: updated.left.elo,
-      rightEloAfter: updated.right.elo,
       createdAt: Date.now(),
     });
   } catch (error) {

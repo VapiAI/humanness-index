@@ -19,9 +19,8 @@ import { list, put } from '@vercel/blob';
 import type { ArenaModelRow } from '../lib/api';
 import { VARIANTS, variantsOfModel } from './catalog';
 import {
-  applyVoteToStats,
+  applyVoteToCounts,
   freshVariantStats,
-  INITIAL_ELO,
   type StandingsState,
   type VariantStats,
   type VoteWinner,
@@ -40,11 +39,6 @@ export type VoteEvent = {
   winner: VoteWinner;
   leftVariantId: string;
   rightVariantId: string;
-  /** Pre/post Elo are kept for audit; replay recomputes from winner + ids. */
-  leftEloBefore: number;
-  rightEloBefore: number;
-  leftEloAfter: number;
-  rightEloAfter: number;
   createdAt: number;
 };
 
@@ -110,9 +104,11 @@ const mapWithConcurrency = async <T, R>(
 };
 
 /**
- * Production standings seed: distribute each model's exported aggregates
- * (mean Elo, summed counts) evenly across its variants so the base state
- * matches production exactly; live votes evolve variant-level from there.
+ * Production standings seed: distribute each model's exported win/loss/tie
+ * totals evenly across its variants so the base counts match production
+ * exactly; live votes accrue variant-level from there. (The ratings come from
+ * the Bradley–Terry fit, which folds these counts as anchor games — see
+ * arena.ts; the seed export's per-model Elo is no longer used.)
  */
 const seededState = (): ArenaSnapshot => {
   const state: StandingsState = new Map(
@@ -125,7 +121,6 @@ const seededState = (): ArenaSnapshot => {
       Math.floor(value / variants.length) + (index < value % variants.length ? 1 : 0);
     variants.forEach((variant, index) => {
       state.set(variant.id, {
-        elo: model.elo ?? INITIAL_ELO,
         wins: share(model.wins, index),
         losses: share(model.losses, index),
         ties: share(model.ties, index),
@@ -136,12 +131,12 @@ const seededState = (): ArenaSnapshot => {
   return { state, totalVotes: seedStandings.totalUniqueVotes };
 };
 
-/** Replay one vote onto the working state (recompute, don't trust stored Elo). */
+/** Tally one vote into the working counts (replayed deterministically). */
 const applyEvent = (state: StandingsState, event: VoteEvent) => {
   const left = state.get(event.leftVariantId);
   const right = state.get(event.rightVariantId);
   if (!left || !right) return;
-  const updated = applyVoteToStats(left, right, event.winner);
+  const updated = applyVoteToCounts(left, right, event.winner);
   state.set(event.leftVariantId, updated.left);
   state.set(event.rightVariantId, updated.right);
 };

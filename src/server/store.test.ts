@@ -4,7 +4,6 @@ import { describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
 
 import { VARIANTS, variantsOfModel } from './catalog';
-import { applyVoteToStats } from './elo';
 import seedStandings from './seed-standings.json';
 import { arenaStore, DuplicateVoteError, type VoteEvent } from './store';
 
@@ -19,15 +18,11 @@ delete process.env.BLOB_READ_WRITE_TOKEN;
 const SEED_RESERVED_MODELS = ['gradium-gradium-tts', 'minimax-minimax-tts'];
 
 const voteEvent = (overrides: Partial<VoteEvent> = {}): VoteEvent => ({
-  id: `elo:${randomUUID().replaceAll('-', '')}`,
+  id: `vote:${randomUUID().replaceAll('-', '')}`,
   battleId: `battle:${randomUUID().replaceAll('-', '')}`,
   winner: 'left',
   leftVariantId: variantsOfModel('inworld-tts-2')[0].id,
   rightVariantId: variantsOfModel('elevenlabs-flash-v2')[0].id,
-  leftEloBefore: 0,
-  rightEloBefore: 0,
-  leftEloAfter: 0,
-  rightEloAfter: 0,
   createdAt: Date.now(),
   ...overrides,
 });
@@ -62,11 +57,8 @@ describe('arenaStore (in-memory fallback)', () => {
       const variants = variantsOfModel(modelId);
       expect(variants.length).toBeGreaterThan(0);
       const stats = variants.map((variant) => state.get(variant.id)!);
-      // Every variant starts at the model's exported Elo; counts are split
-      // evenly (within ±1) and sum exactly to the exported aggregates.
-      for (const variantStats of stats) {
-        expect(variantStats.elo).toBe(seed.elo);
-      }
+      // Counts are split evenly (within ±1) across the model's variants and sum
+      // exactly to the exported aggregates.
       const sum = (key: 'wins' | 'losses' | 'ties' | 'voteCount') =>
         stats.reduce((total, variantStats) => total + variantStats[key], 0);
       expect(sum('wins')).toBe(seed.wins);
@@ -83,37 +75,36 @@ describe('arenaStore (in-memory fallback)', () => {
     const variantId = variantsOfModel('xai-xai-tts')[0].id;
     const first = await store.load();
     const original = { ...first.state.get(variantId)! };
-    first.state.get(variantId)!.elo = -1;
     first.state.get(variantId)!.wins = 999_999;
+    first.state.get(variantId)!.losses = -1;
     const second = await store.load();
     expect(second.state.get(variantId)).toEqual(original);
   });
 
-  it('folds a vote into standings by recomputing Elo (stored Elo is audit-only)', async () => {
+  it('folds a vote into the win/loss/tie counts (replayed from winner + ids)', async () => {
     const store = arenaStore();
     const left = variantsOfModel('inworld-tts-2')[1];
     const right = variantsOfModel('elevenlabs-flash-v2')[1];
     const before = await store.load();
-    const expected = applyVoteToStats(
-      before.state.get(left.id)!,
-      before.state.get(right.id)!,
-      'right',
-    );
+    const leftBefore = before.state.get(left.id)!;
+    const rightBefore = before.state.get(right.id)!;
 
     await store.recordVote(
       voteEvent({
         winner: 'right',
         leftVariantId: left.id,
         rightVariantId: right.id,
-        // Garbage audit fields: replay must recompute from winner + ids.
-        leftEloAfter: 9999,
-        rightEloAfter: 9999,
       }),
     );
 
     const after = await store.load();
-    expect(after.state.get(left.id)).toEqual(expected.left);
-    expect(after.state.get(right.id)).toEqual(expected.right);
+    const leftAfter = after.state.get(left.id)!;
+    const rightAfter = after.state.get(right.id)!;
+    // winner = right: the right variant takes the win, the left the loss.
+    expect(rightAfter.wins).toBe(rightBefore.wins + 1);
+    expect(leftAfter.losses).toBe(leftBefore.losses + 1);
+    expect(rightAfter.voteCount).toBe(rightBefore.voteCount + 1);
+    expect(leftAfter.voteCount).toBe(leftBefore.voteCount + 1);
     expect(after.totalVotes).toBe(before.totalVotes + 1);
   });
 

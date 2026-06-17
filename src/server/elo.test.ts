@@ -3,58 +3,31 @@ import { describe, expect, it } from 'bun:test';
 
 import { VARIANTS } from './catalog';
 import {
-  applyVoteToStats,
-  calculateElo,
+  applyVoteToCounts,
   chooseBattlePair,
   freshVariantStats,
-  INITIAL_ELO,
   type StandingsState,
 } from './elo';
 
 const freshState = (): StandingsState =>
   new Map(VARIANTS.map((variant) => [variant.id, freshVariantStats()]));
 
-describe('calculateElo', () => {
-  it('is zero-sum and symmetric for equal ratings', () => {
-    const [left, right] = calculateElo(1200, 1200, 1, 0);
-    // K=32, expected 0.5 each → winner +16, loser -16.
-    expect(left).toBe(1216);
-    expect(right).toBe(1184);
-  });
-
-  it('awards less to a heavy favorite and more to an upset winner', () => {
-    const [favoriteWin] = calculateElo(1400, 1000, 1, 0);
-    const favoriteGain = favoriteWin - 1400;
-    const [underdogWin] = calculateElo(1000, 1400, 1, 0);
-    const underdogGain = underdogWin - 1000;
-    expect(underdogGain).toBeGreaterThan(favoriteGain);
-  });
-
-  it('moves ratings toward each other on a tie', () => {
-    const [left, right] = calculateElo(1300, 1100, 0.5, 0.5);
-    expect(left).toBeLessThan(1300);
-    expect(right).toBeGreaterThan(1100);
-  });
-});
-
-describe('applyVoteToStats', () => {
-  it('records a win/loss and conserves total Elo', () => {
-    const left = freshVariantStats();
-    const right = freshVariantStats();
-    const result = applyVoteToStats(left, right, 'left');
+describe('applyVoteToCounts', () => {
+  it('tallies a win/loss into both sides', () => {
+    const result = applyVoteToCounts(freshVariantStats(), freshVariantStats(), 'left');
     expect(result.left.wins).toBe(1);
     expect(result.left.losses).toBe(0);
     expect(result.right.losses).toBe(1);
     expect(result.left.voteCount).toBe(1);
     expect(result.right.voteCount).toBe(1);
-    expect(result.left.elo + result.right.elo).toBeCloseTo(INITIAL_ELO * 2, 5);
   });
 
-  it('records a tie on both sides', () => {
-    const result = applyVoteToStats(freshVariantStats(), freshVariantStats(), 'tie');
+  it('tallies a tie on both sides', () => {
+    const result = applyVoteToCounts(freshVariantStats(), freshVariantStats(), 'tie');
     expect(result.left.ties).toBe(1);
     expect(result.right.ties).toBe(1);
-    expect(result.left.elo).toBe(result.right.elo);
+    expect(result.left.wins).toBe(0);
+    expect(result.right.wins).toBe(0);
   });
 });
 
