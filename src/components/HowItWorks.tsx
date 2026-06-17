@@ -15,7 +15,7 @@ const STEPS = [
   {
     n: 3,
     title: 'A real human sets the bar',
-    desc: 'Votes are converted to an Elo score, with a real human at 100. The higher the score, the more human the model sounds.',
+    desc: 'Blind votes are fit into a rating, with a real human at 100. The higher the score, the more human the model sounds.',
   },
 ];
 

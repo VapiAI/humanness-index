@@ -39,25 +39,27 @@ What listeners say gives a synthetic voice away, and what we listen for:
 - Latency: how quickly a voice starts to respond. This is measured
   separately (below), not judged by ear.
 
-## Pure-vote Elo
+## Pure-vote ratings (Bradley–Terry)
 
 A model's Humanness score derives purely from blind votes. There is no
 editorial weighting, no panel, and no vendor input.
 
-- Each (source voice, model) variant carries an Elo rating (initial 1200,
-  K = 32). A vote updates both sides' ratings; ties pull ratings toward
-  each other.
-- A model's displayed rating is the mean of its variants' Elo ratings; its
-  win/loss/tie counts are summed across variants.
-- The displayed Humanness score normalizes the field's Elo so the anchor reads
-  100 and the lowest model reads 0, leaving the top open so a voice that
+- The published rating is a **Bradley–Terry** maximum-likelihood fit over the
+  entire blind-vote history, shown on a familiar Elo-like scale. Unlike a
+  running Elo (a fixed-step update that never fully settles), a Bradley–Terry
+  fit is an all-history estimate: it converges as votes accumulate and it
+  weights wins by how strong the opponent was. Standings are recomputed from
+  the full, immutable vote log, so they don't swing with each new vote.
+- The displayed Humanness score normalizes the field's ratings so the anchor
+  reads 100 and the lowest model reads 0, leaving the top open so a voice that
   out-rates the baseline can score above 100. With the Human baseline present
   it is the anchor (see below); without a baseline, the top model reads 100.
-- Uncertainty is the standard error of an Elo estimate after n votes
-  (160 divided by the square root of n). The "likely rank" range shows
-  every rank consistent with each model's rating plus or minus its
-  uncertainty band, so young models show wide ranges that narrow as votes
-  accumulate.
+- The "likely rank" range is a **bootstrap**: the votes are resampled many
+  times and the fit re-run, and the column shows the span of ranks a model
+  plausibly holds (95% of resamples). A tight cluster of near-equal models
+  reads as a range; it narrows as votes accumulate.
+- A lightweight running Elo is still kept internally to pair blind battles
+  (close-matchup and coverage weighting); it never appears in the standings.
 - Battle pairing is convergence-weighted: under-voted models are forced
   into coverage first, then pairs are weighted toward maximum information
   gain (uncertainty reduction, close matchups, unresolved rank overlaps,

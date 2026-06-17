@@ -64,8 +64,12 @@ export type RevealCard = {
   /** Competitor rank (ignores the Human baseline; 0 for a baseline). */
   rank: number;
   humanness: number;
-  /** Signed Elo shift this vote produced for the side. */
-  eloDelta: number;
+  /**
+   * Per-vote rating nudge, or null. With the published rating now a settled
+   * Bradley–Terry fit, a single vote doesn't meaningfully move it, so this is
+   * null (the reveal shows rank + Humanness instead of a "+N" chip).
+   */
+  eloDelta: number | null;
 };
 
 /**

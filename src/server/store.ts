@@ -58,6 +58,33 @@ type ArenaStore = {
   load(): Promise<ArenaSnapshot>;
   /** Append a vote; throws DuplicateVoteError if the battle was already voted. */
   recordVote(event: VoteEvent): Promise<void>;
+  /**
+   * Every recorded vote event, oldest first — the full pairwise log the
+   * Bradley–Terry standings fit over. Read-only; never mutates the store.
+   */
+  loadVoteEvents(): Promise<VoteEvent[]>;
+};
+
+/** Resolve `fn` over `items` with at most `limit` in flight (bounds blob fan-out). */
+const mapWithConcurrency = async <T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> => {
+  const out: R[] = new Array(items.length);
+  let cursor = 0;
+  const worker = async () => {
+    for (;;) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) return;
+      out[index] = await fn(items[index]);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
+  return out;
 };
 
 /**
@@ -179,8 +206,20 @@ const blobStore = (token: string): ArenaStore => {
     return { state, totalVotes: baseVotes + events.length };
   };
 
+  const loadVoteEvents = async (): Promise<VoteEvent[]> => {
+    const eventBlobs = await listEventBlobs();
+    const events = (
+      await mapWithConcurrency(eventBlobs, 100, (blob) =>
+        fetchJson<VoteEvent>(blob.url),
+      )
+    ).filter((event): event is VoteEvent => event !== null);
+    events.sort((a, b) => a.createdAt - b.createdAt);
+    return events;
+  };
+
   return {
     load,
+    loadVoteEvents,
     async recordVote(event) {
       try {
         await put(`${EVENTS_PREFIX}${event.battleId}.json`, JSON.stringify(event), {
@@ -221,6 +260,9 @@ const memoryStore = (): ArenaStore => {
   const state = seeded.state;
   let totalVotes = seeded.totalVotes;
   const votedBattles = new Set<string>();
+  // The seed export carries no pairwise detail, so the live log starts empty;
+  // it grows as votes come in (mirrors the blob store's event blobs).
+  const events: VoteEvent[] = [];
 
   return {
     async load() {
@@ -229,12 +271,16 @@ const memoryStore = (): ArenaStore => {
         totalVotes,
       };
     },
+    async loadVoteEvents() {
+      return [...events];
+    },
     async recordVote(event) {
       if (votedBattles.has(event.battleId)) {
         throw new DuplicateVoteError('Battle has already been voted on');
       }
       votedBattles.add(event.battleId);
       applyEvent(state, event);
+      events.push(event);
       totalVotes += 1;
     },
   };

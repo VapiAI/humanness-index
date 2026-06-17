@@ -91,11 +91,14 @@ Models carry a few status-shaping fields:
 - A battle plays one shared source voice through two models reading the same
   prompt. Both clips address pre-generated `audio/{hash}.mp3` files by a frozen
   content hash (`sha256("variant:{voiceId}:{providerId}:{arenaApiId}|{promptId}|settings-v3")[:32]`).
-- Each (voice, model) variant carries an Elo rating (initial 1200, K = 32). A
-  model's displayed rating is the mean of its variants. The Humanness score
-  normalizes the field's Elo so the anchor reads 100 and the lowest reads 0;
-  the top is left open, so a voice that out-rates the baseline can exceed 100
-  (see section 7 for the anchor).
+- The published rating is a Bradley–Terry maximum-likelihood fit over the full
+  blind-vote log (model-level, shown on an Elo-like scale): an all-history
+  estimate that settles as votes accumulate and weights wins by opponent
+  strength, with bootstrap "likely rank" ranges. The Humanness score normalizes
+  the field's ratings so the anchor reads 100 and the lowest reads 0; the top is
+  left open, so a voice that out-rates the baseline can exceed 100 (see section 7
+  for the anchor). A lightweight running Elo (initial 1200, K = 32) is kept only
+  to pair blind battles, never shown in the standings.
 - Pairing is convergence-weighted: under-voted models are forced into coverage
   first, then pairs are weighted toward information gain. The shared voice is
   drawn from the intersection of both models' available `sourceVoices`.

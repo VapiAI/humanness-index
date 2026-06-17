@@ -172,8 +172,8 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
 
       let nextModels: ArenaRow[];
       let sides: {
-        left: { modelId: string; eloDelta: number };
-        right: { modelId: string; eloDelta: number };
+        left: { modelId: string; eloDelta: number | null };
+        right: { modelId: string; eloDelta: number | null };
       };
       let correct: boolean;
 
@@ -184,18 +184,14 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
         } catch {
           return null; // network failure: caller leaves the round as-is
         }
-        nextModels = mergeStandings(response.models);
-        setModels(nextModels);
+        // The published standings are a settled Bradley–Terry fit, refreshed on
+        // a schedule — a single vote doesn't move the ranking, so keep the
+        // current standings (no per-vote reshuffle) and just bump the counter.
+        nextModels = models;
         setTotalUniqueVotes(response.totalUniqueVotes);
         sides = {
-          left: {
-            modelId: response.reveal.left.modelId,
-            eloDelta: response.reveal.left.eloDelta,
-          },
-          right: {
-            modelId: response.reveal.right.modelId,
-            eloDelta: response.reveal.right.eloDelta,
-          },
+          left: { modelId: response.reveal.left.modelId, eloDelta: null },
+          right: { modelId: response.reveal.right.modelId, eloDelta: null },
         };
         correct = response.correct;
       } else {
@@ -224,8 +220,8 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
         setModels(nextModels);
         setTotalUniqueVotes((count) => count + 1);
         sides = {
-          left: { modelId: left.id, eloDelta: leftDelta },
-          right: { modelId: right.id, eloDelta: rightDelta },
+          left: { modelId: left.id, eloDelta: null },
+          right: { modelId: right.id, eloDelta: null },
         };
       }
 
@@ -236,7 +232,7 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
 
       // Build the reveal from the post-vote standings (a consistent snapshot).
       const sorted = sortByStanding(nextModels);
-      const cardFor = (side: { modelId: string; eloDelta: number }) => {
+      const cardFor = (side: { modelId: string; eloDelta: number | null }) => {
         const model = nextModels.find((m) => m.id === side.modelId);
         if (!model) return null;
         return {

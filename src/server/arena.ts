@@ -5,27 +5,138 @@
 import { randomUUID } from 'node:crypto';
 
 import type {
+  ArenaModelRow,
   BattleResponse,
   ModelsResponse,
   SampleResponse,
   VoteResponse,
 } from '../lib/api';
 import { voteMatchesCrowd } from '../lib/scoring';
-import { audioUrlFor, PROMPTS, VARIANTS_BY_ID } from './catalog';
+import {
+  audioUrlFor,
+  MODELS,
+  MODELS_BY_ID,
+  PROMPTS,
+  PROVIDERS_BY_ID,
+  VARIANTS_BY_ID,
+  variantsOfModel,
+} from './catalog';
 import {
   applyVoteToStats,
   chooseBattlePair,
   freshVariantStats,
   INITIAL_ELO,
   leaderboard,
+  type StandingsState,
   type VoteWinner,
 } from './elo';
+import {
+  bootstrapRankRange,
+  bradleyTerryFit,
+  BT_CENTER,
+  formatRankRange,
+  type AnchorRecord,
+  type Outcome,
+} from './bradleyTerry';
 import { battleTokenDecode, battleTokenEncode } from './battleToken';
-import { arenaStore, DuplicateVoteError } from './store';
+import seedStandings from './seed-standings.json';
+import { arenaStore, DuplicateVoteError, type VoteEvent } from './store';
+
+/** The Human baseline's model id — the fixed reference the field is scored against. */
+const BASELINE_ID = 'human';
+
+/**
+ * Seed export folded in as anchor games (no loss): the original prototype only
+ * carries per-model win/loss/tie totals, so they count as games versus a
+ * center-strength reference. Live pairwise votes dominate.
+ */
+const SEED_ANCHORS = new Map<string, AnchorRecord>(
+  seedStandings.models
+    .filter((model) => MODELS_BY_ID.has(model.id))
+    .map((model) => [
+      model.id,
+      { wins: model.wins, losses: model.losses, ties: model.ties },
+    ]),
+);
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+const eloStandardError = (voteCount: number) =>
+  Math.round(160 / Math.sqrt(Math.max(1, voteCount)));
+
+/**
+ * The published standings: a Bradley–Terry maximum-likelihood fit over the full
+ * vote log (settles, accounts for opponent strength) with bootstrap rank
+ * ranges. The Elo `state` is still folded for pairing + crowd-correctness, but
+ * the leaderboard the world sees is this BT fit.
+ */
+const bradleyTerryLeaderboard = (
+  state: StandingsState,
+  events: VoteEvent[],
+): ArenaModelRow[] => {
+  const players = MODELS.map((model) => model.id);
+  const outcomes: Outcome[] = [];
+  for (const event of events) {
+    const left = VARIANTS_BY_ID.get(event.leftVariantId)?.modelId;
+    const right = VARIANTS_BY_ID.get(event.rightVariantId)?.modelId;
+    if (!left || !right || left === right) continue;
+    outcomes.push({ left, right, winner: event.winner });
+  }
+  const input = { players, outcomes, anchors: SEED_ANCHORS, prior: 1 };
+  const { ratings } = bradleyTerryFit(input);
+  // Likely rank is over the competitors (the Human baseline is the reference,
+  // not a ranked entrant) so it matches the #N shown elsewhere.
+  const competitors = players.filter((id) => id !== BASELINE_ID);
+  const ranges = bootstrapRankRange(input, competitors, {
+    resamples: 200,
+    interval: 0.95,
+  });
+
+  const countsFor = (modelId: string) => {
+    const stats = variantsOfModel(modelId).map(
+      (variant) => state.get(variant.id) ?? freshVariantStats(),
+    );
+    return {
+      wins: stats.reduce((sum, s) => sum + s.wins, 0),
+      losses: stats.reduce((sum, s) => sum + s.losses, 0),
+      ties: stats.reduce((sum, s) => sum + s.ties, 0),
+      voteCount: stats.reduce((sum, s) => sum + s.voteCount, 0),
+    };
+  };
+
+  return players
+    .map((id): ArenaModelRow => {
+      const model = MODELS_BY_ID.get(id)!;
+      const counts = countsFor(id);
+      return {
+        id,
+        provider: PROVIDERS_BY_ID.get(model.providerId)!.name,
+        model: model.name,
+        elo: round2(ratings.get(id) ?? BT_CENTER),
+        uncertainty: eloStandardError(counts.voteCount),
+        // The baseline shows "Baseline"/dash in the UI, so its range is cosmetic.
+        rankRange: id === BASELINE_ID ? '#1' : formatRankRange(ranges.get(id)!),
+        ...counts,
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.elo - a.elo ||
+        b.voteCount - a.voteCount ||
+        a.provider.localeCompare(b.provider) ||
+        a.model.localeCompare(b.model),
+    );
+};
 
 export const getModels = async (): Promise<ModelsResponse> => {
-  const { state, totalVotes } = await arenaStore().load();
-  return { models: leaderboard(state), totalUniqueVotes: totalVotes };
+  const store = arenaStore();
+  const [{ state, totalVotes }, events] = await Promise.all([
+    store.load(),
+    store.loadVoteEvents(),
+  ]);
+  return {
+    models: bradleyTerryLeaderboard(state, events),
+    totalUniqueVotes: totalVotes,
+  };
 };
 
 export const createBattle = async (): Promise<BattleResponse> => {

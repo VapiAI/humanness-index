@@ -347,7 +347,7 @@ export const RankingsSection = ({
             <tr>
               <th className="rt-rank">
                 Likely Rank
-                <InfoTip tip="Shown as a range because this model needs more votes to pin down its exact rank. It narrows as more people vote." />
+                <InfoTip tip="The span of ranks this model plausibly holds — a 95% bootstrap over the votes, so a tight cluster of close models reads as a range. It narrows as more votes come in." />
               </th>
               <th aria-sort={ariaSortFor(sort, 'provider')}>
                 <SortHeader label="Provider" sortKey="provider" sort={sort} onSortChange={onSortChange} />
@@ -358,11 +358,11 @@ export const RankingsSection = ({
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'humanness')}>
                 <SortHeader label="Humanness" sortKey="humanness" sort={sort} onSortChange={onSortChange} />
-                <InfoTip tip="Based on each model's Elo rating from blind votes, normalized so a real human scores 100 and the lowest-rated voice scores 0." />
+                <InfoTip tip="Each model's rating from blind votes, normalized so a real human scores 100 and the lowest-rated voice scores 0. A voice judged more human than the real person can exceed 100." />
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'elo')}>
-                <SortHeader label="Elo" sortKey="elo" sort={sort} onSortChange={onSortChange} />
-                <InfoTip tip="Elo is each voice's rating from blind head-to-head votes. It rises when listeners pick it as more human, weighted by how strong the other voice was." />
+                <SortHeader label="Rating" sortKey="elo" sort={sort} onSortChange={onSortChange} />
+                <InfoTip tip="A Bradley-Terry rating fit from every blind head-to-head vote, on a familiar Elo-like scale. Unlike a running Elo it's an all-history estimate, so it settles as votes accumulate and accounts for how strong each opponent was." />
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'latency')}>
                 <SortHeader label="Latency" sortKey="latency" sort={sort} onSortChange={onSortChange} />
@@ -374,7 +374,7 @@ export const RankingsSection = ({
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'votes')}>
                 <SortHeader label="Votes" sortKey="votes" sort={sort} onSortChange={onSortChange} />
-                <InfoTip tip="How many listeners picked this voice as more human in blind battles. Rank is set by Elo, which also weights how strong each opponent was, so more votes doesn't always mean a higher rank." />
+                <InfoTip tip="How many listeners picked this voice as more human in blind battles. Rank is set by the Bradley-Terry rating, which also weights how strong each opponent was, so more votes doesn't always mean a higher rank." />
               </th>
               <th className="rt-listen">Listen</th>
             </tr>
