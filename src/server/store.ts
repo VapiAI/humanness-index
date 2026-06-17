@@ -144,6 +144,24 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
   }
 };
 
+/**
+ * Fetch an IMMUTABLE event blob (vote events never change), with retries so a
+ * transient blip never silently drops a vote. No cache-bust — letting the CDN
+ * serve these keeps the all-events read (the Bradley-Terry fold) fast.
+ */
+const fetchEventJson = async <T>(url: string): Promise<T | null> => {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const response = await fetch(url, { cache: 'force-cache' });
+      if (response.ok) return (await response.json()) as T;
+    } catch {
+      // fall through to retry
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100 * (attempt + 1)));
+  }
+  return null;
+};
+
 const blobStore = (token: string): ArenaStore => {
   const loadSnapshot = async (): Promise<SnapshotBlob | null> => {
     const { blobs } = await list({ prefix: SNAPSHOT_PATH, token, limit: 1 });
@@ -208,9 +226,11 @@ const blobStore = (token: string): ArenaStore => {
 
   const loadVoteEvents = async (): Promise<VoteEvent[]> => {
     const eventBlobs = await listEventBlobs();
+    // Vercel Blob is CDN-backed and handles high read concurrency, so fan out
+    // wide to keep the full-log read well under the prerender cache timeout.
     const events = (
-      await mapWithConcurrency(eventBlobs, 100, (blob) =>
-        fetchJson<VoteEvent>(blob.url),
+      await mapWithConcurrency(eventBlobs, 400, (blob) =>
+        fetchEventJson<VoteEvent>(blob.url),
       )
     ).filter((event): event is VoteEvent => event !== null);
     events.sort((a, b) => a.createdAt - b.createdAt);
