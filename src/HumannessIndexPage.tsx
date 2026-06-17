@@ -147,13 +147,34 @@ export const HumannessIndexPage = ({
   // autoplay) only runs while it's visible, so the arena stops cueing up — and
   // playing — new pairs once the listener scrolls down to the rankings.
   const [battleInView, setBattleInView] = useState(true);
+  // A vote is in flight (or its Turnstile challenge is up): the buttons disable
+  // and further clicks/keystrokes are ignored until it resolves. The ref is the
+  // synchronous guard (a burst of clicks lands in one tick, before `voting`
+  // state or `reveal` update), the state drives the disabled styling.
+  const [voting, setVoting] = useState(false);
+  const votingRef = useRef(false);
 
   const revealed = reveal !== null;
+
+  // Release the in-flight lock (vote resolved, failed, or its challenge was
+  // dismissed) so the listener can vote again.
+  const finishVoting = useCallback(() => {
+    votingRef.current = false;
+    setVoting(false);
+  }, []);
 
   // Stop any clip that's still playing the moment the vote flips to the reveal view.
   useEffect(() => {
     if (revealed) audio.stopPlayback();
   }, [revealed, audio.stopPlayback]);
+
+  // The Turnstile challenge (every 10th vote) is modal: silence the battle the
+  // instant it opens so clips don't keep playing behind the overlay while the
+  // listener solves it. The pending vote is captured in the gate, so the reveal
+  // still lands once they pass.
+  useEffect(() => {
+    if (voteGate.challengeOpen) audio.stopPlayback();
+  }, [voteGate.challengeOpen, audio.stopPlayback]);
 
   // Track the picker's visibility so the auto-advance loop can pause when it
   // scrolls off screen (it resumes when scrolled back into view).
@@ -246,43 +267,54 @@ export const HumannessIndexPage = ({
   };
 
   const handleVote = (winner: VoteChoice) => {
-    if (!audio.bothStarted || revealed) return;
+    // `votingRef` rejects the rapid follow-up clicks that used to each count a
+    // vote (tripping the Turnstile cadence early) and fire duplicate submits,
+    // since `reveal`/`voting` don't update until the round-trip returns.
+    if (!audio.bothStarted || revealed || votingRef.current) return;
+    votingRef.current = true;
+    setVoting(true);
 
     // Every 10th vote must pass the Turnstile check before it counts
     // (no-op without keys — castVote then runs immediately). The reveal is
     // built entirely from the vote response (identities, deltas, correctness);
-    // the client never held the pre-vote identities.
-    voteGate.guardVote((captchaToken) => {
-      void arena
-        .applyVote({
-          winner,
-          voteToken: currentBattle.voteToken,
-          captchaToken,
-          // Offline fallback only (no token): the bundled round's local ids.
-          offline: currentBattle.voteToken
-            ? undefined
-            : {
-                leftModelId: currentBattle.leftModelId,
-                rightModelId: currentBattle.rightModelId,
-              },
-        })
-        .then((outcome) => {
-          if (!outcome) return;
-          setReveal(outcome);
-          trackVote({
+    // the client never held the pre-vote identities. Dismissing the challenge
+    // releases the lock via the cancel callback.
+    voteGate.guardVote(
+      (captchaToken) => {
+        void arena
+          .applyVote({
             winner,
-            leftModelId: outcome.left.model.id,
-            rightModelId: outcome.right.model.id,
-            correct: outcome.correct,
+            voteToken: currentBattle.voteToken,
+            captchaToken,
+            // Offline fallback only (no token): the bundled round's local ids.
+            offline: currentBattle.voteToken
+              ? undefined
+              : {
+                  leftModelId: currentBattle.leftModelId,
+                  rightModelId: currentBattle.rightModelId,
+                },
+          })
+          .then((outcome) => {
+            finishVoting();
+            if (!outcome) return;
+            setReveal(outcome);
+            trackVote({
+              winner,
+              leftModelId: outcome.left.model.id,
+              rightModelId: outcome.right.model.id,
+              correct: outcome.correct,
+            });
           });
-        });
-    });
+      },
+      finishVoting,
+    );
   };
 
   const handleNextComparison = () => {
     audio.resetRound();
     arena.advanceBattle();
     setReveal(null);
+    finishVoting();
     lastSideRef.current = null;
   };
 
@@ -323,8 +355,10 @@ export const HumannessIndexPage = ({
   });
   useEffect(() => {
     // Only auto-advance while the reveal is up AND the picker is on screen —
-    // scrolling away pauses the loop so pairs don't keep playing off screen.
-    if (!revealed || !battleInView) {
+    // scrolling away pauses the loop so pairs don't keep playing off screen. A
+    // pending Turnstile challenge also pauses it, so nothing advances or plays
+    // behind the modal.
+    if (!revealed || !battleInView || voteGate.challengeOpen) {
       setAdvanceCountdown(null);
       return undefined;
     }
@@ -344,7 +378,7 @@ export const HumannessIndexPage = ({
       window.clearInterval(interval);
       window.clearTimeout(timer);
     };
-  }, [revealed, battleInView]);
+  }, [revealed, battleInView, voteGate.challengeOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -473,6 +507,7 @@ export const HumannessIndexPage = ({
         playedSides={audio.playedSides}
         playingSide={playingSide}
         canVote={audio.bothStarted}
+        voting={voting}
         autoAdvanceIn={advanceCountdown}
         autoAdvanceMs={REVEAL_HOLD_MS}
         onPlayRound={handlePlayRound}

@@ -7,6 +7,7 @@ import {
   createBattle,
   getModels,
   getSample,
+  getTotalUniqueVotes,
   recomputeStandings,
   submitVote,
   VoteError,
@@ -300,6 +301,33 @@ describe('getModels', () => {
       expect(row.provider.length).toBeGreaterThan(0);
       expect(row.model.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('getTotalUniqueVotes', () => {
+  // The counter regression: reads must reflect a vote immediately. The cached
+  // BT fit only refreshes its total every STANDINGS_RECOMPUTE_INTERVAL votes
+  // (then sits behind an hourly cache), so serving it made the on-screen count
+  // jump on a fresh vote and snap back to a stale round number on refresh.
+  it('reflects a new vote immediately, while the cached fit lags until a refit', async () => {
+    await recomputeStandings();
+    const cachedBefore = (await getModels()).totalUniqueVotes;
+    const liveBefore = await getTotalUniqueVotes();
+    expect(liveBefore).toBe(cachedBefore);
+
+    await submitVote(
+      tokenFor(variantOf('xai-xai-tts', 2).id, variantOf('cartesia-sonic', 2).id),
+      'left',
+    );
+
+    // Live total advances at once; the cached leaderboard total does not move
+    // until the background refit runs — which is exactly why the counter reads
+    // the live value instead of the cached one.
+    expect(await getTotalUniqueVotes()).toBe(liveBefore + 1);
+    expect((await getModels()).totalUniqueVotes).toBe(cachedBefore);
+
+    await recomputeStandings();
+    expect((await getModels()).totalUniqueVotes).toBe(liveBefore + 1);
   });
 });
 

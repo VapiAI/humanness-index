@@ -45,9 +45,13 @@ type VoteGate = {
   /**
    * Run `castVote` immediately, or — on every 10th vote when Turnstile is
    * configured — after the listener solves the challenge (which supplies the
-   * `captchaToken`). Dismissing the challenge drops the vote.
+   * `captchaToken`). Dismissing the challenge drops the vote and fires the
+   * optional `onCancel` so the caller can release any in-flight lock.
    */
-  guardVote: (castVote: (captchaToken?: string) => void) => void;
+  guardVote: (
+    castVote: (captchaToken?: string) => void,
+    onCancel?: () => void,
+  ) => void;
   /** The challenge modal; render it once near the page root. */
   challenge: ReactNode;
   /** True while the challenge modal is up (page shortcuts should stand down). */
@@ -56,10 +60,11 @@ type VoteGate = {
 
 export const useVoteGate = (): VoteGate => {
   const pendingVoteRef = useRef<((captchaToken?: string) => void) | null>(null);
+  const pendingCancelRef = useRef<(() => void) | null>(null);
   const [challengeOpen, setChallengeOpen] = useState(false);
   const [challengeFailed, setChallengeFailed] = useState(false);
 
-  const guardVote = useCallback<VoteGate['guardVote']>((castVote) => {
+  const guardVote = useCallback<VoteGate['guardVote']>((castVote, onCancel) => {
     const nextCount = readVoteCount() + 1;
     if (!TURNSTILE_SITE_KEY || nextCount % CHALLENGE_EVERY !== 0) {
       writeVoteCount(nextCount);
@@ -67,6 +72,7 @@ export const useVoteGate = (): VoteGate => {
       return;
     }
     pendingVoteRef.current = castVote;
+    pendingCancelRef.current = onCancel ?? null;
     setChallengeFailed(false);
     setChallengeOpen(true);
   }, []);
@@ -74,6 +80,7 @@ export const useVoteGate = (): VoteGate => {
   const handleToken = useCallback((token: string) => {
     const castVote = pendingVoteRef.current;
     pendingVoteRef.current = null;
+    pendingCancelRef.current = null;
     setChallengeOpen(false);
     // Counting the gated vote restarts the 10-vote cycle.
     writeVoteCount(readVoteCount() + 1);
@@ -81,8 +88,12 @@ export const useVoteGate = (): VoteGate => {
   }, []);
 
   const handleDismiss = useCallback(() => {
+    const onCancel = pendingCancelRef.current;
     pendingVoteRef.current = null;
+    pendingCancelRef.current = null;
     setChallengeOpen(false);
+    // Let the caller re-enable voting — the round was never recorded.
+    onCancel?.();
   }, []);
 
   useEffect(() => {

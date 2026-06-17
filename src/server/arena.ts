@@ -186,6 +186,20 @@ export const getModels = async (): Promise<ModelsResponse> => {
   return { models, totalUniqueVotes };
 };
 
+/**
+ * The live unique-vote total straight from the store — independent of the
+ * cached Bradley–Terry fit (which only refreshes every
+ * `STANDINGS_RECOMPUTE_INTERVAL` votes and is then hourly-cached). Reads serve
+ * this for the counter so it stays in lockstep with `submitVote`'s returned
+ * total, instead of snapping back to a stale "round" number on refresh. Cheap:
+ * a snapshot read plus the pending-events tally the battle/vote paths already
+ * do per request.
+ */
+export const getTotalUniqueVotes = async (): Promise<number> => {
+  const { totalVotes } = await arenaStore().load();
+  return totalVotes;
+};
+
 export const createBattle = async (): Promise<BattleResponse> => {
   const store = arenaStore();
   const [{ state }, standings] = await Promise.all([

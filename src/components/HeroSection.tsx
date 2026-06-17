@@ -37,6 +37,8 @@ type HeroSectionProps = {
   playingSide: BattleSide | null;
   /** Both voices have started playing — voting is enabled. */
   canVote: boolean;
+  /** A vote is in flight (or its challenge is up): the pick buttons disable. */
+  voting?: boolean;
   /**
    * Seconds left before the post-vote auto-advance (shown counting down in the
    * Next button), or null when no countdown is running.
@@ -63,6 +65,7 @@ export const HeroSection = ({
   playedSides,
   playingSide,
   canVote,
+  voting = false,
   autoAdvanceIn = null,
   autoAdvanceMs,
   onPlayRound,
@@ -257,7 +260,7 @@ export const HeroSection = ({
               <button
                 className="lab-pick-btn lab-pick-a"
                 type="button"
-                disabled={!canVote}
+                disabled={!canVote || voting}
                 onClick={() => onVote('left')}
               >
                 <Check size={18} weight="bold" /> Pick A
@@ -265,7 +268,7 @@ export const HeroSection = ({
               <button
                 className="lab-tie-btn"
                 type="button"
-                disabled={!canVote}
+                disabled={!canVote || voting}
                 onClick={() => onVote('tie')}
               >
                 It&apos;s a tie
@@ -273,7 +276,7 @@ export const HeroSection = ({
               <button
                 className="lab-pick-btn lab-pick-b"
                 type="button"
-                disabled={!canVote}
+                disabled={!canVote || voting}
                 onClick={() => onVote('right')}
               >
                 <Check size={18} weight="bold" /> Pick B
