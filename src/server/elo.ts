@@ -1,15 +1,14 @@
 /**
- * Arena ranking engine — a direct port of the original prototype's Elo math,
- * leaderboard aggregation, uncertainty/rank-range model, and
- * convergence-weighted battle pairing.
+ * Arena vote folding + convergence-weighted battle pairing.
+ *
+ * The PUBLISHED rating is Bradley–Terry (see bradleyTerry.ts) — fit over the
+ * full vote log and cached. This module owns the per-variant win/loss/tie fold
+ * the fit and the "Votes" column read from, plus the pairing that schedules the
+ * next blind matchup (coverage, uncertainty reduction, and BT-rating closeness).
+ * The Elo math here is the audit trail folded alongside the counts; it no longer
+ * feeds the leaderboard, pairing, or crowd-judgment.
  */
-import {
-  MODELS,
-  MODELS_BY_ID,
-  PROVIDERS_BY_ID,
-  VARIANTS,
-  type CatalogVariant,
-} from './catalog';
+import { VARIANTS, type CatalogVariant } from './catalog';
 
 export type VoteWinner = 'left' | 'right' | 'tie';
 
@@ -23,19 +22,6 @@ export type VariantStats = {
 
 /** variant id → stats; the entire mutable state of the arena. */
 export type StandingsState = Map<string, VariantStats>;
-
-type LeaderboardRow = {
-  id: string;
-  provider: string;
-  model: string;
-  elo: number;
-  uncertainty: number;
-  rankRange: string;
-  wins: number;
-  losses: number;
-  ties: number;
-  voteCount: number;
-};
 
 export const INITIAL_ELO = 1200;
 const K_FACTOR = 32;
@@ -101,73 +87,6 @@ export const applyVoteToStats = (
 
 /** Standard error of an Elo estimate after `voteCount` votes (160/√n). */
 const eloStandardError = (voteCount: number) => 160 / Math.sqrt(Math.max(1, voteCount));
-
-type ModelAggregate = {
-  id: string;
-  elo: number;
-  wins: number;
-  losses: number;
-  ties: number;
-  voteCount: number;
-  uncertainty: number;
-};
-
-/** Aggregate variant stats up to (provider, model) rows — mean Elo, summed counts. */
-const modelAggregates = (state: StandingsState): ModelAggregate[] =>
-  MODELS.map((model) => {
-    const variantStats = VARIANTS.filter(
-      (variant) => variant.modelId === model.id,
-    ).map((variant) => state.get(variant.id) ?? freshVariantStats());
-    const voteCount = variantStats.reduce((sum, stats) => sum + stats.voteCount, 0);
-    return {
-      id: model.id,
-      elo: round2(
-        variantStats.reduce((sum, stats) => sum + stats.elo, 0) / variantStats.length,
-      ),
-      wins: variantStats.reduce((sum, stats) => sum + stats.wins, 0),
-      losses: variantStats.reduce((sum, stats) => sum + stats.losses, 0),
-      ties: variantStats.reduce((sum, stats) => sum + stats.ties, 0),
-      voteCount,
-      uncertainty: Math.round(eloStandardError(voteCount)),
-    };
-  });
-
-/** "#3" or "#3-10": ranks consistent with every row's elo ± uncertainty band. */
-const rankRangeFor = (rows: ModelAggregate[], row: ModelAggregate): string => {
-  const lowerBound = row.elo - row.uncertainty;
-  const upperBound = row.elo + row.uncertainty;
-  const others = rows.filter((other) => other !== row);
-  const bestRank = 1 + others.filter((other) => other.elo - other.uncertainty > upperBound).length;
-  const worstRank = 1 + others.filter((other) => other.elo + other.uncertainty >= lowerBound).length;
-  return bestRank === worstRank ? `#${bestRank}` : `#${bestRank}-${worstRank}`;
-};
-
-export const leaderboard = (state: StandingsState): LeaderboardRow[] => {
-  const aggregates = modelAggregates(state);
-  return aggregates
-    .map((aggregate) => {
-      const model = MODELS_BY_ID.get(aggregate.id)!;
-      return {
-        id: aggregate.id,
-        provider: PROVIDERS_BY_ID.get(model.providerId)!.name,
-        model: model.name,
-        elo: aggregate.elo,
-        uncertainty: aggregate.uncertainty,
-        rankRange: rankRangeFor(aggregates, aggregate),
-        wins: aggregate.wins,
-        losses: aggregate.losses,
-        ties: aggregate.ties,
-        voteCount: aggregate.voteCount,
-      };
-    })
-    .sort(
-      (a, b) =>
-        b.elo - a.elo ||
-        b.voteCount - a.voteCount ||
-        a.provider.localeCompare(b.provider) ||
-        a.model.localeCompare(b.model),
-    );
-};
 
 /* --------------------------------------------------------------------------
  * Convergence-weighted battle pairing (port of
@@ -248,10 +167,15 @@ const pairsByVoice = (): Map<string, Pair[]> => {
  * Human, serving only two voices, looks perpetually under-covered.
  *
  * Within the chosen voice the pairing still favors information gain: under-voted
- * models first, then weight by uncertainty reduction, close matchups, and
- * unresolved rank overlaps.
+ * models first, then weight by uncertainty reduction and close matchups. Close
+ * matchups are judged on the supplied model-level Bradley–Terry `ratings` (the
+ * published numbers); without them (cold cache) the close-match term is uniform
+ * and pairing falls back to coverage + uncertainty.
  */
-export const chooseBattlePair = (state: StandingsState): Pair => {
+export const chooseBattlePair = (
+  state: StandingsState,
+  ratings?: ReadonlyMap<string, number>,
+): Pair => {
   const byVoice = pairsByVoice();
   // (B) Uniform source-voice choice across the voices that have a valid pair.
   const voiceIds = [...byVoice.keys()];
@@ -281,19 +205,8 @@ export const chooseBattlePair = (state: StandingsState): Pair => {
     if (covering.length > 0) pairs = covering;
   }
 
-  const aggregates = modelAggregates(state);
-  const overlapsByModel = new Map(
-    aggregates.map((aggregate) => [
-      aggregate.id,
-      aggregates.filter(
-        (other) =>
-          other.id !== aggregate.id &&
-          other.elo - other.uncertainty <= aggregate.elo + aggregate.uncertainty &&
-          other.elo + other.uncertainty >= aggregate.elo - aggregate.uncertainty,
-      ).length,
-    ]),
-  );
   const variantVotes = variantVoteCounts(state);
+  const ratingOf = (modelId: string) => ratings?.get(modelId) ?? INITIAL_ELO;
 
   const weights = pairs.map(([left, right]) => {
     const leftVotes = modelVotes.get(left.modelId) ?? 0;
@@ -301,18 +214,13 @@ export const chooseBattlePair = (state: StandingsState): Pair => {
     const coverageGap = Math.max(0, targetVoteCount - Math.min(leftVotes, rightVotes));
     const coverage = coverageGap + 1;
     const uncertainty = uncertaintyGain(leftVotes) + uncertaintyGain(rightVotes);
-    const expectedLeft = expectedScore(
-      statsFor(state, left.id).elo,
-      statsFor(state, right.id).elo,
-    );
+    const expectedLeft = expectedScore(ratingOf(left.modelId), ratingOf(right.modelId));
     const closeMatch = 4 * expectedLeft * (1 - expectedLeft);
-    const rankBoundary =
-      (overlapsByModel.get(left.modelId) ?? 0) + (overlapsByModel.get(right.modelId) ?? 0);
     // Within the chosen voice, favor the less-sampled of its variants.
     const variantBalance =
       uncertaintyGain(variantVotes.get(left.id) ?? 0) +
       uncertaintyGain(variantVotes.get(right.id) ?? 0);
-    return 1 + coverage + 8 * uncertainty + 6 * closeMatch + 1.5 * rankBoundary + variantBalance;
+    return 1 + coverage + 8 * uncertainty + 6 * closeMatch + variantBalance;
   });
 
   const pair = weightedChoice(pairs, weights);

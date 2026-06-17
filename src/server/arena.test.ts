@@ -1,5 +1,5 @@
 /// <reference types="bun" />
-import { describe, expect, it } from 'bun:test';
+import { beforeAll, describe, expect, it } from 'bun:test';
 
 import { randomUUID } from 'node:crypto';
 
@@ -7,6 +7,7 @@ import {
   createBattle,
   getModels,
   getSample,
+  recomputeStandings,
   submitVote,
   VoteError,
 } from './arena';
@@ -24,7 +25,6 @@ import {
   VARIANTS_BY_ID,
   variantsOfModel,
 } from './catalog';
-import { freshVariantStats, leaderboard, type StandingsState } from './elo';
 import { arenaStore } from './store';
 
 // Hermetic: force the in-memory store fallback (never touch Vercel Blob).
@@ -67,7 +67,14 @@ const expectVoteError = async (promise: Promise<unknown>, message?: string) => {
 };
 
 describe('submitVote', () => {
-  it('moves winner Elo up, loser Elo down, and increments totals', async () => {
+  // Crowd-judgment reads the cached Bradley–Terry ratings; in production the
+  // cache is always warm (migration + the background refit). Prime it here so
+  // these tests exercise the real warm-cache path rather than the cold default.
+  beforeAll(async () => {
+    await recomputeStandings();
+  });
+
+  it('folds the win/loss into counts, increments totals, and reveals identities', async () => {
     const left = variantOf('xai-xai-tts');
     const right = variantOf('cartesia-sonic');
     const store = arenaStore();
@@ -80,8 +87,6 @@ describe('submitVote', () => {
     const after = await store.load();
     const leftAfter = after.state.get(left.id)!;
     const rightAfter = after.state.get(right.id)!;
-    expect(leftAfter.elo).toBeGreaterThan(leftBefore.elo);
-    expect(rightAfter.elo).toBeLessThan(rightBefore.elo);
     expect(leftAfter.wins).toBe(leftBefore.wins + 1);
     expect(leftAfter.losses).toBe(leftBefore.losses);
     expect(leftAfter.ties).toBe(leftBefore.ties);
@@ -92,18 +97,11 @@ describe('submitVote', () => {
     expect(after.totalVotes).toBe(before.totalVotes + 1);
 
     expect(response.totalUniqueVotes).toBe(before.totalVotes + 1);
+    // The reveal carries only the two identities; the client builds rank +
+    // Humanness from the standings it already holds.
     expect(response.reveal.left.modelId).toBe('xai-xai-tts');
     expect(response.reveal.right.modelId).toBe('cartesia-sonic');
-    // The reveal Elo is the refreshed model-level (leaderboard) Elo.
-    const leftRow = response.models.find((row) => row.id === 'xai-xai-tts')!;
-    const rightRow = response.models.find((row) => row.id === 'cartesia-sonic')!;
-    expect(response.reveal.left.elo).toBe(leftRow.elo);
-    expect(response.reveal.right.elo).toBe(rightRow.elo);
-    // The reveal carries the per-side Elo shift and the crowd-correctness, so
-    // the client can build the reveal without any pre-vote identities.
-    expect(response.reveal.left.eloDelta).toBeGreaterThan(0);
-    expect(response.reveal.right.eloDelta).toBeLessThan(0);
-    // Picking the heavy favorite (xAI ~1306 over Sonic ~1027) agrees with the crowd.
+    // Picking the heavy favorite (xAI over Sonic) agrees with the crowd.
     expect(response.correct).toBe(true);
   });
 
@@ -290,7 +288,10 @@ describe('createBattle', () => {
 });
 
 describe('getModels', () => {
-  it('returns the full leaderboard sorted by Elo with the store vote total', async () => {
+  it('returns the full Bradley–Terry leaderboard with the store vote total', async () => {
+    // getModels serves the cached fit; refresh it so the total matches the
+    // store after this suite's votes (the background refit's role in prod).
+    await recomputeStandings();
     const snapshot = await arenaStore().load();
     const { models, totalUniqueVotes } = await getModels();
     expect(totalUniqueVotes).toBe(snapshot.totalVotes);
@@ -349,80 +350,5 @@ describe('getSample', () => {
     // Not in the battle → no exclusion, any voice/prompt is valid.
     const sample = await getSample('elevenlabs-flash-v2', { battleToken: token });
     expect(sample.audioUrl).toMatch(/^https:\/\/.+\.mp3$/);
-  });
-});
-
-/* --------------------------------------------------------------------------
- * Rankings — leaderboard rank ranges, tie stability, uncertainty narrowing.
- * (Built on locally constructed states; never touches the shared store.)
- * ------------------------------------------------------------------------ */
-
-const freshState = (): StandingsState =>
-  new Map(VARIANTS.map((variant) => [variant.id, freshVariantStats()]));
-
-describe('leaderboard rankings', () => {
-  it('narrows uncertainty as a model accumulates votes', () => {
-    const uncertaintyWith = (votesPerVariant: number) => {
-      const state = freshState();
-      for (const variant of variantsOfModel('xai-xai-tts')) {
-        state.set(variant.id, {
-          ...freshVariantStats(),
-          voteCount: votesPerVariant,
-        });
-      }
-      return leaderboard(state).find((row) => row.id === 'xai-xai-tts')!
-        .uncertainty;
-    };
-    const none = uncertaintyWith(0);
-    const some = uncertaintyWith(1);
-    const many = uncertaintyWith(100);
-    expect(some).toBeLessThan(none);
-    expect(many).toBeLessThan(some);
-  });
-
-  it('collapses rank ranges to exact ranks once Elo gaps dwarf uncertainty', () => {
-    const state = freshState();
-    const modelIds = [...new Set(VARIANTS.map((variant) => variant.modelId))];
-    modelIds.forEach((modelId, index) => {
-      for (const variant of variantsOfModel(modelId)) {
-        state.set(variant.id, {
-          ...freshVariantStats(),
-          elo: 2000 - index * 100,
-          voteCount: 10_000,
-        });
-      }
-    });
-    const rows = leaderboard(state);
-    expect(rows.map((row) => row.id)).toEqual(modelIds);
-    rows.forEach((row, index) => {
-      expect(row.rankRange).toBe(`#${index + 1}`);
-    });
-  });
-
-  it('keeps every rank reachable when the whole field is tied', () => {
-    const rows = leaderboard(freshState());
-    for (const row of rows) {
-      expect(row.rankRange).toBe(`#1-${rows.length}`);
-    }
-  });
-
-  it('breaks Elo ties by vote count and orders deterministically across calls', () => {
-    const state = freshState();
-    for (const variant of variantsOfModel('cartesia-sonic')) {
-      state.set(variant.id, { ...freshVariantStats(), elo: 1500, voteCount: 50 });
-    }
-    for (const variant of variantsOfModel('cartesia-sonic-2')) {
-      state.set(variant.id, { ...freshVariantStats(), elo: 1500, voteCount: 10 });
-    }
-    const rows = leaderboard(state);
-    expect(rows[0].id).toBe('cartesia-sonic');
-    expect(rows[1].id).toBe('cartesia-sonic-2');
-    // Re-running over the same state yields the identical ordering.
-    expect(leaderboard(state).map((row) => row.id)).toEqual(
-      rows.map((row) => row.id),
-    );
-    expect(leaderboard(freshState()).map((row) => row.id)).toEqual(
-      leaderboard(freshState()).map((row) => row.id),
-    );
   });
 });

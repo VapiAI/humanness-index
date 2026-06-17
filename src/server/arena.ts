@@ -25,8 +25,6 @@ import {
   applyVoteToStats,
   chooseBattlePair,
   freshVariantStats,
-  INITIAL_ELO,
-  leaderboard,
   type StandingsState,
   type VoteWinner,
 } from './elo';
@@ -40,7 +38,12 @@ import {
 } from './bradleyTerry';
 import { battleTokenDecode, battleTokenEncode } from './battleToken';
 import seedStandings from './seed-standings.json';
-import { arenaStore, DuplicateVoteError, type VoteEvent } from './store';
+import {
+  arenaStore,
+  DuplicateVoteError,
+  type StoredStandings,
+  type VoteEvent,
+} from './store';
 
 /** The Human baseline's model id — the fixed reference the field is scored against. */
 const BASELINE_ID = 'human';
@@ -64,15 +67,19 @@ const eloStandardError = (voteCount: number) =>
   Math.round(160 / Math.sqrt(Math.max(1, voteCount)));
 
 /**
- * The published standings: a Bradley–Terry maximum-likelihood fit over the full
- * vote log (settles, accounts for opponent strength) with bootstrap rank
- * ranges. The Elo `state` is still folded for pairing + crowd-correctness, but
- * the leaderboard the world sees is this BT fit.
+ * Fit the published standings: a Bradley–Terry maximum-likelihood estimate over
+ * the full vote log (settles, accounts for opponent strength) with bootstrap
+ * rank ranges. Returns the leaderboard rows AND the model-level ratings — the
+ * single source of truth that pairing and crowd-judgment also read (no separate
+ * online-Elo system). This is the heavy compute (reads the whole log); callers
+ * persist it via `recomputeStandings` and serve the cache, so it never runs on
+ * the request path.
  */
-const bradleyTerryLeaderboard = (
+const computeStandings = (
   state: StandingsState,
   events: VoteEvent[],
-): ArenaModelRow[] => {
+  totalUniqueVotes: number,
+): StoredStandings => {
   const players = MODELS.map((model) => model.id);
   const outcomes: Outcome[] = [];
   for (const event of events) {
@@ -103,7 +110,7 @@ const bradleyTerryLeaderboard = (
     };
   };
 
-  return players
+  const models = players
     .map((id): ArenaModelRow => {
       const model = MODELS_BY_ID.get(id)!;
       const counts = countsFor(id);
@@ -125,27 +132,77 @@ const bradleyTerryLeaderboard = (
         a.provider.localeCompare(b.provider) ||
         a.model.localeCompare(b.model),
     );
+
+  return {
+    models,
+    ratings: Object.fromEntries(players.map((id) => [id, ratings.get(id) ?? BT_CENTER])),
+    totalUniqueVotes,
+    asOf: new Date().toISOString(),
+  };
 };
 
-export const getModels = async (): Promise<ModelsResponse> => {
+/**
+ * Refresh the cached Bradley–Terry fit every N recorded votes. The settled fit
+ * barely moves vote-to-vote, and reads are also hourly-cached, so this only has
+ * to be frequent enough to keep the blob current — not per-vote.
+ */
+export const STANDINGS_RECOMPUTE_INTERVAL = 50;
+
+/**
+ * Refit the Bradley–Terry standings over the whole vote log and persist them.
+ * This is the only place the full log is read + fit; it runs in the background
+ * on a vote interval (see the vote route's `after`) and from the migration
+ * script, so every read path stays O(1).
+ */
+export const recomputeStandings = async (): Promise<StoredStandings> => {
   const store = arenaStore();
   const [{ state, totalVotes }, events] = await Promise.all([
     store.load(),
     store.loadVoteEvents(),
   ]);
-  return {
-    models: bradleyTerryLeaderboard(state, events),
-    totalUniqueVotes: totalVotes,
-  };
+  const standings = computeStandings(state, events, totalVotes);
+  await store.writeStandings(standings);
+  return standings;
+};
+
+/**
+ * The cached standings, computed on demand if the cache is cold (first run /
+ * in-memory dev / tests). The cache is the fast path — a single blob read —
+ * with the all-log fit as a fallback that never persists from a read.
+ */
+const loadStandings = async (): Promise<StoredStandings> => {
+  const store = arenaStore();
+  const cached = await store.loadStandings();
+  if (cached) return cached;
+  const [{ state, totalVotes }, events] = await Promise.all([
+    store.load(),
+    store.loadVoteEvents(),
+  ]);
+  return computeStandings(state, events, totalVotes);
+};
+
+export const getModels = async (): Promise<ModelsResponse> => {
+  const { models, totalUniqueVotes } = await loadStandings();
+  return { models, totalUniqueVotes };
 };
 
 export const createBattle = async (): Promise<BattleResponse> => {
-  const { state } = await arenaStore().load();
+  const store = arenaStore();
+  const [{ state }, standings] = await Promise.all([
+    store.load(),
+    store.loadStandings(),
+  ]);
+  // Close-matchup weighting reads the cached Bradley–Terry ratings (the same
+  // numbers the leaderboard shows); cold cache → undefined → coverage-only
+  // pairing until the first fit lands.
+  const ratings = standings
+    ? new Map(Object.entries(standings.ratings))
+    : undefined;
   // The pair is two variants on a shared source voice that BOTH models serve
   // (chooseBattlePair groups by voice over the availability-restricted
   // VARIANTS matrix), so the clip URLs below always resolve — a model is never
   // asked for a voice it has no clips for.
-  const [left, right] = chooseBattlePair(state);
+  const [left, right] = chooseBattlePair(state, ratings);
   const prompt = PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
   const payload = {
     id: `battle:${randomUUID().replaceAll('-', '')}`,
@@ -189,19 +246,22 @@ export const submitVote = async (
   if (!left || !right) throw new VoteError('Unknown battle variants');
 
   const store = arenaStore();
-  const { state, totalVotes } = await store.load();
+  const [{ state, totalVotes }, standings] = await Promise.all([
+    store.load(),
+    store.loadStandings(),
+  ]);
   const leftBefore = state.get(left.id) ?? freshVariantStats();
   const rightBefore = state.get(right.id) ?? freshVariantStats();
 
-  // "Correct" = the pick agreed with the crowd, judged on the PRE-vote
-  // model-level standings (computed here so the client never needs pre-vote
-  // identities to build the reveal).
-  const preModels = leaderboard(state);
-  const preElo = (modelId: string) =>
-    preModels.find((row) => row.id === modelId)?.elo ?? INITIAL_ELO;
+  // "Correct" = the pick agreed with the crowd, judged on the cached
+  // Bradley–Terry model ratings (the same numbers the leaderboard shows) so the
+  // client never needs pre-vote identities to build the reveal. A settled fit
+  // doesn't move on one vote, so reading the cache (not refitting) is exact
+  // enough; cold cache → equal ratings → only an honest tie reads as "correct".
+  const ratingOf = (modelId: string) => standings?.ratings[modelId] ?? BT_CENTER;
   const correct = voteMatchesCrowd(
-    preElo(left.modelId),
-    preElo(right.modelId),
+    ratingOf(left.modelId),
+    ratingOf(right.modelId),
     winner,
   );
 
@@ -227,30 +287,16 @@ export const submitVote = async (
     throw error;
   }
 
-  state.set(left.id, updated.left);
-  state.set(right.id, updated.right);
-  const models = leaderboard(state);
-  const eloOf = (modelId: string) =>
-    models.find((row) => row.id === modelId)?.elo ?? 0;
-
-  // Everything the client needs to render the reveal without ever having held
-  // the pre-vote identities: each side's model id, post-vote model elo, and the
-  // signed per-side Elo shift this vote produced (variant-level, the "+N Elo").
+  // The reveal needs only each side's identity — the client builds rank +
+  // Humanness from the standings it already holds. The published leaderboard is
+  // the settled BT fit (refreshed in the background), so a single vote is not
+  // echoed back as a reshuffle.
   return {
     reveal: {
-      left: {
-        modelId: left.modelId,
-        elo: eloOf(left.modelId),
-        eloDelta: Math.round(updated.left.elo - leftBefore.elo),
-      },
-      right: {
-        modelId: right.modelId,
-        elo: eloOf(right.modelId),
-        eloDelta: Math.round(updated.right.elo - rightBefore.elo),
-      },
+      left: { modelId: left.modelId },
+      right: { modelId: right.modelId },
     },
     correct,
-    models,
     totalUniqueVotes: totalVotes + 1,
   };
 };

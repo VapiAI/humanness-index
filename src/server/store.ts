@@ -16,6 +16,7 @@
  */
 import { list, put } from '@vercel/blob';
 
+import type { ArenaModelRow } from '../lib/api';
 import { VARIANTS, variantsOfModel } from './catalog';
 import {
   applyVoteToStats,
@@ -29,6 +30,7 @@ import seedStandings from './seed-standings.json';
 
 const EVENTS_PREFIX = 'humanness/events/';
 const SNAPSHOT_PATH = 'humanness/snapshot.json';
+const STANDINGS_PATH = 'humanness/standings.json';
 /** Roll events into a fresh snapshot every N votes so loads stay fast. */
 const SNAPSHOT_INTERVAL = 50;
 
@@ -51,10 +53,26 @@ type ArenaSnapshot = {
   totalVotes: number;
 };
 
+/**
+ * The precomputed Bradley–Terry standings, persisted as a single blob and
+ * refreshed in the background on a vote interval. Reading it is O(1) — the
+ * heavy all-events fit happens only when this is (re)written, off the request
+ * path — so pages, the leaderboard API, pairing, and crowd-judgment all serve
+ * from here instead of refitting the whole log per call.
+ */
+export type StoredStandings = {
+  models: ArenaModelRow[];
+  /** model id → Bradley–Terry rating (Elo-scale), for pairing + crowd-judgment. */
+  ratings: Record<string, number>;
+  totalUniqueVotes: number;
+  /** ISO timestamp the fit was taken. */
+  asOf: string;
+};
+
 export class DuplicateVoteError extends Error {}
 
 type ArenaStore = {
-  /** Current standings + total unique votes. */
+  /** Current variant-level counts + total unique votes (fast: snapshot + pending). */
   load(): Promise<ArenaSnapshot>;
   /** Append a vote; throws DuplicateVoteError if the battle was already voted. */
   recordVote(event: VoteEvent): Promise<void>;
@@ -63,6 +81,10 @@ type ArenaStore = {
    * Bradley–Terry standings fit over. Read-only; never mutates the store.
    */
   loadVoteEvents(): Promise<VoteEvent[]>;
+  /** The cached Bradley–Terry standings, or null before the first fit. O(1). */
+  loadStandings(): Promise<StoredStandings | null>;
+  /** Persist a freshly computed Bradley–Terry fit (background refresh). */
+  writeStandings(standings: StoredStandings): Promise<void>;
 };
 
 /** Resolve `fn` over `items` with at most `limit` in flight (bounds blob fan-out). */
@@ -180,6 +202,23 @@ const blobStore = (token: string): ArenaStore => {
     });
   };
 
+  const loadStandings = async (): Promise<StoredStandings | null> => {
+    const { blobs } = await list({ prefix: STANDINGS_PATH, token, limit: 1 });
+    if (blobs.length === 0) return null;
+    return fetchJson<StoredStandings>(blobs[0].url);
+  };
+
+  const writeStandings = async (standings: StoredStandings) => {
+    await put(STANDINGS_PATH, JSON.stringify(standings), {
+      access: 'public',
+      token,
+      contentType: 'application/json',
+      allowOverwrite: true,
+      addRandomSuffix: false,
+      cacheControlMaxAge: 0,
+    });
+  };
+
   const listEventBlobs = async () => {
     const blobs = [];
     let cursor: string | undefined;
@@ -240,6 +279,8 @@ const blobStore = (token: string): ArenaStore => {
   return {
     load,
     loadVoteEvents,
+    loadStandings,
+    writeStandings,
     async recordVote(event) {
       try {
         await put(`${EVENTS_PREFIX}${event.battleId}.json`, JSON.stringify(event), {
@@ -283,6 +324,7 @@ const memoryStore = (): ArenaStore => {
   // The seed export carries no pairwise detail, so the live log starts empty;
   // it grows as votes come in (mirrors the blob store's event blobs).
   const events: VoteEvent[] = [];
+  let standings: StoredStandings | null = null;
 
   return {
     async load() {
@@ -293,6 +335,12 @@ const memoryStore = (): ArenaStore => {
     },
     async loadVoteEvents() {
       return [...events];
+    },
+    async loadStandings() {
+      return standings;
+    },
+    async writeStandings(next) {
+      standings = next;
     },
     async recordVote(event) {
       if (votedBattles.has(event.battleId)) {

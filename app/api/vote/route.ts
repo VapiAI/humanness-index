@@ -1,11 +1,20 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 
-import { submitVote, VoteError } from '@/server/arena';
+import {
+  recomputeStandings,
+  STANDINGS_RECOMPUTE_INTERVAL,
+  submitVote,
+  VoteError,
+} from '@/server/arena';
 import {
   checkVoteRateLimit,
   clientIpFrom,
 } from '@/server/rateLimit';
 import { verifyTurnstileToken } from '@/server/turnstile';
+
+// The background BT refit (`after`) reads the whole vote log; give it headroom
+// beyond the default function budget.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const clientIp = clientIpFrom(request);
@@ -44,9 +53,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    return NextResponse.json(
-      await submitVote(String(body.voteToken ?? ''), String(body.winner ?? '')),
+    const result = await submitVote(
+      String(body.voteToken ?? ''),
+      String(body.winner ?? ''),
     );
+    // Refresh the cached Bradley–Terry standings in the background on the vote
+    // interval — keeps reads O(1) (no all-log refit on the request path) while
+    // the published numbers stay current.
+    if (result.totalUniqueVotes % STANDINGS_RECOMPUTE_INTERVAL === 0) {
+      try {
+        after(() =>
+          recomputeStandings().catch((error) => {
+            console.error('[humanness] background standings refresh failed:', error);
+          }),
+        );
+      } catch {
+        // `after` throws outside a request scope (e.g. direct unit-test calls);
+        // the scheduled refresh is best-effort, so skip it there.
+      }
+    }
+    return NextResponse.json(result);
   } catch (error) {
     if (error instanceof VoteError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

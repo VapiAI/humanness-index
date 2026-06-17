@@ -8,7 +8,6 @@ import {
   chooseBattlePair,
   freshVariantStats,
   INITIAL_ELO,
-  leaderboard,
   type StandingsState,
 } from './elo';
 
@@ -56,36 +55,6 @@ describe('applyVoteToStats', () => {
     expect(result.left.ties).toBe(1);
     expect(result.right.ties).toBe(1);
     expect(result.left.elo).toBe(result.right.elo);
-  });
-});
-
-describe('leaderboard', () => {
-  it('lists every model, sorted by Elo descending', () => {
-    const rows = leaderboard(freshState());
-    const modelIds = new Set(VARIANTS.map((variant) => variant.modelId));
-    expect(rows.length).toBe(modelIds.size);
-    for (let i = 1; i < rows.length; i += 1) {
-      expect(rows[i - 1].elo).toBeGreaterThanOrEqual(rows[i].elo);
-    }
-  });
-
-  it('reflects an applied vote in the winning model row', () => {
-    const state = freshState();
-    const [a, b] = VARIANTS.filter((v, _i, all) => v.modelId !== all[0].modelId)
-      .slice(0, 1)
-      .concat(VARIANTS[0]);
-    const updated = applyVoteToStats(state.get(a.id)!, state.get(b.id)!, 'left');
-    state.set(a.id, updated.left);
-    state.set(b.id, updated.right);
-    const winnerRow = leaderboard(state).find((row) => row.id === a.modelId);
-    expect(winnerRow?.wins).toBe(1);
-    expect(winnerRow!.elo).toBeGreaterThan(INITIAL_ELO);
-  });
-
-  it('widens uncertainty when a row has fewer votes', () => {
-    const rows = leaderboard(freshState());
-    // No votes → standard error 160/sqrt(1) = 160 for every row.
-    expect(rows[0].uncertainty).toBe(160);
   });
 });
 

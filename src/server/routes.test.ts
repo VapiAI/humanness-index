@@ -89,12 +89,11 @@ describe('POST /api/vote', () => {
       );
       expect(response.status).toBe(200);
       const body = await response.json();
+      // The reveal carries only identities now (the client builds rank +
+      // Humanness from the standings it holds); no per-vote leaderboard echo.
       expect(body.reveal.left.modelId).toBe('canopy-orpheus');
       expect(body.reveal.right.modelId).toBe('cartesia-sonic-2');
-      expect(typeof body.reveal.left.eloDelta).toBe('number');
       expect(typeof body.correct).toBe('boolean');
-      expect(Array.isArray(body.models)).toBe(true);
-      expect(body.models.length).toBeGreaterThan(0);
       expect(typeof body.totalUniqueVotes).toBe('number');
     } finally {
       globalThis.fetch = realFetch;

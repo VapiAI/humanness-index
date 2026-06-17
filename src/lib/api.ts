@@ -40,17 +40,18 @@ export type BattleResponse = {
 
 export type RevealSide = {
   modelId: string;
-  /** Post-vote model-level Elo. */
-  elo: number;
-  /** Signed per-side Elo shift this vote produced (the "+N Elo"). */
-  eloDelta: number;
 };
 
 export type VoteResponse = {
+  /**
+   * Just the two identities — the client builds rank + Humanness from the
+   * standings it already holds. The published leaderboard is the settled
+   * Bradley–Terry fit (refreshed in the background), so a single vote is never
+   * echoed back as a reshuffle.
+   */
   reveal: { left: RevealSide; right: RevealSide };
-  /** Whether the pick agreed with the crowd (judged on pre-vote standings). */
+  /** Whether the pick agreed with the crowd (judged on the cached BT ratings). */
   correct: boolean;
-  models: ArenaModelRow[];
   totalUniqueVotes: number;
 };
 
