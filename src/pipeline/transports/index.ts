@@ -8,6 +8,7 @@
  */
 import { cartesia } from './cartesia';
 import { elevenlabs } from './elevenlabs';
+import { fish } from './fish';
 import { hume } from './hume';
 import { inworld } from './inworld';
 import { minimax } from './minimax';
@@ -29,6 +30,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   hume,
   sesame,
   xai,
+  fish,
 };
 
 /** Why the remaining arena providers cannot be measured/generated live. */

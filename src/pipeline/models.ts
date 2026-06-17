@@ -90,6 +90,19 @@ const NEW_MODELS: PipelineModel[] = [
     name: 'TTS-1.5 Mini',
     registered: false,
   },
+  // Fish Audio s2.1-pro, request mode `latency: "balanced"`. The transport
+  // (transports/fish.ts) speaks the realtime msgpack WS; pipelineModels uses
+  // vendorModelId for the `model` header on every request. arenaApiId is
+  // FROZEN ONCE clips are hashed.
+  {
+    id: 'fish-s21-pro',
+    slug: 'fish-s2-1-pro',
+    providerId: 'fish',
+    arenaApiId: 's2-1-pro',
+    vendorModelId: 's2.1-pro',
+    name: 's2.1-pro',
+    registered: false,
+  },
 ];
 
 const registryModels = (): PipelineModel[] =>
