@@ -90,6 +90,21 @@ const NEW_MODELS: PipelineModel[] = [
     name: 'TTS-1.5 Mini',
     registered: false,
   },
+  {
+    // BLOCKED (2026-07-17): the Speechify clone API works (create + synth +
+    // delete round-trip verified live), but cloned voices list only
+    // simba-english / simba-multilingual — simba-3.2 is limited to eight
+    // stock `*_32` shared voices, so the same-voice arena run cannot start.
+    // No clips exist yet, so the frozen ids below are still a proposal.
+    // Revisit when clones list simba-3.2 (see RUNBOOK status table).
+    id: 'speechify-simba-3-2',
+    slug: 'speechify-simba-3-2',
+    providerId: 'speechify',
+    arenaApiId: 'simba-3-2',
+    vendorModelId: 'simba-3.2',
+    name: 'Simba 3.2',
+    registered: false,
+  },
 ];
 
 const registryModels = (): PipelineModel[] =>

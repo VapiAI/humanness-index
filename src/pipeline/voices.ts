@@ -60,6 +60,7 @@ const STATIC_CLONED_VOICE_IDS: Record<string, VoiceMap> = {
   neuphonic: {},
   hume: {},
   sesame: {},
+  speechify: {},
 };
 
 const LOCAL_VOICES_PATH = resolve(import.meta.dir, 'voices.local.json');

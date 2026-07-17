@@ -14,6 +14,7 @@ import { minimax } from './minimax';
 import { neuphonic } from './neuphonic';
 import { sesame } from './sesame';
 import { smallest } from './smallest';
+import { speechify } from './speechify';
 import { xai } from './xai';
 import type { ProviderTransport } from './types';
 
@@ -28,6 +29,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   neuphonic,
   hume,
   sesame,
+  speechify,
   xai,
 };
 

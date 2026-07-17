@@ -152,6 +152,7 @@ upload. No TTFB bench (Human has no API; `latencyMs: null`).
 | Neuphonic | neu_fast | **PARKED, hosted but unregistered (2026-06-12)**: 80 clips uploaded + HEAD-verified under arenaApiId `neu-fast` (FROZEN), but the API ignores the model param, so these clips came from the SAME served pool as neu_hq's; registering both would put two rows on one system (methodology integrity wins). The request body did send `model: neu_fast`, so the clips become retroactively correct if Neuphonic exposes true per-model selection | Revisit if Neuphonic exposes true per-model selection; the pre-registration row stays in pipeline/models.ts |
 | Hume | Octave, Octave 2 | Clone creation is **Platform-UI only** (the API uses clones but cannot create them), manual console work | `bun run humanness:clone hume` prints the console steps; record ids with `--record`; then steps 2-5. Octave 2 voices are not backward compatible with Octave 1, so clone on the right model family |
 | Sesame | CSM-1B | **Decision needed**: the hosted deployment's clone path expects source samples staged in its own private storage, which this pipeline cannot reach | Decide: get upload access / self-host CSM-1B cloning / drop Sesame. Transport synthesis works against the SESAME_URL host; `createClone` intentionally throws with this note |
+| Speechify | Simba 3.2 | **BLOCKED on clone-model support (2026-07-17)**: transport verified live end to end (synthesis, streaming TTFB surface, clone create + synth + delete round-trip on a throwaway test voice, deleted after). The API strictly validates `model` (a bogus id 400s with the valid list: simba-english, simba-multilingual, simba-3.0, simba-3.2), so there is no Neuphonic-style shared pool. But cloned voices list only simba-english / simba-multilingual; simba-3.2 is limited to eight stock `*_32` shared voices (beatrice/dominic/edmund/geffen/harper/hugh/imogen/wyatt, en-US + en-GB), so the same-voice methodology cannot run yet. Pre-registration row `speechify-simba-3-2` (proposed frozen arenaApiId `simba-3-2`) staged in pipeline/models.ts | Re-probe periodically: create a clone, check whether its `models` list includes simba-3.2 (or the stock-voice gate lifts). When it does: clone the four source voices (`humanness:clone speechify`, needs the consent env vars), then steps 2-5 |
 
 Source clips for cloning: the licensed master recordings live at
 `pipeline/results/source-voices/originals/{clara,emma,godfrey,nelliot}/`
@@ -192,9 +193,16 @@ dropped in; the originals supersede them.)
   the documented batch route `POST /v1/tts` works with this key (200,
   audio/mpeg, single-probe first-byte ~463 ms); only the legacy
   `/v1/audio/speech` path 403s (re-probe: `results/probe-xai-http.ts`).
-- **Blob store**: `audio/{hash}.mp3`, public access, `addRandomSuffix:
-  false`. Uploads are idempotent (skip-if-exists); the token's store id must
-  be the arena audio origin (bkvlbh5qphzaen1w...).
+- **Speechify (2026-07-17)**: `POST /v1/audio/speech` returns JSON with
+  base64 `audio_data` (not raw bytes); request mp3 via `audio_format`.
+  Cloning is multipart `POST /v1/voices` (`name`, one `sample` file,
+  `consent` JSON naming the voice owner: `SPEECHIFY_CONSENT_FULL_NAME` /
+  `SPEECHIFY_CONSENT_EMAIL` in pipeline/.env). Back-to-back requests 429
+  quickly (a second request within ~1 s of the first), so keep
+  `--concurrency 1` and let generateClips' RateLimitedError backoff pace the
+  run. TTFB benches the chunked HTTP `/v1/audio/stream` route (single July
+  2026 probe saw first audio at ~0.9 s; not a bench). Bench voice is the
+  stock `harper_32` until cloned voices can run simba-3.2.
 
 ## TTFB results provenance
 
