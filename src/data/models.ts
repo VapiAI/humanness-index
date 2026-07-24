@@ -18,9 +18,11 @@ const seedUncertainty = (voteCount: number) =>
  * Static first-paint snapshot of the arena standings: the 2026-06-10
  * production export (data/seedStandings.ts, in standings order) joined with
  * registry identity — display names, the frozen `seedLikelyRank` label, and
- * the `voiceProfile` seed for each model's visualizer fingerprint. Unlisted
- * registry entries (and any seed row without a registry entry) are filtered
- * out; the live leaderboard replaces all of it on mount.
+ * the `voiceProfile` seed for each model's visualizer fingerprint. Only
+ * active registry entries are included: retired and unlisted models (and any
+ * seed row without a registry entry) are filtered out so a retired model
+ * never flashes into the table before the live leaderboard replaces all of
+ * it on mount.
  *
  * The Human baseline is seeded above the field (server/seed-standings.json,
  * anchor Elo) so it is the unique 100 from first paint; it carries no
@@ -28,7 +30,7 @@ const seedUncertainty = (voteCount: number) =>
  */
 export const ARENA_ROWS: ArenaRow[] = SEED_STANDINGS.models.flatMap((seed) => {
   const entry = modelEntryById(seed.id);
-  if (!entry || entry.status === 'unlisted') return [];
+  if (!entry || entry.status !== 'active') return [];
   return [
     {
       id: entry.id,

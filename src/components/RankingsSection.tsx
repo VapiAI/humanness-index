@@ -483,9 +483,11 @@ export const RankingsSection = ({
       <p className="ranking-foot">
         The Index only includes models that support voice cloning: each battle
         plays the same cloned source voice through both models, so the
-        comparison is head to head and fair. Don&apos;t see your model on this
-        list? Contact us at{' '}
-        <a href="mailto:humannessindex@vapi.ai">humannessindex@vapi.ai</a>.
+        comparison is head to head and fair. The Index is an open benchmark
+        and is independent of the Vapi product: a model appearing here does
+        not mean it is available in Vapi, and availability in Vapi plays no
+        part in scoring. Don&apos;t see your model on this list? Contact us
+        at <a href="mailto:humannessindex@vapi.ai">humannessindex@vapi.ai</a>.
       </p>
     </section>
   );

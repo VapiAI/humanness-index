@@ -36,6 +36,8 @@ export const UNMEASURABLE_PROVIDERS: Record<string, string> = {
   canopylabs:
     "no public synthesis API — arena clips came from Canopy's internal Orpheus dashboard",
   gradium: 'no Gradium API key locally (arena clips were imported from a vendor zip)',
+  speechify:
+    'no Speechify API key locally (arena clips were vendor-rendered; ingested via humanness:vendor-clips)',
 };
 
 export const transportFor = (providerId: string): ProviderTransport | undefined =>

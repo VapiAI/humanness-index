@@ -86,12 +86,13 @@ const MARKS_DIR = resolve(import.meta.dir, '../../public/marks');
 
 describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
-    // 10 providers / 22 models: the 9 vendors + 21 TTS models, plus the Human
-    // baseline (provider `human`, model `human`).
-    expect(BASE_PROVIDER_ENTRIES.length).toBe(10);
-    expect(BASE_MODEL_ENTRIES.length).toBe(22);
-    expect(arenaProviderEntries().length).toBe(10);
-    expect(arenaModelEntries().length).toBe(22);
+    // 11 providers / 23 models: the 10 vendors + 22 TTS models, plus the Human
+    // baseline (provider `human`, model `human`). Two ElevenLabs entries are
+    // retired (2026-07-23), so the arena carries 21 of the 23.
+    expect(BASE_PROVIDER_ENTRIES.length).toBe(11);
+    expect(BASE_MODEL_ENTRIES.length).toBe(23);
+    expect(arenaProviderEntries().length).toBe(11);
+    expect(arenaModelEntries().length).toBe(21);
     // The committed registry carries no unlisted entries today; embargoed
     // ones live in the private overlay until their providers announce them.
     expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual(
@@ -164,6 +165,7 @@ describe('registry: ids, slugs, refs', () => {
       'minimax-speech-02-turbo',
       'smallestai-lightning-v31',
       'neuphonic-neu-hq',
+      'speechify-simba-3-2',
     ]);
     const seedIds = SEED_STANDINGS.models.map((row) => row.id);
     expect(new Set(seedIds).size).toBe(seedIds.length);
@@ -320,12 +322,8 @@ const EXPECTED_MODELS = [
     providerId: 'elevenlabs',
     name: 'Turbo v2',
   },
-  {
-    id: 'elevenlabs-turbo-v25',
-    arenaId: 'elevenlabs:eleven_turbo_v2_5',
-    providerId: 'elevenlabs',
-    name: 'Turbo v2.5',
-  },
+  // elevenlabs-turbo-v25 and elevenlabs-multilingual-v2 retired 2026-07-23:
+  // out of the arena catalog, pages stay live.
   {
     id: 'elevenlabs-flash-v2',
     arenaId: 'elevenlabs:eleven_flash_v2',
@@ -343,12 +341,6 @@ const EXPECTED_MODELS = [
     arenaId: 'elevenlabs:eleven_v3',
     providerId: 'elevenlabs',
     name: 'Eleven v3',
-  },
-  {
-    id: 'elevenlabs-multilingual-v2',
-    arenaId: 'elevenlabs:eleven_multilingual_v2',
-    providerId: 'elevenlabs',
-    name: 'Multilingual v2',
   },
   {
     id: 'cartesia-sonic',
@@ -390,7 +382,9 @@ const EXPECTED_MODELS = [
     id: 'minimax-minimax-tts',
     arenaId: 'minimax:minimax-tts',
     providerId: 'minimax',
-    name: 'Speech 2.5',
+    // Relabeled 2026-07-23 (was 'Speech 2.5'): MiniMax confirmed the
+    // benchmarked generation was Speech 2.8. Frozen ids unchanged.
+    name: 'Speech 2.8',
   },
   {
     id: 'minimax-speech-02-hd',
@@ -441,6 +435,12 @@ const EXPECTED_MODELS = [
     name: 'neu_hq',
   },
   {
+    id: 'speechify-simba-3-2',
+    arenaId: 'speechify:simba-3-2',
+    providerId: 'speechify',
+    name: 'Simba 3.2',
+  },
+  {
     id: 'human',
     arenaId: 'human:human',
     providerId: 'human',
@@ -458,6 +458,7 @@ const EXPECTED_PROVIDERS = [
   { id: 'inworld', name: 'Inworld' },
   { id: 'smallestai', name: 'Smallest.ai' },
   { id: 'neuphonic', name: 'Neuphonic' },
+  { id: 'speechify', name: 'Speechify' },
   { id: 'human', name: 'Human' },
 ];
 
@@ -498,8 +499,9 @@ describe('server/catalog derivation equality', () => {
         modelId: model.id,
       })),
     );
-    // 21 TTS models x 4 voices + the Human baseline x 4 recorded voices = 88.
-    expect(VARIANTS.length).toBe(88);
+    // 20 active TTS models x 4 voices + the Human baseline x 4 recorded
+    // voices = 84 (retired models leave the variant matrix with the arena).
+    expect(VARIANTS.length).toBe(84);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -701,18 +703,8 @@ const EXPECTED_ARENA_ROWS = [
     likelyRank: '#3-10',
     voiceProfile: 4,
   },
-  {
-    id: 'elevenlabs-turbo-v25',
-    provider: 'ElevenLabs',
-    model: 'Turbo v2.5',
-    elo: 1234,
-    uncertainty: 16,
-    wins: 55,
-    losses: 38,
-    ties: 5,
-    likelyRank: '#3-12',
-    voiceProfile: 5,
-  },
+  // elevenlabs-turbo-v25 is seeded but retired (2026-07-23), so it no longer
+  // reaches the first-paint rows.
   {
     id: 'elevenlabs-eleven-v3',
     provider: 'ElevenLabs',
@@ -740,8 +732,9 @@ const EXPECTED_ARENA_ROWS = [
   {
     id: 'minimax-minimax-tts',
     provider: 'MiniMax',
-    // Display name renamed 2026-06-11 (MiniMax TTS -> Speech 2.5); id frozen.
-    model: 'Speech 2.5',
+    // Display name renamed 2026-06-11 (MiniMax TTS -> Speech 2.5) and again
+    // 2026-07-23 (Speech 2.5 -> Speech 2.8, per MiniMax); id frozen.
+    model: 'Speech 2.8',
     elo: 1222,
     uncertainty: 16,
     wins: 48,
@@ -899,12 +892,10 @@ const EXPECTED_VOICE_STATS: Array<[string, string, string, string, string]> = [
   ['Cartesia', 'Sonic', '116 ms', '15', '$50'],
   ['Canopy Labs', 'Orpheus', '\u2014', 'English', 'Open source'],
   ['ElevenLabs', 'Turbo v2', '302 ms', 'English', '$50'],
-  ['ElevenLabs', 'Turbo v2.5', '265 ms', '32', '$50'],
   ['ElevenLabs', 'Flash v2', '226 ms', 'English', '$50'],
   ['ElevenLabs', 'Flash v2.5', '197 ms', '32', '$50'],
   ['ElevenLabs', 'Eleven v3', '758 ms', '70+', '$100'],
-  ['ElevenLabs', 'Multilingual v2', '1006 ms', '29', '$100'],
-  ['MiniMax', 'Speech 2.5', '325 ms', '40', '$60'],
+  ['MiniMax', 'Speech 2.8', '325 ms', '40', '$60'],
   ['MiniMax', 'Speech 2 HD', '357 ms', '32', '$100'],
   ['MiniMax', 'Speech 2 Turbo', '315 ms', '32', '$60'],
   ['Inworld', 'TTS-1.5-max', '337 ms', '15', '$35'],
@@ -913,6 +904,9 @@ const EXPECTED_VOICE_STATS: Array<[string, string, string, string, string]> = [
   // No published Neuphonic API pricing as of 2026-06-12 (renders a dash).
   ['Neuphonic', 'neu_hq', '276 ms', '9', '\u2014'],
   ['Smallest.ai', 'Lightning v3.1', '420 ms', '12', '$15'],
+  // Vendor-rendered clips; no Speechify key on the benchmark machine, so
+  // latency renders a dash (measured-only rule).
+  ['Speechify', 'Simba 3.2', '\u2014', 'English', '$10'],
   // The Human baseline is a real person reading the line: no latency, no
   // languages count, no price. All dashes.
   ['Human', 'Homo Sapien', '\u2014', '\u2014', '\u2014'],
@@ -960,6 +954,7 @@ describe('data/providers derivation equality', () => {
       Inworld: 'inworld.png',
       'Smallest.ai': 'smallestai.png',
       Neuphonic: 'neuphonic.png',
+      Speechify: 'speechify.svg',
       Human: 'human.svg',
       // Overlay providers keep their marks wired for re-listing.
       ...Object.fromEntries(
@@ -979,6 +974,7 @@ describe('data/providers derivation equality', () => {
       ['Gradium', 'G'],
       ['Smallest.ai', 'S'],
       ['Neuphonic', 'N'],
+      ['Speechify', 'S'],
       ['Human', 'H'],
       ['Acme Voice Co', 'AV'],
     ];
@@ -1046,8 +1042,13 @@ describe('unlisted entries are excluded from every derived surface', () => {
     for (const model of OVERLAY.models) {
       expect(ARENA_ROWS.some((row) => row.id === model.id)).toBe(false);
     }
-    // Every committed seed row is listed, so the derivation is one-to-one.
-    expect(ARENA_ROWS.length).toBe(SEED_STANDINGS.models.length);
+    // First paint is active seed rows only: retired seeded models (Turbo
+    // v2.5 as of 2026-07-23) are filtered with the unlisted ones.
+    expect(ARENA_ROWS.length).toBe(
+      SEED_STANDINGS.models.filter(
+        (row) => modelEntryById(row.id)?.status === 'active',
+      ).length,
+    );
   });
 
   it('is absent from stats, latency plots, and display lookups', () => {
@@ -1073,8 +1074,35 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(22);
-    expect(listedProviderEntries().length).toBe(10);
+    expect(listedModelEntries().length).toBe(23);
+    expect(listedProviderEntries().length).toBe(11);
+  });
+});
+
+/* ---------------------------- Retired exclusion ----------------------------
+ * Retired entries (Turbo v2.5 + Multilingual v2 as of 2026-07-23) leave the
+ * arena and the first paint but keep their pages: an earned URL never 404s.
+ * -------------------------------------------------------------------------- */
+
+describe('retired entries leave the arena but keep their pages', () => {
+  const RETIRED_IDS = ['elevenlabs-turbo-v25', 'elevenlabs-multilingual-v2'];
+
+  it('is out of battles, first paint, and offline samples', () => {
+    for (const id of RETIRED_IDS) {
+      expect(modelEntryById(id)?.status).toBe('retired');
+      expect(MODELS_BY_ID.has(id)).toBe(false);
+      expect(variantsOfModel(id)).toEqual([]);
+      expect(ARENA_ROWS.some((row) => row.id === id)).toBe(false);
+      expect(MODEL_SAMPLE_CLIPS[id]).toBeUndefined();
+    }
+  });
+
+  it('stays on the page/sitemap surfaces with resolvable stats identity', () => {
+    for (const id of RETIRED_IDS) {
+      const entry = listedModelEntries().find((model) => model.id === id);
+      expect(entry).toBeDefined();
+      expect(entry!.copy.length).toBeGreaterThanOrEqual(2);
+    }
   });
 });
 
@@ -1095,6 +1123,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
       'smallestai-lightning-v31',
     );
     expect(slugById.get('neuphonic-neu-hq')).toBe('neuphonic-neu-hq');
+    expect(slugById.get('speechify-simba-3-2')).toBe('speechify-simba-3-2');
     expect(slugById.get('human')).toBe('human');
     // Overlay slugs are frozen identity too: id and slug must already agree
     // with the store before an entry ever goes public.
@@ -1114,6 +1143,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
       'minimax',
       'neuphonic',
       'smallest-ai',
+      'speechify',
       'xai',
     ]);
   });

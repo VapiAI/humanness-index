@@ -152,9 +152,11 @@ describe('parseLatencyMs', () => {
     expect(parseLatencyMs({ provider: 'ElevenLabs', model: 'Turbo v2' })).toBe(302);
     expect(parseLatencyMs({ provider: 'ElevenLabs', model: 'Flash v2' })).toBe(226);
     expect(parseLatencyMs({ provider: 'ElevenLabs', model: 'Eleven v3' })).toBe(758);
-    // Renamed display name (was 'MiniMax TTS'); the registry lookup keys off
-    // the current name and must keep returning the measured median.
-    expect(parseLatencyMs({ provider: 'MiniMax', model: 'Speech 2.5' })).toBe(325);
+    // Renamed display name (MiniMax TTS -> Speech 2.5 -> Speech 2.8); the
+    // registry lookup keys off the current name and must keep returning the
+    // measured median, with the old names resolving to nothing.
+    expect(parseLatencyMs({ provider: 'MiniMax', model: 'Speech 2.8' })).toBe(325);
+    expect(parseLatencyMs({ provider: 'MiniMax', model: 'Speech 2.5' })).toBeNull();
     expect(parseLatencyMs({ provider: 'MiniMax', model: 'MiniMax TTS' })).toBeNull();
     // Both Grok configs measured 2026-06-12 on the shared realtime WS — they
     // differ only by the optimize_streaming_latency flag (on=285, off=460).

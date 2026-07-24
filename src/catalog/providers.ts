@@ -44,7 +44,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'Model families and pricing',
         paragraphs: [
-          'Six ElevenLabs models sit on the Index, spanning the Turbo, Flash, Multilingual, and v3 families. ElevenLabs bills in credits: Flash and Turbo models bill one credit per two characters, while Eleven v3 and Multilingual v2 bill one credit per character, which is why those two carry a higher effective rate.',
+          'Four ElevenLabs models compete in the arena, spanning the Turbo, Flash, and v3 families; the Multilingual v2 and Turbo v2.5 entries are retired from battles but keep their pages. ElevenLabs bills in credits: Flash and Turbo models bill one credit per two characters, while Eleven v3 and Multilingual v2 bill one credit per character, which is why those two carry a higher effective rate.',
         ],
         sourceUrls: [
           'https://elevenlabs.io/docs/overview/models',
@@ -151,8 +151,8 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       pricing: {
         value: '$60',
         sourceUrl: 'https://platform.minimax.io/docs/guides/pricing-paygo',
-        asOf: '2026-06-10',
-        note: 'Speech 2.5 turbo $60 per 1M characters pay-as-you-go; the arena clips are the 2.5 generation, turbo tier (matches the measured realtime latency).',
+        asOf: '2026-07-23',
+        note: 'Turbo tier $60 per 1M characters pay-as-you-go (speech-2.8-turbo; HD bills $100); the arena clips are the 2.8 generation, turbo tier (matches the measured realtime latency).',
       },
     },
     copy: [
@@ -166,10 +166,10 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'Speech generations',
         paragraphs: [
-          'The speech line moved fast through 2025, with the Speech-02 series arriving in April and Speech 2.5 following in August. The current generation supports more than 40 languages and clones a voice from roughly six to ten seconds of reference audio using a learnable speaker encoder that needs no transcript. The clips on this Index were generated with the Speech 2.5 generation, turbo tier.',
+          'The speech line moved fast through 2025 and into 2026, with the Speech-02 series arriving in April 2025, Speech 2.5 following in August, and the Speech 2.8 generation current since early 2026. The current generation supports more than 40 languages and clones a voice from roughly six to ten seconds of reference audio using a learnable speaker encoder that needs no transcript. The clips on this Index were generated with the Speech 2.8 generation, turbo tier.',
         ],
         sourceUrls: [
-          'https://www.minimax.io/news/minimax-speech-25',
+          'https://platform.minimax.io/docs/guides/models-intro',
           'https://platform.minimax.io/docs/api-reference/speech-t2a-http',
         ],
       },
@@ -372,6 +372,49 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
         sourceUrls: [
           'https://docs.neuphonic.com/build-group/text-to-speech',
           'https://docs.neuphonic.com/changelog',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'speechify',
+    slug: 'speechify',
+    name: 'Speechify',
+    websiteUrl: 'https://speechify.ai',
+    mark: 'speechify.svg',
+    stats: {
+      languages: {
+        value: '30+',
+        sourceUrl: 'https://docs.speechify.ai/build/guides/concepts/models',
+        asOf: '2026-07-23',
+        note: 'Simba Multilingual covers 30+ languages; the streaming-native Simba 3.2 on the Index is English only, encoded per model.',
+      },
+      pricing: {
+        value: '$10',
+        sourceUrl: 'https://speechify.ai/text-to-speech-api',
+        asOf: '2026-07-23',
+        note: 'Flat per-character rate by plan: $10 per 1M characters on Starter, $8 on Pro, $6 on Scale; no credit conversion.',
+      },
+    },
+    copy: [
+      {
+        heading: 'About Speechify',
+        paragraphs: [
+          'Speechify grew from one of the most used consumer reading apps into a full voice platform, and SpeechifyAI Build exposes the same text to speech stack that powers its products as a developer API. The Simba model family spans the streaming native Simba 3.2 flagship, the earlier streaming Simba 3.0, and the legacy multilingual and English models.',
+        ],
+        sourceUrls: [
+          'https://speechify.ai/build',
+          'https://docs.speechify.ai/build/guides/concepts/models',
+        ],
+      },
+      {
+        heading: 'Platform and pricing',
+        paragraphs: [
+          'The API serves batch and streaming endpoints with SSML, emotion controls, speech marks, and voice cloning, billed per character at a flat rate per plan: $10 per 1M characters on Starter, $8 on Pro, and $6 on Scale. Simba 3.2 serves a curated voice allow list, and cloned voices on it currently require manual Speechify approval of the voice key.',
+        ],
+        sourceUrls: [
+          'https://speechify.ai/text-to-speech-api',
+          'https://docs.speechify.ai/build/text-to-speech-api',
         ],
       },
     ],

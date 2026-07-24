@@ -20,6 +20,7 @@
     "postinstall": "bun run scripts/ensure-overlay.ts",
     "humanness:clips": "bun run src/pipeline/generateClips.ts",
     "humanness:human-clips": "bun run src/pipeline/ingestHumanClips.ts",
+    "humanness:vendor-clips": "bun run src/pipeline/ingestVendorClips.ts",
     "humanness:human-segment": "bun run src/pipeline/segmentHumanTakes.ts",
     "humanness:human-detap": "bun run src/pipeline/detapTakes.ts",
     "humanness:clone": "bun run src/pipeline/cloneVoices.ts",

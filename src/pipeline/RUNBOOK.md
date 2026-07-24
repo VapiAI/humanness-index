@@ -24,7 +24,9 @@ pipeline/
   segmentHumanTakes.ts # humanness:human-segment -- Deepgram nova-3 cut to lines
   detapTakes.ts        # humanness:human-detap -- de-tap/clean recorded takes
   audioClean.ts        # shared de-tap high-pass + light denoise filters
+  arenaNormalize.ts    # shared trim + loudness-to-field-median + MP3 encode
   ingestHumanClips.ts  # humanness:human-clips -- normalize + upload human clips
+  ingestVendorClips.ts # humanness:vendor-clips -- ingest a vendor-rendered 80-clip set
   HUMAN-RECORDING.md   # the actor recording brief (the 20 lines)
 ```
 
@@ -89,6 +91,26 @@ it.
 New models enter at Elo 1200 on their first live votes (no seed-standings
 row; `mergeStandings` handles unseeded models and the table includes them on
 the first live fetch).
+
+## Vendor-rendered clip sets (special case)
+
+Where a provider gives us no API access, it can render the 80 arena clips
+itself (four cloned source voices x the 20 frozen prompts, layout
+`voice-clara/clip-01.mp3`...) and supply them as a zip. Precedent: Gradium;
+first scripted use: Speechify Simba 3.2 (2026-07-23). Ingest is
+all-or-nothing (the run fails on an incomplete matrix) and each clip runs
+the shared arenaNormalize.ts chain (trim, single-gain loudnorm to the
+generated-field median -24.7 LUFS, true-peak limit, mono 44.1 kHz 128 kbps
+MP3) before landing at its frozen content-hash address:
+
+```sh
+bun run humanness:vendor-clips <model-id> <source-dir> --upload
+```
+
+Then register per the standard steps (the entry's copy must say the clips
+were vendor-rendered), leave `latencyMs: null` unless the bench can run
+with a real key, and add the provider to UNMEASURABLE_PROVIDERS with the
+sourced reason.
 
 ## The Human baseline (special case)
 

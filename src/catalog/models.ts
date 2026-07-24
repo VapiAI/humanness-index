@@ -1,5 +1,6 @@
 /**
- * The 21 model entries (all currently active).
+ * The 23 model entries (21 active in the arena; ElevenLabs Multilingual v2
+ * and Turbo v2.5 are retired but keep their pages).
  *
  * ADD A NEW MODEL CHECKLIST (the whole point of this registry):
  *  1. Generate + host the model's audio clips (each source voice x 20
@@ -166,7 +167,9 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     name: 'Turbo v2.5',
     apiModelId: 'eleven_turbo_v2_5',
     arenaApiId: 'eleven_turbo_v2_5',
-    status: 'active',
+    // Retired 2026-07-23 (PRO-3580): trims the ElevenLabs entries in the
+    // arena to one per active family. Page and hosted clips stay live.
+    status: 'retired',
     releaseDate: {
       value: '2024-07-19',
       sourceUrl: 'https://elevenlabs.io/blog/introducing-turbo-v25',
@@ -190,7 +193,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Turbo v2.5 arrived in July 2024 and extended ElevenLabs' low latency tier from English to 32 languages, making Hindi, French, Spanish, Mandarin and more roughly three times faster than before, with English itself about 25 percent faster. ElevenLabs has since positioned Flash v2.5 as its successor. On the Humanness Index™, Turbo v2.5 is currently the strongest ElevenLabs model in blind listening tests.",
+          "Turbo v2.5 arrived in July 2024 and extended ElevenLabs' low latency tier from English to 32 languages, making Hindi, French, Spanish, Mandarin and more roughly three times faster than before, with English itself about 25 percent faster. ElevenLabs has since positioned Flash v2.5 as its successor. It was the strongest ElevenLabs model in blind listening tests while it competed on the Humanness Index™, and it is now retired from the arena in favor of one entry per active family.",
         ],
         sourceUrls: ['https://elevenlabs.io/blog/introducing-turbo-v25'],
       },
@@ -207,7 +210,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         question: 'How does Turbo v2.5 compare to Flash v2.5?',
         answer:
-          'Flash v2.5 is faster in our measurements (197 ms vs 265 ms median TTFB) and ElevenLabs recommends Flash for new real time builds, but Turbo v2.5 currently posts the stronger humanness showing in blind tests.',
+          'Flash v2.5 is faster in our measurements (197 ms vs 265 ms median TTFB) and ElevenLabs recommends Flash for new real time builds, but Turbo v2.5 posted the stronger humanness showing in blind tests while it competed.',
       },
     ],
   },
@@ -398,7 +401,9 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     name: 'Multilingual v2',
     apiModelId: 'eleven_multilingual_v2',
     arenaApiId: 'eleven_multilingual_v2',
-    status: 'active',
+    // Retired 2026-07-23 (PRO-3580): trims the ElevenLabs entries in the
+    // arena to one per active family. Page and hosted clips stay live.
+    status: 'retired',
     releaseDate: {
       value: '2023-08-22',
       sourceUrl:
@@ -854,22 +859,25 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     id: 'minimax-minimax-tts',
     slug: 'minimax-tts',
     providerId: 'minimax',
-    // Renamed from 'MiniMax TTS' (2026-06-11): the clips are the Speech 2.5
-    // generation, so the display name now says so. Frozen ids unchanged.
-    name: 'Speech 2.5',
+    // Renamed from 'MiniMax TTS' (2026-06-11), then to 'Speech 2.8'
+    // (2026-07-23, PRO-3361): MiniMax confirmed the benchmarked generation
+    // was Speech 2.8, turbo tier. Frozen ids unchanged; apiModelId keeps the
+    // request id the June 2026 run was configured with.
+    name: 'Speech 2.8',
     apiModelId: 'speech-2.5-turbo-preview',
     arenaApiId: 'minimax-tts',
     status: 'active',
     releaseDate: {
-      value: '2025-08-07',
-      sourceUrl: 'https://www.minimax.io/news/minimax-speech-25',
-      asOf: '2026-06-10',
-      note: 'Speech 2.5; the arena clips are this generation, turbo tier. The Speech-02 series preceded it in 2025-04.',
+      value: '2026-01',
+      sourceUrl: 'https://platform.minimax.io/docs/guides/models-intro',
+      asOf: '2026-07-23',
+      confidence: 'medium',
+      note: 'Speech 2.8 family (speech-2.8-hd / speech-2.8-turbo). The arena clips are this generation, turbo tier, per MiniMax; the Speech-02 series preceded it in 2025-04 and Speech 2.5 in 2025-08.',
     },
     stats: {
       latencyMs: measuredTtfb(
         325,
-        'Measured as speech-2.5-turbo-preview (its realtime tier); median of 50 sequential live streaming trials, June 2026, including network RTT.',
+        'Measured on the MiniMax realtime turbo tier (June 2026 run, configured with the speech-2.5-turbo-preview request id); median of 50 sequential live streaming trials including network RTT.',
       ),
     },
     voiceProfile: 8,
@@ -889,14 +897,14 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "MiniMax's speech models moved fast through 2025, with the Speech-02 series arriving in April and Speech 2.5 following in August. The current generation supports more than 40 languages and clones a voice from roughly six to ten seconds of reference audio, using a learnable speaker encoder that needs no transcript. MiniMax is widely regarded as the strongest text to speech provider for Chinese, and the 2.5 generation brought English accuracy and rhythm up alongside it.",
+          "MiniMax's speech models moved fast through 2025 and into 2026, with the Speech-02 series arriving in April 2025, Speech 2.5 following in August, and the Speech 2.8 generation current since early 2026. The current generation supports more than 40 languages and clones a voice from roughly six to ten seconds of reference audio, using a learnable speaker encoder that needs no transcript. MiniMax is widely regarded as the strongest text to speech provider for Chinese, and its recent generations brought English accuracy and rhythm up alongside it.",
         ],
-        sourceUrls: ['https://www.minimax.io/news/minimax-speech-25'],
+        sourceUrls: ['https://platform.minimax.io/docs/guides/models-intro'],
       },
       {
         heading: 'At a glance',
         paragraphs: [
-          'The arena clips on this Index were generated with the Speech 2.5 generation, turbo tier, the realtime tier we also measured for latency. In our 50 trial streaming benchmark it returned first audio in a median of 325 ms.',
+          'The arena clips on this Index were generated with the Speech 2.8 generation, turbo tier, the realtime tier we also measured for latency. In our 50 trial streaming benchmark it returned first audio in a median of 325 ms.',
         ],
         sourceUrls: [
           'https://platform.minimax.io/docs/api-reference/speech-t2a-http',
@@ -904,11 +912,16 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       },
     ],
     faq: [
-      HOW_TESTED('Speech 2.5'),
+      HOW_TESTED('Speech 2.8'),
       {
         question: 'Which MiniMax generation do the arena clips use?',
         answer:
-          'The clips were generated with the Speech 2.5 generation, turbo tier, the realtime tier we also measured for latency (325 ms median TTFB).',
+          'The clips were generated with the Speech 2.8 generation, turbo tier, per MiniMax, the realtime tier we also measured for latency (325 ms median TTFB). This entry was labeled Speech 2.5 until July 2026, when MiniMax confirmed the benchmarked generation was 2.8.',
+      },
+      {
+        question: 'Was the HD or Turbo variant benchmarked?',
+        answer:
+          'Turbo. Both the clips and the 325 ms latency figure come from the realtime turbo tier. The blind evaluation itself runs on 20 English customer support prompts, while MiniMax advertises more than 40 languages of capability for the generation.',
       },
     ],
   },
@@ -1035,7 +1048,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'The realtime member of the Speech 2 pair and the direct ancestor of the Speech 2.5 entry already on the Index. In our 50 trial streaming benchmark it returned first audio in a median of 315 ms including network time, in line with the 325 ms we measured for its 2.5 successor.',
+          'The realtime member of the Speech 2 pair and the direct ancestor of the Speech 2.8 entry already on the Index. In our 50 trial streaming benchmark it returned first audio in a median of 315 ms including network time, in line with the 325 ms we measured for its successor.',
         ],
         sourceUrls: [
           'https://platform.minimax.io/docs/api-reference/speech-t2a-http',
@@ -1045,9 +1058,9 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     faq: [
       HOW_TESTED('Speech 2 Turbo'),
       {
-        question: 'How does Speech 2 Turbo relate to the Speech 2.5 entry?',
+        question: 'How does Speech 2 Turbo relate to the Speech 2.8 entry?',
         answer:
-          'The Speech 2.5 entry on the Index runs the newer generation, turbo tier; Speech 2 Turbo is the April 2025 realtime tier that preceded it. Both share the MiniMax cloning stack, so the blind tests compare generations of the same family directly.',
+          'The Speech 2.8 entry on the Index runs the newer generation, turbo tier; Speech 2 Turbo is the April 2025 realtime tier that preceded it. Both share the MiniMax cloning stack, so the blind tests compare generations of the same family directly.',
       },
     ],
   },
@@ -1462,6 +1475,82 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         question: 'Why is neu_fast not on the Index?',
         answer:
           'Neuphonic historically exposed neu_fast as the realtime sibling of neu_hq, but the current public API does not expose model selection and serves one voice pool. The Index lists that pool once, under the neu_hq name; a separate neu_fast entry would put two names on the same system.',
+      },
+    ],
+  },
+
+  /* ------------------------------- Speechify ------------------------------ */
+  {
+    id: 'speechify-simba-3-2',
+    slug: 'speechify-simba-3-2',
+    providerId: 'speechify',
+    name: 'Simba 3.2',
+    apiModelId: 'simba-3.2',
+    // Frozen without the dot, like the Inworld ids: it feeds the variant ids
+    // and audio content hashes.
+    arenaApiId: 'simba-3-2',
+    status: 'active',
+    releaseDate: {
+      value: '2026-07-08',
+      sourceUrl: 'https://docs.speechify.ai/build/changelog/2026/7/8',
+      asOf: '2026-07-23',
+      note: 'API availability of simba-3.2 on the speech and stream endpoints.',
+    },
+    stats: {
+      // No Speechify API key on the benchmark machine; the arena clips were
+      // vendor-rendered (see the copy below). Measured-only rule: renders a
+      // dash until the 50-trial bench can run.
+      latencyMs: null,
+      languages: {
+        value: 'English',
+        sourceUrl: 'https://docs.speechify.ai/build/guides/concepts/models',
+        asOf: '2026-07-23',
+        note: 'English only at launch; Speechify says multilingual support will land under the same model id.',
+      },
+      voiceCloning: {
+        value: 'zero-shot, manual approval',
+        sourceUrl: 'https://docs.speechify.ai/build/guides/concepts/models',
+        asOf: '2026-07-23',
+        note: 'Cloned voices are supported on simba-3.2, but each voice key currently requires manual Speechify approval.',
+      },
+    },
+    voiceProfile: 25,
+    sample: {
+      fallbackClip: clip(
+        'voice-emma',
+        'speechify',
+        'simba-3-2',
+        'clip-10',
+        'ecb602ac01a8867cea91e9802fa56357',
+      ),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: [
+          "Simba 3.2 is Speechify's streaming native flagship, released to the SpeechifyAI API in July 2026 as the recommended model for new English integrations. Speechify positions it on expressivity and time to first byte, and it debuted statistically tied for first place on the Artificial Analysis TTS leaderboard. It serves a curated voice allow list, with cloned voices supported behind a manual approval step.",
+        ],
+        sourceUrls: [
+          'https://docs.speechify.ai/build/changelog/2026/7/8',
+          'https://speechify.ai/text-to-speech-api',
+        ],
+      },
+      {
+        heading: 'At a glance',
+        paragraphs: [
+          'The arena clips for Simba 3.2 were rendered by Speechify with the four licensed source voices cloned on its platform, then verified and hosted by the Index team under the same frozen content hash scheme as every other model, the same vendor supplied path used where the pipeline has no API access. Latency shows a dash because the 50 trial streaming benchmark has not run against a Speechify key yet; we never substitute vendor figures.',
+        ],
+        sourceUrls: [
+          'https://docs.speechify.ai/build/guides/concepts/models',
+        ],
+      },
+    ],
+    faq: [
+      HOW_TESTED('Simba 3.2'),
+      {
+        question: 'Where did the Simba 3.2 arena clips come from?',
+        answer:
+          'Speechify rendered the 80 arena clips (four cloned source voices reading the 20 frozen prompts) with simba-3.2 and supplied them to the Index team, who normalized, verified, and hosted them under the frozen content hash scheme. Blind battles and scoring work exactly as for every other model.',
       },
     ],
   },

@@ -122,6 +122,14 @@ excluded from latency plots. A small number of figures are team-reported
 measurements (same protocol, run where the pipeline had no credentials);
 they are marked as such in the data with reduced confidence.
 
+## Independence from the Vapi product
+
+The Index is an open benchmark built by Vapi, but it is independent of the
+Vapi product. A model appearing on the Index does not mean it is available
+in Vapi, and whether a model is available in Vapi plays no part in whether
+it is listed or how it scores. Inclusion is governed only by the voice
+cloning criterion below.
+
 ## Inclusion criterion: voice cloning
 
 A model can sound human on its own demo voice and robotic on yours, so
