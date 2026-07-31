@@ -127,7 +127,9 @@ describe('POST /api/vote', () => {
     });
   });
 
-  it('rejects a second vote on the same battle token with a 400', async () => {
+  // 409, not 400: the client tells a spent pairing apart from a malformed one
+  // so it can skip ahead to the next battle instead of retrying a dead round.
+  it('rejects a second vote on the same battle token with a 409', async () => {
     const voteToken = freshVoteToken();
     const first = await postVote(
       JSON.stringify({ voteToken, winner: 'tie' }),
@@ -139,7 +141,7 @@ describe('POST /api/vote', () => {
       JSON.stringify({ voteToken, winner: 'left' }),
       uniqueIp(),
     );
-    expect(second.status).toBe(400);
+    expect(second.status).toBe(409);
     const body = await second.json();
     expect(body.error).toMatch(/already been voted/);
   });

@@ -13,7 +13,11 @@ import { PiecesSection } from './components/PiecesSection';
 import { RankingsSection } from './components/RankingsSection';
 import { WhyThisExists } from './components/WhyThisExists';
 import { useArenaAudio } from './hooks/useArenaAudio';
-import { useArenaData, type ArenaStandingsSeed } from './hooks/useArenaData';
+import {
+  BATTLE_SPENT,
+  useArenaData,
+  type ArenaStandingsSeed,
+} from './hooks/useArenaData';
 import { useVoteGate } from './hooks/useVoteGate';
 import { voiceStats } from './data/providers';
 import { trackRoundStarted, trackVote } from './lib/analytics';
@@ -296,6 +300,12 @@ export const HumannessIndexPage = ({
           })
           .then((outcome) => {
             finishVoting();
+            // The pair was already voted on (its token is spent), so there is
+            // no reveal to show and retrying it can only fail: move on.
+            if (outcome === BATTLE_SPENT) {
+              handleNextComparison();
+              return;
+            }
             if (!outcome) return;
             setReveal(outcome);
             trackVote({

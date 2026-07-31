@@ -239,6 +239,13 @@ export const createBattle = async (): Promise<BattleResponse> => {
 
 export class VoteError extends Error {}
 
+/**
+ * The battle's one vote is already recorded, so this token can never succeed.
+ * Distinct from the other VoteErrors (which are malformed input) because the
+ * client's only sensible response is to move on to the next pairing.
+ */
+export class BattleAlreadyVotedError extends VoteError {}
+
 const isVoteWinner = (value: string): value is VoteWinner =>
   value === 'left' || value === 'right' || value === 'tie';
 
@@ -288,7 +295,7 @@ export const submitVote = async (
     });
   } catch (error) {
     if (error instanceof DuplicateVoteError) {
-      throw new VoteError(error.message);
+      throw new BattleAlreadyVotedError(error.message);
     }
     throw error;
   }

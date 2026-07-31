@@ -1,6 +1,7 @@
 import { after, NextResponse } from 'next/server';
 
 import {
+  BattleAlreadyVotedError,
   recomputeStandings,
   STANDINGS_RECOMPUTE_INTERVAL,
   submitVote,
@@ -74,6 +75,11 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(result);
   } catch (error) {
+    // 409 rather than 400: the request was well-formed, the battle is just
+    // spent. The client reads the status to skip straight to the next pairing.
+    if (error instanceof BattleAlreadyVotedError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     if (error instanceof VoteError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }

@@ -4,7 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { HERO_BATTLES } from '../data/battles';
 import { ARENA_ROWS, mergeStandings, SEED_TOTAL_UNIQUE_VOTES } from '../data/models';
-import { type ArenaModelRow, getBattle, getModels, submitVote } from '../lib/api';
+import {
+  type ArenaModelRow,
+  BattleSpentError,
+  getBattle,
+  getModels,
+  submitVote,
+} from '../lib/api';
 import {
   competitorRank,
   eloExpectation,
@@ -23,6 +29,9 @@ import type {
 
 /** Elo K-factor for the optimistic local update (matches the backend). */
 const VOTE_K = 32;
+
+/** `applyVote` outcome: this pairing was already voted on — advance the round. */
+export const BATTLE_SPENT = 'battle-spent' as const;
 
 /**
  * Server-rendered first-paint standings (the hourly `getStandingsSnapshot`),
@@ -152,7 +161,9 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
    * per-side Elo shift, crowd-correctness). No optimistic update and no
    * pre-vote identities are needed. OFFLINE path (no token, bundled fallback
    * round): resolve the round's local ids and compute a reveal + optimistic
-   * standings client-side. Returns null if the vote could not be recorded.
+   * standings client-side. Returns null if the vote could not be recorded, or
+   * BATTLE_SPENT when the pairing was already voted on and the caller should
+   * move to the next one.
    */
   const applyVote = useCallback(
     async ({
@@ -167,7 +178,7 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
       captchaToken?: string;
       /** Local ids for the offline fallback round (live path omits this). */
       offline?: { leftModelId?: string; rightModelId?: string };
-    }): Promise<RoundReveal | null> => {
+    }): Promise<RoundReveal | typeof BATTLE_SPENT | null> => {
       hasVotedRef.current = true;
 
       let nextModels: ArenaRow[];
@@ -181,7 +192,11 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
         let response;
         try {
           response = await submitVote(voteToken, winner, captchaToken);
-        } catch {
+        } catch (error) {
+          // A spent pairing can never be voted again (it lingers on screen when
+          // the prefetched pair hasn't landed yet), so skip it rather than
+          // stranding the listener on a round that will keep failing.
+          if (error instanceof BattleSpentError) return BATTLE_SPENT;
           return null; // network failure: caller leaves the round as-is
         }
         // The published standings are a settled Bradley–Terry fit, refreshed on

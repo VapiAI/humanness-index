@@ -90,6 +90,13 @@ export const getSample = (
 };
 
 /**
+ * The pairing on screen has already been voted on (409), so its token is spent
+ * — retrying can never work. Thrown separately from ordinary vote failures so
+ * the round can skip ahead instead of stranding the listener on a dead pair.
+ */
+export class BattleSpentError extends Error {}
+
+/**
  * Record a vote; returns the reveal plus refreshed standings.
  * `captchaToken` is the solved Turnstile token attached to every 10th vote
  * (see ../hooks/useVoteGate); the server verifies it when configured.
@@ -108,6 +115,7 @@ export const submitVote = async (
       ...(captchaToken ? { captchaToken } : {}),
     }),
   });
+  if (response.status === 409) throw new BattleSpentError('battle already voted');
   if (!response.ok) throw new Error(`vote failed: ${response.status}`);
   return response.json() as Promise<VoteResponse>;
 };
