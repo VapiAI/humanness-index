@@ -34,6 +34,29 @@ const VOTE_K = 32;
 export const BATTLE_SPENT = 'battle-spent' as const;
 
 /**
+ * Bump ONLY the win/loss/tie tally for the two battled models so a live vote
+ * shows up immediately. Ratings (elo) are untouched, so rank + Humanness stay
+ * on the settled Bradley–Terry fit and the board doesn't reshuffle under the
+ * reveal — mirrors how the server overlays live counts on the cached ratings.
+ */
+const bumpTally = (
+  rows: ArenaRow[],
+  leftModelId: string,
+  rightModelId: string,
+  winner: VoteChoice,
+): ArenaRow[] =>
+  rows.map((model) => {
+    if (model.id !== leftModelId && model.id !== rightModelId) return model;
+    const outcome = outcomeFor(winner, model.id === leftModelId ? 'left' : 'right');
+    return {
+      ...model,
+      wins: model.wins + (outcome === 1 ? 1 : 0),
+      losses: model.losses + (outcome === 0 ? 1 : 0),
+      ties: model.ties + (outcome === 0.5 ? 1 : 0),
+    };
+  });
+
+/**
  * Server-rendered first-paint standings (the hourly `getStandingsSnapshot`),
  * handed to the hook so the table/chart hydrate from the SAME data the live
  * `/api/models` fetch returns. Without it the hook falls back to the bundled
@@ -199,14 +222,19 @@ export const useArenaData = (seed?: ArenaStandingsSeed) => {
           if (error instanceof BattleSpentError) return BATTLE_SPENT;
           return null; // network failure: caller leaves the round as-is
         }
-        // The published standings are a settled Bradley–Terry fit, refreshed on
-        // a schedule — a single vote doesn't move the ranking, so keep the
-        // current standings (no per-vote reshuffle) and just bump the counter.
-        nextModels = models;
+        const leftModelId = response.reveal.left.modelId;
+        const rightModelId = response.reveal.right.modelId;
+        // The published RATINGS are a settled Bradley–Terry fit refreshed on a
+        // schedule, so a single vote doesn't move rank/Humanness. But the vote
+        // TALLY is live: bump the two models' win/loss/tie counts so the vote
+        // shows immediately (matches the server's live-count overlay). Elo is
+        // untouched, so the board doesn't reshuffle under the reveal.
+        nextModels = bumpTally(models, leftModelId, rightModelId, winner);
+        setModels(nextModels);
         setTotalUniqueVotes(response.totalUniqueVotes);
         sides = {
-          left: { modelId: response.reveal.left.modelId, eloDelta: null },
-          right: { modelId: response.reveal.right.modelId, eloDelta: null },
+          left: { modelId: leftModelId, eloDelta: null },
+          right: { modelId: rightModelId, eloDelta: null },
         };
         correct = response.correct;
       } else {

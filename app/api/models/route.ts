@@ -1,29 +1,37 @@
 import { connection, NextResponse } from 'next/server';
 
-import { getTotalUniqueVotes } from '@/server/arena';
+import { getLiveModelCounts } from '@/server/arena';
 import { getStandingsSnapshot } from '@/server/standingsSnapshot';
 
-// The Bradley–Terry standings are an all-history fit over the vote log; serving
-// the hourly-cached snapshot (the same one the pages render from) keeps the
-// rankings fast and identical to first paint, instead of refitting per call.
-// The unique-vote COUNT, though, is read live: the cached fit only updates the
-// total every N votes (then sits behind an hourly cache), so serving it made
-// the counter snap back to a stale round number on refresh while a fresh vote
-// reported the true (much higher) total. Pairing cached rankings with the live
-// count keeps the displayed number honest and consistent with POST /api/vote.
+// The Bradley–Terry RATINGS are an all-history fit over the vote log; serving
+// the hourly-cached snapshot (the same one the pages render from) keeps rank +
+// Humanness fast and identical to first paint, instead of refitting per call.
+// The vote TALLIES, though, are read live and overlaid on those cached rows:
+// the unique-vote total plus each model's win/loss/tie counts come straight
+// from the store (snapshot + pending events), so a fresh vote shows up
+// immediately instead of waiting for the next refit + hourly cache turnover.
+// Rank/rating still come from the settled fit, so the board doesn't reshuffle
+// per vote — only the counts tick up, consistent with POST /api/vote.
 export async function GET() {
-  // Opt out of static prerendering so the live count below runs per request:
+  // Opt out of static prerendering so the live counts below run per request:
   // without this, cacheComponents prerenders the route (the in-memory store
-  // does no build-time I/O) and freezes the count to the hourly ISR window —
+  // does no build-time I/O) and freezes the counts to the hourly ISR window —
   // reviving the very staleness this endpoint is meant to avoid. The heavy BT
   // fit stays cached via getStandingsSnapshot's `'use cache'`.
   await connection();
   try {
-    const [{ models }, totalUniqueVotes] = await Promise.all([
+    const [{ models }, { counts, totalUniqueVotes }] = await Promise.all([
       getStandingsSnapshot(),
-      getTotalUniqueVotes(),
+      getLiveModelCounts(),
     ]);
-    return NextResponse.json({ models, totalUniqueVotes });
+    // Overlay live tallies onto the cached rows (ratings/rank/order untouched).
+    const liveModels = models.map((row) => {
+      const live = counts[row.id];
+      return live
+        ? { ...row, wins: live.wins, losses: live.losses, ties: live.ties, voteCount: live.voteCount }
+        : row;
+    });
+    return NextResponse.json({ models: liveModels, totalUniqueVotes });
   } catch (error) {
     console.error('[humanness] models failed:', error);
     return NextResponse.json({ error: 'Failed to load standings' }, { status: 500 });

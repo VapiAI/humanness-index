@@ -66,6 +66,21 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
 const ratingStandardError = (voteCount: number) =>
   Math.round(160 / Math.sqrt(Math.max(1, voteCount)));
 
+type ModelCounts = { wins: number; losses: number; ties: number; voteCount: number };
+
+/** Sum a model's variant-level stats into a single win/loss/tie/vote tally. */
+const aggregateCounts = (state: StandingsState, modelId: string): ModelCounts => {
+  const stats = variantsOfModel(modelId).map(
+    (variant) => state.get(variant.id) ?? freshVariantStats(),
+  );
+  return {
+    wins: stats.reduce((sum, s) => sum + s.wins, 0),
+    losses: stats.reduce((sum, s) => sum + s.losses, 0),
+    ties: stats.reduce((sum, s) => sum + s.ties, 0),
+    voteCount: stats.reduce((sum, s) => sum + s.voteCount, 0),
+  };
+};
+
 /**
  * Fit the published standings: a Bradley–Terry maximum-likelihood estimate over
  * the full vote log (settles, accounts for opponent strength) with bootstrap
@@ -98,22 +113,10 @@ const computeStandings = (
     interval: 0.95,
   });
 
-  const countsFor = (modelId: string) => {
-    const stats = variantsOfModel(modelId).map(
-      (variant) => state.get(variant.id) ?? freshVariantStats(),
-    );
-    return {
-      wins: stats.reduce((sum, s) => sum + s.wins, 0),
-      losses: stats.reduce((sum, s) => sum + s.losses, 0),
-      ties: stats.reduce((sum, s) => sum + s.ties, 0),
-      voteCount: stats.reduce((sum, s) => sum + s.voteCount, 0),
-    };
-  };
-
   const models = players
     .map((id): ArenaModelRow => {
       const model = MODELS_BY_ID.get(id)!;
-      const counts = countsFor(id);
+      const counts = aggregateCounts(state, id);
       return {
         id,
         provider: PROVIDERS_BY_ID.get(model.providerId)!.name,
@@ -200,6 +203,29 @@ export const getTotalUniqueVotes = async (): Promise<number> => {
   return totalVotes;
 };
 
+export type LiveModelCounts = {
+  totalUniqueVotes: number;
+  /** model id → live win/loss/tie/vote tally (snapshot + pending events). */
+  counts: Record<string, ModelCounts>;
+};
+
+/**
+ * Live per-model tallies straight from the store (snapshot + pending events),
+ * independent of the settled Bradley–Terry fit. Read paths overlay these onto
+ * the cached standings so a fresh vote's tally shows immediately while
+ * rank/Humanness stay on the periodically-refit ratings. A single store load
+ * serves both the counts and the live unique-vote total, so this replaces —
+ * rather than adds to — the counter-only `getTotalUniqueVotes` on the read path.
+ */
+export const getLiveModelCounts = async (): Promise<LiveModelCounts> => {
+  const { state, totalVotes } = await arenaStore().load();
+  const counts: Record<string, ModelCounts> = {};
+  for (const model of MODELS) {
+    counts[model.id] = aggregateCounts(state, model.id);
+  }
+  return { totalUniqueVotes: totalVotes, counts };
+};
+
 export const createBattle = async (): Promise<BattleResponse> => {
   const store = arenaStore();
   // Pairing reads the snapshot rather than the exact counts: it only weights
@@ -271,10 +297,10 @@ export const submitVote = async (
   if (!left || !right) throw new VoteError('Unknown battle variants');
 
   const store = arenaStore();
-  const [{ totalVotes }, standings] = await Promise.all([
-    store.load(),
-    store.loadStandings(),
-  ]);
+  // Only the cached standings (O(1) blob read) are needed before recording;
+  // the live vote total comes back from `recordVote` itself, so the request
+  // path no longer does a second full state load just to read the counter.
+  const standings = await store.loadStandings();
 
   // "Correct" = the pick agreed with the crowd, judged on the cached
   // Bradley–Terry model ratings (the same numbers the leaderboard shows) so the
@@ -288,15 +314,16 @@ export const submitVote = async (
     winner,
   );
 
+  let totalVotes: number;
   try {
-    await store.recordVote({
+    ({ totalVotes } = await store.recordVote({
       id: `vote:${randomUUID().replaceAll('-', '')}`,
       battleId: payload.id,
       winner,
       leftVariantId: left.id,
       rightVariantId: right.id,
       createdAt: Date.now(),
-    });
+    }));
   } catch (error) {
     if (error instanceof DuplicateVoteError) {
       throw new BattleAlreadyVotedError(error.message);
@@ -314,7 +341,8 @@ export const submitVote = async (
       right: { modelId: right.modelId },
     },
     correct,
-    totalUniqueVotes: totalVotes + 1,
+    // `recordVote` loads state AFTER the write, so this already counts this vote.
+    totalUniqueVotes: totalVotes,
   };
 };
 
