@@ -14,7 +14,7 @@
  * `BLOB_READ_WRITE_TOKEN` is injected by the connected Blob store in prod;
  * without it (local dev) an in-memory store seeded the same way is used.
  */
-import { list, put } from '@vercel/blob';
+import { del, list, put } from '@vercel/blob';
 
 import type { ArenaModelRow } from '../lib/api';
 import { VARIANTS, variantsOfModel } from './catalog';
@@ -28,6 +28,15 @@ import {
 import seedStandings from './seed-standings.json';
 
 const EVENTS_PREFIX = 'humanness/events/';
+/**
+ * A copy of each vote event, filed under the snapshot generation it landed in.
+ * Reading the current counts means replaying the votes recorded since the last
+ * snapshot, and finding those by listing EVENTS_PREFIX costs a round trip per
+ * 1,000 votes ever cast. Listing one generation of markers instead is a couple
+ * of dozen blobs however long the log grows. The event blobs remain the log of
+ * record (and the duplicate-vote guard); markers are a disposable index.
+ */
+const PENDING_PREFIX = 'humanness/pending/';
 const SNAPSHOT_PATH = 'humanness/snapshot.json';
 const STANDINGS_PATH = 'humanness/standings.json';
 /** Roll events into a fresh snapshot every N votes so loads stay fast. */
@@ -79,13 +88,23 @@ type ArenaStore = {
    * that only need the shape of the standings rather than an exact count.
    */
   loadSnapshotState(): Promise<ArenaSnapshot>;
-  /** Append a vote; throws DuplicateVoteError if the battle was already voted. */
-  recordVote(event: VoteEvent): Promise<void>;
+  /**
+   * Append a vote; throws DuplicateVoteError if the battle was already voted.
+   * Returns the post-write unique-vote total so the request path doesn't need
+   * a second full `load()` just to report the new count.
+   */
+  recordVote(event: VoteEvent): Promise<{ totalVotes: number }>;
   /**
    * Every recorded vote event, oldest first — the full pairwise log the
    * Bradley–Terry standings fit over. Read-only; never mutates the store.
    */
   loadVoteEvents(): Promise<VoteEvent[]>;
+  /**
+   * Refold the snapshot from the full event log and put reads on the marker
+   * index. Maintenance only (`scripts/migrate-pending-markers.ts`), and
+   * idempotent — re-run it to repair a snapshot that has drifted.
+   */
+  rebuildSnapshot(): Promise<{ totalVotes: number; generation: number }>;
   /** The cached Bradley–Terry standings, or null before the first fit. O(1). */
   loadStandings(): Promise<StoredStandings | null>;
   /** Persist a freshly computed Bradley–Terry fit (background refresh). */
@@ -157,9 +176,19 @@ const applyEvent = (state: StandingsState, event: VoteEvent) => {
 type SnapshotBlob = {
   /** variant id → stats */
   variants: Record<string, VariantStats>;
-  /** battle ids already folded into `variants`. */
+  /**
+   * Battle ids already folded into `variants`. On a pre-marker snapshot this
+   * is every battle ever folded; from `generation` onward it only holds the
+   * ids folded out of the marker folders, so it stays a few dozen long.
+   */
   battleIds: string[];
   totalVotes: number;
+  /**
+   * Marker folder this snapshot folded through, absent on pre-marker
+   * snapshots — which is the signal to fall back to listing the whole event
+   * prefix. Written by `scripts/migrate-pending-markers.ts`.
+   */
+  generation?: number;
 };
 
 const fetchJson = async <T>(url: string): Promise<T | null> => {
@@ -190,7 +219,12 @@ const fetchEventJson = async <T>(url: string): Promise<T | null> => {
   return null;
 };
 
-const blobStore = (token: string): ArenaStore => {
+/**
+ * Blob-backed store bound to `token`. Production goes through `arenaStore()`;
+ * this is exported so tests can drive the blob paths against a fake backend
+ * without depending on process env or the module-level singleton.
+ */
+export const blobArenaStore = (token: string): ArenaStore => {
   const loadSnapshot = async (): Promise<SnapshotBlob | null> => {
     const { blobs } = await list({ prefix: SNAPSHOT_PATH, token, limit: 1 });
     if (blobs.length === 0) return null;
@@ -225,15 +259,79 @@ const blobStore = (token: string): ArenaStore => {
     });
   };
 
-  const listEventBlobs = async () => {
+  const listAll = async (prefix: string) => {
     const blobs = [];
     let cursor: string | undefined;
     do {
-      const page = await list({ prefix: EVENTS_PREFIX, token, cursor, limit: 1000 });
+      const page = await list({ prefix, token, cursor, limit: 1000 });
       blobs.push(...page.blobs);
       cursor = page.hasMore ? page.cursor : undefined;
     } while (cursor);
     return blobs;
+  };
+
+  const listEventBlobs = () => listAll(EVENTS_PREFIX);
+
+  const markerFolder = (generation: number) => `${PENDING_PREFIX}g${generation}/`;
+
+  /**
+   * The votes still to replay into `snapshot`, plus the ids a roll should then
+   * record as folded — everything visible now, not just the replayed subset,
+   * or markers folded by an earlier pass would be replayed a second time.
+   *
+   * Marker-backed snapshots list two generations: a vote can be filed against
+   * generation N while a roll moves the snapshot to N+1, so the older folder
+   * stays live for one more turn, and `battleIds` drops whatever that roll
+   * already folded. A snapshot written before markers existed has no
+   * generation, so it falls back to listing every event ever recorded.
+   */
+  const pendingWork = async (snapshot: SnapshotBlob | null) => {
+    const folded = new Set(snapshot?.battleIds ?? []);
+    const listed =
+      snapshot?.generation === undefined
+        ? await listEventBlobs()
+        : (
+            await Promise.all(
+              [snapshot.generation - 1, snapshot.generation]
+                .filter((generation) => generation >= 1)
+                .map((generation) => listAll(markerFolder(generation))),
+            )
+          ).flat();
+    const seen = new Set<string>();
+    const pending = listed.filter((blob) => {
+      const battleId = battleIdFromPathname(blob.pathname);
+      if (folded.has(battleId) || seen.has(battleId)) return false;
+      seen.add(battleId);
+      return true;
+    });
+    return {
+      pending,
+      foldedAfterRoll: listed.map((blob) => battleIdFromPathname(blob.pathname)),
+    };
+  };
+
+  /** Fold `blobs` (vote events) into a base state, oldest first. */
+  const replay = async (
+    base: ArenaSnapshot,
+    blobs: { url: string }[],
+  ): Promise<ArenaSnapshot> => {
+    const events = (
+      await Promise.all(blobs.map((blob) => fetchJson<VoteEvent>(blob.url)))
+    ).filter((event): event is VoteEvent => event !== null);
+    events.sort((a, b) => a.createdAt - b.createdAt);
+    for (const event of events) applyEvent(base.state, event);
+    return { state: base.state, totalVotes: base.totalVotes + events.length };
+  };
+
+  /** Retire marker folders no read will look at again (best effort). */
+  const dropMarkers = async (generation: number) => {
+    if (generation < 1) return;
+    try {
+      const stale = await listAll(markerFolder(generation));
+      if (stale.length > 0) await del(stale.map((blob) => blob.url), { token });
+    } catch (error) {
+      console.warn('[humanness] dropping stale vote markers failed:', error);
+    }
   };
 
   /** The folded snapshot as working counts (no pending replay). */
@@ -261,28 +359,14 @@ const blobStore = (token: string): ArenaStore => {
 
   const load = async (): Promise<ArenaSnapshot> => {
     const snapshot = await loadSnapshot();
-    const { state, totalVotes: baseVotes } = foldedState(snapshot);
-    const includedBattles = new Set(snapshot?.battleIds ?? []);
-
-    const eventBlobs = await listEventBlobs();
-    const pending = eventBlobs.filter(
-      (blob) => !includedBattles.has(battleIdFromPathname(blob.pathname)),
-    );
-    const events = (
-      await Promise.all(pending.map((blob) => fetchJson<VoteEvent>(blob.url)))
-    ).filter((event): event is VoteEvent => event !== null);
-    events.sort((a, b) => a.createdAt - b.createdAt);
-    for (const event of events) applyEvent(state, event);
-
-    return { state, totalVotes: baseVotes + events.length };
+    const { pending } = await pendingWork(snapshot);
+    return replay(foldedState(snapshot), pending);
   };
 
-  const loadVoteEvents = async (): Promise<VoteEvent[]> => {
+  const readAllEvents = async (concurrency: number): Promise<VoteEvent[]> => {
     const eventBlobs = await listEventBlobs();
-    // Vercel Blob is CDN-backed and handles high read concurrency, so fan out
-    // wide to keep the full-log read well under the prerender cache timeout.
     const events = (
-      await mapWithConcurrency(eventBlobs, 400, (blob) =>
+      await mapWithConcurrency(eventBlobs, concurrency, (blob) =>
         fetchEventJson<VoteEvent>(blob.url),
       )
     ).filter((event): event is VoteEvent => event !== null);
@@ -290,13 +374,43 @@ const blobStore = (token: string): ArenaStore => {
     return events;
   };
 
+  // Vercel Blob is CDN-backed and handles high read concurrency, so fan out
+  // wide to keep the full-log read well under the prerender cache timeout.
+  const loadVoteEvents = () => readAllEvents(400);
+
   return {
     load,
     loadSnapshotState,
     loadVoteEvents,
     loadStandings,
     writeStandings,
+    async rebuildSnapshot() {
+      const generation = 1;
+      // Deliberately gentler than the request-path read: this is offline
+      // maintenance with no timeout budget, and a burst of thousands of blob
+      // reads from one client can trip Vercel's automatic DDoS mitigation
+      // (which then 403s public reads, audio clips included).
+      const events = await readAllEvents(25);
+      const { state, totalVotes: seedVotes } = foldedState(null);
+      for (const event of events) applyEvent(state, event);
+      const foldedIds = new Set(events.map((event) => event.battleId));
+      // Listed AFTER the fold: a marker written mid-rebuild is only recorded as
+      // folded if its event actually made it into the counts above.
+      const markers = await listAll(markerFolder(generation));
+      await writeSnapshot({
+        variants: Object.fromEntries(state),
+        battleIds: markers
+          .map((blob) => battleIdFromPathname(blob.pathname))
+          .filter((battleId) => foldedIds.has(battleId)),
+        totalVotes: seedVotes + events.length,
+        generation,
+      });
+      return { totalVotes: seedVotes + events.length, generation };
+    },
     async recordVote(event) {
+      const snapshot = await loadSnapshot();
+      // The event blob is the log of record AND the duplicate guard: one battle
+      // maps to one immutable path, so a second vote loses the write outright.
       try {
         await put(`${EVENTS_PREFIX}${event.battleId}.json`, JSON.stringify(event), {
           access: 'public',
@@ -312,22 +426,47 @@ const blobStore = (token: string): ArenaStore => {
         }
         throw error;
       }
+      // Then the marker reads find this vote through, in the generation the
+      // snapshot is currently on. Overwritable, so a retry is harmless.
+      const generation = snapshot?.generation ?? 1;
+      await put(
+        `${markerFolder(generation)}${event.battleId}.json`,
+        JSON.stringify(event),
+        {
+          access: 'public',
+          token,
+          contentType: 'application/json',
+          allowOverwrite: true,
+          addRandomSuffix: false,
+          cacheControlMaxAge: 0,
+        },
+      );
+
+      const { pending, foldedAfterRoll } = await pendingWork(snapshot);
+      const { state, totalVotes } = await replay(foldedState(snapshot), pending);
       // Opportunistically refresh the snapshot so loads don't replay forever.
-      const { state, totalVotes } = await load();
       if (totalVotes % SNAPSHOT_INTERVAL === 0) {
-        const eventBlobs = await listEventBlobs();
         await writeSnapshot({
           variants: Object.fromEntries(state),
-          battleIds: eventBlobs.map((blob) => battleIdFromPathname(blob.pathname)),
+          battleIds: foldedAfterRoll,
           totalVotes,
+          // A pre-marker store keeps rolling the old way until the migration
+          // script switches reads onto the markers.
+          ...(snapshot?.generation === undefined
+            ? {}
+            : { generation: generation + 1 }),
         });
+        // The folder before the one just folded is out of every read's reach.
+        if (snapshot?.generation !== undefined) await dropMarkers(generation - 1);
       }
+      return { totalVotes };
     },
   };
 };
 
+/** `humanness/events/battle:ab.json` → `battle:ab` (markers share the shape). */
 const battleIdFromPathname = (pathname: string): string =>
-  pathname.replace(EVENTS_PREFIX, '').replace(/\.json$/, '');
+  pathname.slice(pathname.lastIndexOf('/') + 1).replace(/\.json$/, '');
 
 /* ----------------------------- In-memory store ---------------------------- */
 
@@ -356,6 +495,10 @@ const memoryStore = (): ArenaStore => {
     async loadStandings() {
       return standings;
     },
+    // Nothing is deferred in memory, so there is no snapshot to refold.
+    async rebuildSnapshot() {
+      return { totalVotes, generation: 1 };
+    },
     async writeStandings(next) {
       standings = next;
     },
@@ -367,6 +510,7 @@ const memoryStore = (): ArenaStore => {
       applyEvent(state, event);
       events.push(event);
       totalVotes += 1;
+      return { totalVotes };
     },
   };
 };
@@ -379,7 +523,7 @@ export const arenaStore = (): ArenaStore => {
   if (store) return store;
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (token) {
-    store = blobStore(token);
+    store = blobArenaStore(token);
   } else {
     console.warn(
       '[humanness] BLOB_READ_WRITE_TOKEN not set; using in-memory arena store (votes reset on restart).',
