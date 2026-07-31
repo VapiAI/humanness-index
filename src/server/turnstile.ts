@@ -1,8 +1,12 @@
 /**
- * Cloudflare Turnstile verification for the vote endpoint — the anti-abuse
- * gate that sits on top of the per-IP rate limit. Every vote must carry a
- * freshly solved token (see ../hooks/useVoteGate, which keeps one warm so the
- * check stays invisible); this module verifies it server-side.
+ * Cloudflare Turnstile verification for the vote endpoint. Every vote must
+ * carry a freshly solved token (see ../hooks/useVoteGate, which keeps one warm
+ * so the check stays invisible); this module verifies it server-side.
+ *
+ * Rate limiting is NOT here and is not in application code at all: it runs as
+ * Vercel Firewall rules on /api/vote, at the edge ahead of this function. That
+ * is deliberate — the previous in-process limiter counted per lambda, so on
+ * serverless it counted almost nothing while still reading as protection.
  *
  * Mirrors the repo's optional-integration pattern (see
  * src/app/api/call/redis-client.ts / env-validator.ts): when the env vars are
@@ -16,6 +20,13 @@
 
 const SITEVERIFY_URL =
   'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+
+/** Best-effort client IP from proxy headers (Vercel sets x-forwarded-for). */
+export const clientIpFrom = (request: Request): string => {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0]!.trim();
+  return request.headers.get('x-real-ip')?.trim() || 'unknown';
+};
 
 type TurnstileVerification = {
   ok: boolean;

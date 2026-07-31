@@ -40,9 +40,9 @@ the model-onboarding process see [docs/ADDING_A_MODEL.md](docs/ADDING_A_MODEL.md
 - Bun for scripts and the test suite.
 - Vercel hosting; Vercel Blob for both the event-sourced vote store and the
   audio origin that serves `audio/{contentHash}.mp3`.
-- Optional Upstash Redis (durable rate limiting) and Cloudflare Turnstile
-  (every-Nth-vote challenge); optional PostHog analytics. The app is fully
-  functional locally with none of them set.
+- Cloudflare Turnstile, verified on every vote; optional PostHog analytics.
+  Vote rate limiting is a Vercel Firewall rule at the edge, not application
+  code. The app is fully functional locally with none of them set.
 
 ## 4. Repository layout
 
@@ -174,9 +174,10 @@ five-step model-onboarding sequence.
   an in-memory store seeded from the production export (fine for dev).
 - `HUMANNESS_AUDIO_ORIGIN` overrides the default public audio origin.
 - `HUMANNESS_BATTLE_TOKEN_SECRET` signs battle tokens (required in production).
-- Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`) and
-  Upstash Redis are optional but recommended in production; PostHog analytics
-  is optional and loads no code without a key. See `.env.example`.
+- Turnstile (`NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY`) is
+  optional locally and required in production, where it gates every vote;
+  PostHog analytics is optional and loads no code without a key. Rate limiting
+  needs no env vars — it is a Vercel Firewall rule. See `.env.example`.
 
 ## 10. Licensing
 

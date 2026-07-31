@@ -13,17 +13,14 @@ import {
   VARIANTS_BY_ID,
   variantsOfModel,
 } from './catalog';
-import { clientIpFrom } from './rateLimit';
+import { clientIpFrom } from './turnstile';
 
-// Hermetic: in-memory store (no Vercel Blob), in-memory rate limiter (no
-// Upstash), and a no-op Turnstile gate. All of these read env lazily, so
-// clearing here — before any test body runs — is early enough.
+// Hermetic: in-memory store (no Vercel Blob) and a no-op Turnstile gate. Both
+// read env lazily, so clearing here — before any test body runs — is early
+// enough.
 delete process.env.BLOB_READ_WRITE_TOKEN;
-delete process.env.UPSTASH_REDIS_REST_URL;
-delete process.env.UPSTASH_REDIS_REST_TOKEN;
 delete process.env.TURNSTILE_SECRET_KEY;
 
-/** Rate-limit buckets are per IP and shared module state — isolate each test. */
 let ipSequence = 0;
 const uniqueIp = () => {
   ipSequence += 1;
@@ -163,26 +160,15 @@ describe('POST /api/vote', () => {
     expect(body.error).toMatch(/already been voted/);
   });
 
-  it('rate limits the 41st request in a window with 429 + retry-after', async () => {
+  // Rate limiting is intentionally absent from this route: it lives in Vercel
+  // Firewall rules on /api/vote, ahead of the function. Nothing to assert here
+  // — an in-process limiter is what previously made the endpoint look
+  // protected while counting per lambda.
+  it('does not rate limit in application code, however many requests arrive', async () => {
     const ip = uniqueIp();
-    // The limiter runs before body parsing, so cheap invalid payloads each
-    // consume a slot (40 allowed per 60s fixed window).
-    for (let i = 0; i < 40; i += 1) {
-      const response = await postVote('{}', ip);
-      expect(response.status).toBe(400);
+    for (let i = 0; i < 50; i += 1) {
+      expect((await postVote('{}', ip)).status).toBe(400);
     }
-    const limited = await postVote('{}', ip);
-    expect(limited.status).toBe(429);
-    expect(await limited.json()).toEqual({
-      error: 'Too many votes. Slow down a moment.',
-    });
-    const retryAfter = Number(limited.headers.get('retry-after'));
-    expect(retryAfter).toBeGreaterThan(0);
-    expect(retryAfter).toBeLessThanOrEqual(60);
-
-    // The window is per IP: other clients are unaffected.
-    const other = await postVote('{}', uniqueIp());
-    expect(other.status).toBe(400);
   });
 });
 

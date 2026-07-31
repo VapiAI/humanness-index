@@ -7,11 +7,7 @@ import {
   submitVote,
   VoteError,
 } from '@/server/arena';
-import {
-  checkVoteRateLimit,
-  clientIpFrom,
-} from '@/server/rateLimit';
-import { verifyTurnstileToken } from '@/server/turnstile';
+import { clientIpFrom, verifyTurnstileToken } from '@/server/turnstile';
 
 // The background BT refit (`after`) reads the whole vote log; give it headroom
 // beyond the default function budget.
@@ -19,16 +15,6 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const clientIp = clientIpFrom(request);
-  const limit = await checkVoteRateLimit(clientIp);
-  if (!limit.allowed) {
-    return NextResponse.json(
-      { error: 'Too many votes. Slow down a moment.' },
-      {
-        status: 429,
-        headers: { 'retry-after': String(limit.retryAfterSeconds) },
-      },
-    );
-  }
 
   let body: { voteToken?: string; winner?: string; captchaToken?: string };
   try {
