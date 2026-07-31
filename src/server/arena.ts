@@ -158,11 +158,13 @@ export const STANDINGS_RECOMPUTE_INTERVAL = 50;
  * on a vote interval (see the vote route's `after`) and from the migration
  * script, so every read path stays O(1).
  */
-export const recomputeStandings = async (): Promise<StoredStandings> => {
+export const recomputeStandings = async (
+  options: { concurrency?: number } = {},
+): Promise<StoredStandings> => {
   const store = arenaStore();
   const [{ state, totalVotes }, events] = await Promise.all([
     store.load(),
-    store.loadVoteEvents(),
+    store.loadVoteEvents(options.concurrency),
   ]);
   const standings = computeStandings(state, events, totalVotes);
   await store.writeStandings(standings);

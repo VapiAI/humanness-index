@@ -24,7 +24,9 @@ const main = async () => {
   }
 
   const start = Date.now();
-  const standings = await recomputeStandings();
+  // Gentler than the request path: thousands of blob reads from one client trip
+  // Vercel's DDoS mitigation, which then 403s public reads, audio clips included.
+  const standings = await recomputeStandings({ concurrency: 25 });
   const seconds = ((Date.now() - start) / 1000).toFixed(1);
 
   console.log(

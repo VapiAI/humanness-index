@@ -97,8 +97,9 @@ type ArenaStore = {
   /**
    * Every recorded vote event, oldest first — the full pairwise log the
    * Bradley–Terry standings fit over. Read-only; never mutates the store.
+   * Offline callers should lower `concurrency` (see `rebuildSnapshot`).
    */
-  loadVoteEvents(): Promise<VoteEvent[]>;
+  loadVoteEvents(concurrency?: number): Promise<VoteEvent[]>;
   /**
    * Refold the snapshot from the full event log and put reads on the marker
    * index. Maintenance only (`scripts/migrate-pending-markers.ts`), and
@@ -382,7 +383,7 @@ export const blobArenaStore = (token: string): ArenaStore => {
 
   // Vercel Blob is CDN-backed and handles high read concurrency, so fan out
   // wide to keep the full-log read well under the prerender cache timeout.
-  const loadVoteEvents = () => readAllEvents(400);
+  const loadVoteEvents = (concurrency = 400) => readAllEvents(concurrency);
 
   return {
     load,
