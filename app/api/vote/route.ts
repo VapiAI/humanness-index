@@ -37,8 +37,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  // CAPTCHA gate (every 10th vote carries a token): no-op unless
-  // TURNSTILE_SECRET_KEY is configured. See server/turnstile.ts.
+  // CAPTCHA gate: every vote must carry a token once TURNSTILE_SECRET_KEY is
+  // configured, and no-ops entirely when it isn't. See server/turnstile.ts.
   const captcha = await verifyTurnstileToken(
     typeof body.captchaToken === 'string' && body.captchaToken !== ''
       ? body.captchaToken
