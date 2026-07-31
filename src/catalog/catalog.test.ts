@@ -914,7 +914,7 @@ const EXPECTED_VOICE_STATS: Array<[string, string, string, string, string]> = [
   ['Smallest.ai', 'Lightning v3.1', '420 ms', '12', '$15'],
   // Vendor-rendered clips, but the latency is our own: benched 2026-07-30
   // against a Speechify key once one arrived (bench-only transport).
-  ['Speechify', 'Simba 3.2', '575 ms', 'English', '$10'],
+  ['Speechify', 'Simba 3.2', '428 ms', 'English', '$10'],
   // The Human baseline is a real person reading the line: no latency, no
   // languages count, no price. All dashes.
   ['Human', 'Homo Sapien', '\u2014', '\u2014', '\u2014'],

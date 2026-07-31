@@ -117,7 +117,7 @@ Vendor-rendered clips do NOT imply an unmeasurable latency: the two are
 independent. Speechify is the worked example (2026-07-30) — the clips stay
 vendor-rendered and hash-frozen, but a key later arrived and a bench-only
 transport (no `synthesize`/`createClone`, like xai's) took Simba 3.2 from a
-dash to a measured 575 ms. When that happens, drop the provider's
+dash to a measured 428 ms. When that happens, drop the provider's
 UNMEASURABLE_PROVIDERS row and rewrite the entry's "latency shows a dash"
 copy along with the stat.
 
@@ -239,16 +239,19 @@ dropped in; the originals supersede them.)
 - **Speechify (2026-07-30)**: bench-only transport against
   `POST /v1/audio/stream` (`Authorization: Bearer`, body
   `{input, voice_id, model}`). The `Accept` header is REQUIRED and picks the
-  container; we send `audio/mpeg` on purpose, because the docs call
-  `audio/pcm` the lowest-latency option and using it would flatter Simba
-  against a field benched on compressed streams. `loudness_normalization`
-  stays off (the docs say it adds latency). simba-3.2 serves a curated voice
-  allow list (`geffen_32` et al) and the arena's clones are NOT on it, so the
-  bench uses a stock voice. Response is raw chunked audio with no JSON
-  envelope, so `anyBytesMarker` is correct. 2026-07-30 run: 50/50 clean
-  trials, median 575 ms (`pipelineTtfb(575)`), p90 619 / min 558 / max 1033 /
-  stdev 73 — the second-slowest active model on the Index, behind Eleven v3
-  (758 ms), despite Speechify positioning simba-3.2 on time to first byte. No
+  container; we send `audio/pcm` (served as `audio/L16;rate=24000;channels=1`).
+  **The container choice is worth ~150 ms**: three 50/50 clean runs the same
+  day gave 575 ms and 581 ms on `audio/mpeg` versus 428 ms on `audio/pcm`.
+  PCM is the right pick because the bench convention across the field is each
+  provider's lowest-latency streaming mode — raw PCM for Cartesia, ElevenLabs'
+  realtime WS, Inworld (LINEAR16), Neuphonic, and xAI, WAV for Smallest.ai —
+  so MP3 would have handicapped Simba against them (and it puts an ID3 tag
+  ahead of the first audio frame). Registry cites the PCM run,
+  `pipelineTtfb(428)`, p90 552 / min 396 / max 957 / stdev 90.
+  `loudness_normalization` stays off (the docs say it adds latency).
+  simba-3.2 serves a curated voice allow list (`geffen_32` et al) and the
+  arena's clones are NOT on it, so the bench uses a stock voice. Response is
+  raw chunked audio with no JSON envelope, so `anyBytesMarker` is correct. No
   Bun fetch wedge on Bun 1.3.14 (the Smallest.ai slicing workaround was a
   1.0.3 problem).
 - **Blob store**: `audio/{hash}.mp3`, public access, `addRandomSuffix:

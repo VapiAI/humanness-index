@@ -1,9 +1,10 @@
 /**
  * Provider transport registry. Providers without an entry here (canopylabs,
  * gradium) have no usable synthesis/bench surface from this
- * pipeline — see UNMEASURABLE_PROVIDERS for the sourced reasons. xai has a
- * bench-only transport (realtime WS; its HTTP config stays team-gated —
- * transports/xai.ts). fish is a full transport, but its arena clips were
+ * pipeline — see UNMEASURABLE_PROVIDERS for the sourced reasons. xai and
+ * speechify have bench-only transports (xai: realtime WS, its HTTP config
+ * stays team-gated; speechify: hash-frozen vendor-rendered clips, so only
+ * TTFB is needed). fish is a full transport, but its arena clips were
  * vendor-rendered, so only the bench path runs here. LMNT was cut from the
  * expansion 2026-06-11 and its never-run transport deleted (see RUNBOOK).
  */
@@ -16,6 +17,7 @@ import { minimax } from './minimax';
 import { neuphonic } from './neuphonic';
 import { sesame } from './sesame';
 import { smallest } from './smallest';
+import { speechify } from './speechify';
 import { xai } from './xai';
 import type { ProviderTransport } from './types';
 
@@ -31,6 +33,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   hume,
   sesame,
   fish,
+  speechify,
   xai,
 };
 
@@ -39,8 +42,6 @@ export const UNMEASURABLE_PROVIDERS: Record<string, string> = {
   canopylabs:
     "no public synthesis API — arena clips came from Canopy's internal Orpheus dashboard",
   gradium: 'no Gradium API key locally (arena clips were imported from a vendor zip)',
-  speechify:
-    'no Speechify API key locally (arena clips were vendor-rendered; ingested via humanness:vendor-clips)',
 };
 
 export const transportFor = (providerId: string): ProviderTransport | undefined =>

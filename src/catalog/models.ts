@@ -1503,11 +1503,14 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     stats: {
       // Measured 2026-07-30 on POST /v1/audio/stream via
       // pipeline/transports/speechify.ts: 50 clean trials, zero errors, zero
-      // rate-limit hits (p90 619 / min 558 / max 1033 / stdev 73). The clips
-      // stay vendor-rendered; only the bench runs against our own key.
+      // rate-limit hits (p90 552 / min 396 / max 957 / stdev 90). Benched on
+      // raw PCM, the endpoint's lowest-latency mode, matching how the rest of
+      // the field is measured; asking the same endpoint for MP3 instead costs
+      // ~150 ms (two 50-trial runs at 575 and 581 ms). The clips stay
+      // vendor-rendered; only the bench runs against our own key.
       latencyMs: pipelineTtfb(
-        575,
-        'Measured on the chunked HTTP /v1/audio/stream endpoint at its default MP3 output, using an allow-list voice (the arena clones are not registered on simba-3.2); median of 50 sequential trials, July 2026, including network RTT.',
+        428,
+        'Measured on the chunked HTTP /v1/audio/stream endpoint at raw PCM output (16-bit, 24 kHz), using an allow-list voice (the arena clones are not registered on simba-3.2); median of 50 sequential trials, July 2026, including network RTT.',
         '2026-07-30',
       ),
       languages: {
@@ -1547,7 +1550,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'The arena clips for Simba 3.2 were rendered by Speechify with the four licensed source voices cloned on its platform, then verified and hosted by the Index team under the same frozen content hash scheme as every other model, the same vendor supplied path used where the pipeline has no API access. Latency is our own measurement: the 50 trial streaming benchmark ran against a Speechify key in July 2026 and returned a 575 ms median, so the figure here is measured rather than vendor supplied.',
+          'The arena clips for Simba 3.2 were rendered by Speechify with the four licensed source voices cloned on its platform, then verified and hosted by the Index team under the same frozen content hash scheme as every other model, the same vendor supplied path used where the pipeline has no API access. Latency is our own measurement: the 50 trial streaming benchmark ran against a Speechify key in July 2026 and returned a 428 ms median, so the figure here is measured rather than vendor supplied.',
         ],
         sourceUrls: [
           'https://docs.speechify.ai/build/guides/concepts/models',
