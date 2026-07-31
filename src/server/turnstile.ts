@@ -1,16 +1,16 @@
 /**
  * Cloudflare Turnstile verification for the vote endpoint — the anti-abuse
- * CAPTCHA gate that sits on top of the per-IP rate limit. The client asks for
- * a challenge every 10th vote (see ../hooks/useVoteGate) and attaches the
- * solved token to that vote; this module verifies it server-side.
+ * gate that sits on top of the per-IP rate limit. Every vote must carry a
+ * freshly solved token (see ../hooks/useVoteGate, which keeps one warm so the
+ * check stays invisible); this module verifies it server-side.
  *
  * Mirrors the repo's optional-integration pattern (see
  * src/app/api/call/redis-client.ts / env-validator.ts): when the env vars are
  * missing the whole gate gracefully no-ops and voting works exactly as before.
  *
  * Environment variables (set BOTH in Vercel to activate the gate):
- * - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` — widget site key (client; renders the
- *   challenge on every 10th vote).
+ * - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` — widget site key (client; solves the
+ *   challenge in the background).
  * - `TURNSTILE_SECRET_KEY` — siteverify secret (server; validates tokens).
  */
 
@@ -26,17 +26,17 @@ type TurnstileVerification = {
 /**
  * Verifies a Turnstile token against Cloudflare's siteverify endpoint.
  *
- * Pragmatic gating (standings aren't security-critical): only votes that
- * carry a token are verified — the client decides the every-10 cadence, and
- * token-less votes still pass through the per-IP rate limit. When
- * `TURNSTILE_SECRET_KEY` is unset, verification is skipped entirely (no-op).
+ * Once `TURNSTILE_SECRET_KEY` is set the gate is mandatory: a vote without a
+ * token is rejected, so a script has to solve a challenge per vote rather than
+ * simply omitting the field. With the secret unset it no-ops (local dev, tests).
  */
 export const verifyTurnstileToken = async (
   token: string | undefined,
   remoteIp: string,
 ): Promise<TurnstileVerification> => {
   const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
-  if (!secret || !token) return { ok: true };
+  if (!secret) return { ok: true };
+  if (!token) return { ok: false, reason: 'missing token' };
 
   try {
     const params = new URLSearchParams({ secret, response: token });
@@ -60,7 +60,9 @@ export const verifyTurnstileToken = async (
       reason: result['error-codes']?.join(', ') || 'verification failed',
     };
   } catch (error) {
-    // Cloudflare being unreachable shouldn't take voting down with it.
+    // Fail open only on an outage: an attacker can't make siteverify
+    // unreachable from Vercel, but Cloudflare having a bad day shouldn't take
+    // voting down with it.
     console.warn('[humanness] turnstile siteverify unavailable:', error);
     return { ok: true };
   }

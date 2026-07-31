@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ARENA_AUDIO_ORIGIN } from '../../../src/catalog/audio';
+import { blindClipHash } from '../../../src/server/catalog';
 
 /**
  * Same-origin audio relay over the Blob store.
@@ -17,13 +18,28 @@ import { ARENA_AUDIO_ORIGIN } from '../../../src/catalog/audio';
  */
 
 const CLIP_FILE_PATTERN = /^[0-9a-f]{32}\.mp3$/;
+/** Sealed blind-battle clip id (see server/catalog.ts#blindClipUrl). */
+const BLIND_FILE_PATTERN = /^[A-Za-z0-9_-]{48,512}\.mp3$/;
+
+/**
+ * The stored clip this request addresses: a bare content hash (labeled
+ * samples, which already name their model) or a sealed blind-battle id, which
+ * only this route can resolve.
+ */
+const storedClipFor = (file: string): string | null => {
+  if (CLIP_FILE_PATTERN.test(file)) return file;
+  if (!BLIND_FILE_PATTERN.test(file)) return null;
+  const hash = blindClipHash(file.slice(0, -'.mp3'.length));
+  return hash && `${hash}.mp3`;
+};
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ file: string }> },
 ) {
   const { file } = await params;
-  if (!CLIP_FILE_PATTERN.test(file)) {
+  const stored = storedClipFor(file);
+  if (!stored) {
     return new NextResponse('Not found', { status: 404 });
   }
 
@@ -35,7 +51,7 @@ export async function GET(
   const token = process.env.BLOB_READ_WRITE_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
 
-  const upstream = await fetch(`${ARENA_AUDIO_ORIGIN}/audio/${file}`, {
+  const upstream = await fetch(`${ARENA_AUDIO_ORIGIN}/audio/${stored}`, {
     headers,
     signal: AbortSignal.timeout(30_000),
   });

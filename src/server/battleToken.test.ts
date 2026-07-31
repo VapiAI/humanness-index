@@ -16,19 +16,33 @@ describe('battleToken', () => {
     expect(battleTokenDecode(battleTokenEncode(payload))).toEqual(payload);
   });
 
-  it('rejects a tampered payload (forged winner-friendly variant)', () => {
+  it('does not expose the matchup to whoever holds the token', () => {
     const token = battleTokenEncode(payload);
-    const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
-    decoded.payload.leftVariantId = 'variant:voice-clara:xai:pro-streaming';
-    const forged = Buffer.from(JSON.stringify(decoded), 'utf-8').toString('base64url');
-    expect(() => battleTokenDecode(forged)).toThrow('Invalid battle token');
+    const raw = Buffer.from(token, 'base64url').toString('binary');
+    for (const secret of [payload.leftVariantId, payload.rightVariantId, payload.promptId]) {
+      expect(token).not.toContain(secret);
+      expect(raw).not.toContain(secret);
+    }
+  });
+
+  it('seals the same payload differently every time', () => {
+    expect(battleTokenEncode(payload)).not.toBe(battleTokenEncode(payload));
+  });
+
+  it('rejects a tampered payload (forged winner-friendly variant)', () => {
+    const raw = Buffer.from(battleTokenEncode(payload), 'base64url');
+    // Flip a ciphertext bit — GCM's auth tag must catch it.
+    raw[raw.length - 1] ^= 0xff;
+    expect(() => battleTokenDecode(raw.toString('base64url'))).toThrow(
+      'Invalid battle token',
+    );
   });
 
   it('rejects a garbage token', () => {
     expect(() => battleTokenDecode('not-a-real-token')).toThrow('Invalid battle token');
   });
 
-  it('rejects a payload signed with a different secret', () => {
+  it('rejects a payload sealed with a different secret', () => {
     const token = battleTokenEncode(payload);
     process.env.HUMANNESS_BATTLE_TOKEN_SECRET = 'a-different-secret';
     try {

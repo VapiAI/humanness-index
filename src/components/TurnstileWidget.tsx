@@ -2,9 +2,13 @@
 
 /**
  * Minimal Cloudflare Turnstile wrapper: loads the script once (explicit
- * render mode), renders the challenge into a div, and surfaces the solved
+ * render mode), renders the challenge into a div, and surfaces each solved
  * token via `onToken`. Only mounted when NEXT_PUBLIC_TURNSTILE_SITE_KEY is
  * configured (see ../hooks/useVoteGate).
+ *
+ * Rendered `interaction-only`, so it solves silently and takes no space unless
+ * Cloudflare actually wants a human. Tokens are single-use: bump `resetSignal`
+ * after spending one and the widget solves again for the next.
  */
 import { useEffect, useRef } from 'react';
 
@@ -14,11 +18,14 @@ type TurnstileRenderOptions = {
   'expired-callback'?: () => void;
   'error-callback'?: () => void;
   theme?: 'light' | 'dark' | 'auto';
+  appearance?: 'always' | 'execute' | 'interaction-only';
+  'refresh-expired'?: 'auto' | 'manual' | 'never';
 };
 
 type TurnstileApi = {
   render: (element: HTMLElement, options: TurnstileRenderOptions) => string;
   remove: (widgetId: string) => void;
+  reset: (widgetId: string) => void;
 };
 
 declare global {
@@ -58,14 +65,18 @@ type TurnstileWidgetProps = {
   onToken: (token: string) => void;
   /** Fired when the challenge errors, expires, or the script fails to load. */
   onError?: () => void;
+  /** Bump to discard the current token and solve for a fresh one. */
+  resetSignal?: number;
 };
 
 export const TurnstileWidget = ({
   siteKey,
   onToken,
   onError,
+  resetSignal = 0,
 }: TurnstileWidgetProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
   // Keep latest callbacks without re-rendering the widget.
   const callbacksRef = useRef({ onToken, onError });
   useEffect(() => {
@@ -73,15 +84,16 @@ export const TurnstileWidget = ({
   });
 
   useEffect(() => {
-    let widgetId: string | null = null;
     let cancelled = false;
 
     void loadTurnstile()
       .then((turnstile) => {
         if (cancelled || !containerRef.current) return;
-        widgetId = turnstile.render(containerRef.current, {
+        widgetIdRef.current = turnstile.render(containerRef.current, {
           sitekey: siteKey,
           theme: 'light',
+          appearance: 'interaction-only',
+          'refresh-expired': 'auto',
           callback: (token) => callbacksRef.current.onToken(token),
           'expired-callback': () => callbacksRef.current.onError?.(),
           'error-callback': () => callbacksRef.current.onError?.(),
@@ -93,9 +105,17 @@ export const TurnstileWidget = ({
 
     return () => {
       cancelled = true;
-      if (widgetId !== null) window.turnstile?.remove(widgetId);
+      if (widgetIdRef.current !== null) {
+        window.turnstile?.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
     };
   }, [siteKey]);
+
+  useEffect(() => {
+    if (resetSignal === 0 || widgetIdRef.current === null) return;
+    window.turnstile?.reset(widgetIdRef.current);
+  }, [resetSignal]);
 
   return <div ref={containerRef} className="hi-gate-widget" />;
 };

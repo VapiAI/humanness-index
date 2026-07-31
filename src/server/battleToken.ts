@@ -1,10 +1,14 @@
 /**
- * Stateless signed battle tokens — the original prototype's scheme
- * (HMAC-SHA256 over the canonical JSON payload, base64url of
- * {payload, signature}). The battle never needs server-side persistence: the
- * token round-trips through the client and is verified on vote.
+ * Stateless battle tokens — the token round-trips through the client and is
+ * decoded on vote, so a battle never needs server-side persistence.
+ *
+ * The payload names both models, so it is SEALED rather than merely signed.
+ * The original scheme (HMAC over base64url'd JSON) was tamper-proof but
+ * readable: one `atob()` on the token handed out with a blind battle revealed
+ * the matchup before voting. Sealing keeps the same round trip and adds the
+ * integrity guarantee via AES-GCM's auth tag.
  */
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { seal, unseal } from './opaque';
 
 export type BattlePayload = {
   id: string;
@@ -14,40 +18,17 @@ export type BattlePayload = {
   createdAt: number;
 };
 
-const secret = () =>
-  process.env.HUMANNESS_BATTLE_TOKEN_SECRET ?? 'humanness-local-battle-token-secret';
+const LABEL = 'battle-token';
 
-const canonical = (payload: BattlePayload): string =>
-  JSON.stringify(payload, Object.keys(payload).sort());
-
-const sign = (serialized: string): string =>
-  createHmac('sha256', secret()).update(serialized).digest('hex');
-
-export const battleTokenEncode = (payload: BattlePayload): string => {
-  const serialized = canonical(payload);
-  const token = JSON.stringify({ payload, signature: sign(serialized) });
-  return Buffer.from(token, 'utf-8').toString('base64url');
-};
+export const battleTokenEncode = (payload: BattlePayload): string =>
+  seal(LABEL, JSON.stringify(payload));
 
 export const battleTokenDecode = (token: string): BattlePayload => {
-  let parsed: { payload?: BattlePayload; signature?: string };
+  const plaintext = unseal(LABEL, token);
+  if (plaintext === null) throw new Error('Invalid battle token');
   try {
-    parsed = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
+    return JSON.parse(plaintext) as BattlePayload;
   } catch {
     throw new Error('Invalid battle token');
   }
-  const { payload, signature } = parsed;
-  if (!payload || typeof signature !== 'string') {
-    throw new Error('Invalid battle token');
-  }
-  const expected = sign(canonical(payload));
-  const expectedBuffer = Buffer.from(expected, 'utf-8');
-  const signatureBuffer = Buffer.from(signature, 'utf-8');
-  if (
-    expectedBuffer.length !== signatureBuffer.length ||
-    !timingSafeEqual(expectedBuffer, signatureBuffer)
-  ) {
-    throw new Error('Invalid battle token');
-  }
-  return payload;
 };

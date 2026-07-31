@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, it } from 'bun:test';
 import { randomUUID } from 'node:crypto';
 
 import {
+  BattleAlreadyVotedError,
   createBattle,
   getModels,
   getSample,
@@ -19,6 +20,7 @@ import {
 } from './battleToken';
 import {
   audioUrlFor,
+  blindClipHash,
   MODELS_BY_ID,
   PROMPTS,
   PROMPTS_BY_ID,
@@ -162,17 +164,18 @@ describe('submitVote', () => {
     );
   });
 
-  it('rejects a tampered token (re-encoded without re-signing)', async () => {
+  it('seals the matchup: unreadable in transit, unusable once edited', async () => {
     const token = tokenFor(
       variantOf('xai-xai-tts').id,
       variantOf('cartesia-sonic').id,
     );
-    const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
-    decoded.payload.rightVariantId = variantOf('cartesia-sonic-3').id;
-    const forged = Buffer.from(JSON.stringify(decoded), 'utf-8').toString(
-      'base64url',
+    const raw = Buffer.from(token, 'base64url');
+    expect(raw.toString('utf-8')).not.toContain('cartesia');
+    raw[raw.length - 1] ^= 0x01;
+    await expectVoteError(
+      submitVote(raw.toString('base64url'), 'left'),
+      'Invalid battle token',
     );
-    await expectVoteError(submitVote(forged, 'left'), 'Invalid battle token');
   });
 
   it('rejects garbage and empty tokens', async () => {
@@ -206,15 +209,26 @@ describe('submitVote', () => {
     expect(after.totalVotes).toBe(before.totalVotes);
   });
 
-  it('documents current behavior: tokens carry no TTL, stale createdAt is accepted', async () => {
-    // There is no expiry check on createdAt (battleTokenDecode and submitVote
-    // both ignore it). Replay is bounded only by the single-use battle id.
-    const token = tokenFor(
+  it('expires an aged token so pairings cannot be banked and cashed in later', async () => {
+    const stale = tokenFor(
       variantOf('inworld-tts-15-max').id,
       variantOf('elevenlabs-turbo-v2').id,
       { createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000 },
     );
-    const response = await submitVote(token, 'tie');
+    const error = await submitVote(stale, 'tie').then(
+      () => null,
+      (thrown: unknown) => thrown,
+    );
+    // Reported as spent, not malformed: the client's move is the next pairing.
+    expect(error).toBeInstanceOf(BattleAlreadyVotedError);
+
+    // An hour old is still a live listening session.
+    const recent = tokenFor(
+      variantOf('inworld-tts-15-max').id,
+      variantOf('elevenlabs-turbo-v2').id,
+      { createdAt: Date.now() - 60 * 60 * 1000 },
+    );
+    const response = await submitVote(recent, 'tie');
     expect(response.reveal.left.modelId).toBe('inworld-tts-15-max');
   });
 });
@@ -235,8 +249,19 @@ describe('createBattle', () => {
     expect(MODELS_BY_ID.has(left.modelId)).toBe(true);
     expect(MODELS_BY_ID.has(right.modelId)).toBe(true);
     expect(PROMPTS_BY_ID.get(payload.promptId)?.text).toBe(battle.prompt);
-    expect(battle.leftAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
-    expect(battle.rightAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
+    // Blind clips: the URL names neither model, and only the server can turn
+    // it back into the stored clip it addresses.
+    for (const [url, variantId] of [
+      [battle.leftAudioUrl, payload.leftVariantId],
+      [battle.rightAudioUrl, payload.rightVariantId],
+    ] as const) {
+      expect(url).toMatch(/^\/audio\/[A-Za-z0-9_-]+\.mp3$/);
+      expect(url).not.toContain(variantId);
+      const hash = blindClipHash(url.slice('/audio/'.length, -'.mp3'.length));
+      expect(
+        audioUrlFor(variantId, payload.promptId).endsWith(`/audio/${hash}.mp3`),
+      ).toBe(true);
+    }
   });
 
   it('never pairs a model against itself; pairs share a source voice (25 draws)', async () => {

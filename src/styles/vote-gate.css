@@ -15,6 +15,17 @@
   background: rgba(26, 26, 46, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.15s ease;
+}
+
+/*
+ * Idle: the gate is mounted all session so Turnstile can keep a token warm,
+ * but it must not be seen or clicked. Transparent rather than `display: none`
+ * or `visibility: hidden`, both of which stop the widget from solving.
+ */
+.hi-gate-overlay[data-waiting='false'] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .hi-gate-card {

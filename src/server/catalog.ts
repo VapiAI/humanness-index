@@ -22,6 +22,7 @@ import {
   modelEntryById,
   SOURCE_VOICE_IDS,
 } from '../catalog';
+import { seal, unseal } from './opaque';
 
 type CatalogProvider = {
   id: string;
@@ -214,13 +215,38 @@ const AUDIO_GENERATION_VERSION = 'settings-v3';
 
 const AUDIO_ORIGIN = process.env.HUMANNESS_AUDIO_ORIGIN ?? ARENA_AUDIO_ORIGIN;
 
+/** The stored clip's content hash — frozen; this is its address in the store. */
+const clipHash = (variantId: string, promptId: string): string =>
+  createHash('sha256')
+    .update(`${variantId}|${promptId}|${AUDIO_GENERATION_VERSION}`)
+    .digest('hex')
+    .slice(0, 32);
+
 /**
  * Hosted clip URL for a (variant, prompt) — the original prototype's exact
- * content-hash scheme, frozen so the hosted clips resolve unchanged.
+ * content-hash scheme, frozen so the hosted clips resolve unchanged. Safe
+ * wherever the model is already named (labeled samples, the clip pipeline);
+ * use `blindClipUrl` for anything served inside a blind battle.
  */
-export const audioUrlFor = (variantId: string, promptId: string): string => {
-  const digest = createHash('sha256')
-    .update(`${variantId}|${promptId}|${AUDIO_GENERATION_VERSION}`)
-    .digest('hex');
-  return `${AUDIO_ORIGIN}/audio/${digest.slice(0, 32)}.mp3`;
+export const audioUrlFor = (variantId: string, promptId: string): string =>
+  `${AUDIO_ORIGIN}/audio/${clipHash(variantId, promptId)}.mp3`;
+
+const BLIND_CLIP_LABEL = 'blind-clip';
+
+/**
+ * The clip URL a browser gets for a BLIND battle. Every input to `clipHash`
+ * ships in this repo, so the content-hash URL names the model in its filename
+ * — precompute 88 variants x 20 prompts and any battle unmasks from the URL
+ * alone. This seals the identity instead: only `/audio/[file]` can resolve it,
+ * and the fresh IV per call means the same clip looks different every battle.
+ */
+export const blindClipUrl = (variantId: string, promptId: string): string =>
+  `/audio/${seal(BLIND_CLIP_LABEL, `${variantId}|${promptId}`)}.mp3`;
+
+/** Resolve a blind clip id back to its stored content hash, or null if forged. */
+export const blindClipHash = (id: string): string | null => {
+  const plaintext = unseal(BLIND_CLIP_LABEL, id);
+  const [variantId, promptId] = plaintext?.split('|') ?? [];
+  if (!variantId || !promptId) return null;
+  return clipHash(variantId, promptId);
 };

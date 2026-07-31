@@ -66,8 +66,10 @@ describe('GET /api/battle', () => {
     expect(MODELS_BY_ID.has(left.modelId)).toBe(true);
     expect(MODELS_BY_ID.has(right.modelId)).toBe(true);
     expect(PROMPTS_BY_ID.get(payload.promptId)?.text).toBe(battle.prompt);
-    expect(battle.leftAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
-    expect(battle.rightAudioUrl).toMatch(/^https:\/\/.+\.mp3$/);
+    expect(battle.leftAudioUrl).toMatch(/^\/audio\/[A-Za-z0-9_-]+\.mp3$/);
+    expect(battle.rightAudioUrl).toMatch(/^\/audio\/[A-Za-z0-9_-]+\.mp3$/);
+    expect(battle.leftAudioUrl).not.toContain(payload.leftVariantId);
+    expect(battle.rightAudioUrl).not.toContain(payload.rightVariantId);
   });
 });
 
@@ -97,6 +99,21 @@ describe('POST /api/vote', () => {
       expect(typeof body.totalUniqueVotes).toBe('number');
     } finally {
       globalThis.fetch = realFetch;
+    }
+  });
+
+  it('rejects a token-less vote once the captcha gate is configured', async () => {
+    // The gate is only worth anything if omitting the field fails; a script
+    // that skips the challenge must not vote.
+    process.env.TURNSTILE_SECRET_KEY = 'test-secret';
+    try {
+      const response = await postVote(
+        JSON.stringify({ voteToken: freshVoteToken(), winner: 'left' }),
+        uniqueIp(),
+      );
+      expect(response.status).toBe(403);
+    } finally {
+      delete process.env.TURNSTILE_SECRET_KEY;
     }
   });
 

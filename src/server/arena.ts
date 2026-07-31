@@ -14,6 +14,7 @@ import type {
 import { voteMatchesCrowd } from '../lib/scoring';
 import {
   audioUrlFor,
+  blindClipUrl,
   MODELS,
   MODELS_BY_ID,
   PROMPTS,
@@ -255,26 +256,36 @@ export const createBattle = async (): Promise<BattleResponse> => {
     rightVariantId: right.id,
     createdAt: Date.now(),
   };
-  // Blind by design: the response carries NO model identities. The matchup
-  // lives only inside the signed voteToken (server-decodable), so the frontend
-  // cannot reveal which model is which until the vote response comes back.
+  // Blind by design, and blind in fact: the response carries no model
+  // identities, the matchup lives only inside the SEALED voteToken, and the
+  // clip URLs are sealed too — the content-hash form would otherwise name each
+  // model in its filename to anyone who reads this repo.
   return {
     id: payload.id,
     prompt: prompt.text,
     voteToken: battleTokenEncode(payload),
-    leftAudioUrl: audioUrlFor(left.id, prompt.id),
-    rightAudioUrl: audioUrlFor(right.id, prompt.id),
+    leftAudioUrl: blindClipUrl(left.id, prompt.id),
+    rightAudioUrl: blindClipUrl(right.id, prompt.id),
   };
 };
 
 export class VoteError extends Error {}
 
 /**
- * The battle's one vote is already recorded, so this token can never succeed.
- * Distinct from the other VoteErrors (which are malformed input) because the
- * client's only sensible response is to move on to the next pairing.
+ * This token can never succeed — the battle's one vote is already recorded, or
+ * the token has aged out. Distinct from the other VoteErrors (which are
+ * malformed input) because the client's only sensible response is to move on
+ * to the next pairing.
  */
 export class BattleAlreadyVotedError extends VoteError {}
+
+/**
+ * How long a battle stays votable. Battles are stateless — nothing exists
+ * server-side until the vote — so without a deadline a token minted today is
+ * spendable forever, and a script could bank thousands of pre-solved pairings
+ * to cash in later. Hours of slack for a listener; useless as a stash.
+ */
+const BATTLE_TTL_MS = 2 * 60 * 60 * 1000;
 
 const isVoteWinner = (value: string): value is VoteWinner =>
   value === 'left' || value === 'right' || value === 'tie';
@@ -291,6 +302,9 @@ export const submitVote = async (
     payload = battleTokenDecode(voteToken);
   } catch {
     throw new VoteError('Invalid battle token');
+  }
+  if (Date.now() - payload.createdAt > BATTLE_TTL_MS) {
+    throw new BattleAlreadyVotedError('Battle expired');
   }
   const left = VARIANTS_BY_ID.get(payload.leftVariantId);
   const right = VARIANTS_BY_ID.get(payload.rightVariantId);

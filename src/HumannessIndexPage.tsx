@@ -172,10 +172,10 @@ export const HumannessIndexPage = ({
     if (revealed) audio.stopPlayback();
   }, [revealed, audio.stopPlayback]);
 
-  // The Turnstile challenge (every 10th vote) is modal: silence the battle the
-  // instant it opens so clips don't keep playing behind the overlay while the
-  // listener solves it. The pending vote is captured in the gate, so the reveal
-  // still lands once they pass.
+  // A vote that outran its Turnstile token puts a modal check on screen:
+  // silence the battle the instant it opens so clips don't keep playing behind
+  // the overlay. The pending vote is captured in the gate, so the reveal still
+  // lands once the token arrives.
   useEffect(() => {
     if (voteGate.challengeOpen) audio.stopPlayback();
   }, [voteGate.challengeOpen, audio.stopPlayback]);
@@ -271,18 +271,19 @@ export const HumannessIndexPage = ({
   };
 
   const handleVote = (winner: VoteChoice) => {
-    // `votingRef` rejects the rapid follow-up clicks that used to each count a
-    // vote (tripping the Turnstile cadence early) and fire duplicate submits,
-    // since `reveal`/`voting` don't update until the round-trip returns.
+    // `votingRef` rejects the rapid follow-up clicks that used to fire
+    // duplicate submits, since `reveal`/`voting` don't update until the
+    // round-trip returns.
     if (!audio.bothStarted || revealed || votingRef.current) return;
     votingRef.current = true;
     setVoting(true);
 
-    // Every 10th vote must pass the Turnstile check before it counts
-    // (no-op without keys — castVote then runs immediately). The reveal is
-    // built entirely from the vote response (identities, deltas, correctness);
-    // the client never held the pre-vote identities. Dismissing the challenge
-    // releases the lock via the cancel callback.
+    // Every vote carries a Turnstile token (no-op without keys — castVote then
+    // runs immediately); the gate keeps one warm, so it only stalls if the vote
+    // beats it. The reveal is built entirely from the vote response
+    // (identities, deltas, correctness); the client never held the pre-vote
+    // identities. Abandoning the check releases the lock via the cancel
+    // callback.
     voteGate.guardVote(
       (captchaToken) => {
         void arena
