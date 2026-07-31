@@ -32,7 +32,9 @@ const main = async () => {
   const { totalVotes, generation } = await store.rebuildSnapshot();
   const rebuildSeconds = ((Date.now() - before) / 1000).toFixed(1);
 
-  // Prove the switch: this read now goes through the markers.
+  // Prove the switch: this read now goes through the markers. Blob overwrites
+  // take a moment to propagate, so pause first or this reads the old snapshot.
+  await new Promise((resolve) => setTimeout(resolve, 3_000));
   const readStart = Date.now();
   const exact = await store.load();
   const readMs = Date.now() - readStart;
@@ -44,7 +46,8 @@ const main = async () => {
   console.log(`Marker-backed load(): ${readMs} ms · ${exact.totalVotes} unique votes`);
   if (exact.totalVotes !== totalVotes) {
     console.log(
-      `  (${exact.totalVotes - totalVotes} vote(s) landed during the rebuild — expected)`,
+      `  (${exact.totalVotes - totalVotes} vote(s) difference — votes landing ` +
+        `during or after the refold, replayed from their markers)`,
     );
   }
 };

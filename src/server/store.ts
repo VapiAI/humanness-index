@@ -275,28 +275,34 @@ export const blobArenaStore = (token: string): ArenaStore => {
   const markerFolder = (generation: number) => `${PENDING_PREFIX}g${generation}/`;
 
   /**
+   * Every marker a read at `generation` looks through. Two folders, because a
+   * vote can be filed against generation N while a roll moves the snapshot to
+   * N+1 — so the older folder stays live for exactly one more turn.
+   */
+  const listMarkers = async (generation: number) =>
+    (
+      await Promise.all(
+        [generation - 1, generation]
+          .filter((value) => value >= 1)
+          .map((value) => listAll(markerFolder(value))),
+      )
+    ).flat();
+
+  /**
    * The votes still to replay into `snapshot`, plus the ids a roll should then
    * record as folded — everything visible now, not just the replayed subset,
    * or markers folded by an earlier pass would be replayed a second time.
    *
-   * Marker-backed snapshots list two generations: a vote can be filed against
-   * generation N while a roll moves the snapshot to N+1, so the older folder
-   * stays live for one more turn, and `battleIds` drops whatever that roll
-   * already folded. A snapshot written before markers existed has no
-   * generation, so it falls back to listing every event ever recorded.
+   * `battleIds` drops whatever the last roll already folded out of those
+   * folders. A snapshot written before markers existed has no generation, so
+   * it falls back to listing every event ever recorded.
    */
   const pendingWork = async (snapshot: SnapshotBlob | null) => {
     const folded = new Set(snapshot?.battleIds ?? []);
     const listed =
       snapshot?.generation === undefined
         ? await listEventBlobs()
-        : (
-            await Promise.all(
-              [snapshot.generation - 1, snapshot.generation]
-                .filter((generation) => generation >= 1)
-                .map((generation) => listAll(markerFolder(generation))),
-            )
-          ).flat();
+        : await listMarkers(snapshot.generation);
     const seen = new Set<string>();
     const pending = listed.filter((blob) => {
       const battleId = battleIdFromPathname(blob.pathname);
@@ -385,7 +391,10 @@ export const blobArenaStore = (token: string): ArenaStore => {
     loadStandings,
     writeStandings,
     async rebuildSnapshot() {
-      const generation = 1;
+      // Advance the sequence rather than resetting it: votes in flight file
+      // markers under the CURRENT generation, and a read at the next one still
+      // looks through that folder, so a rebuild can't strand them.
+      const generation = ((await loadSnapshot())?.generation ?? 0) + 1;
       // Deliberately gentler than the request-path read: this is offline
       // maintenance with no timeout budget, and a burst of thousands of blob
       // reads from one client can trip Vercel's automatic DDoS mitigation
@@ -396,7 +405,7 @@ export const blobArenaStore = (token: string): ArenaStore => {
       const foldedIds = new Set(events.map((event) => event.battleId));
       // Listed AFTER the fold: a marker written mid-rebuild is only recorded as
       // folded if its event actually made it into the counts above.
-      const markers = await listAll(markerFolder(generation));
+      const markers = await listMarkers(generation);
       await writeSnapshot({
         variants: Object.fromEntries(state),
         battleIds: markers

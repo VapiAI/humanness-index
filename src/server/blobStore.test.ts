@@ -20,15 +20,24 @@ const ORIGIN = 'https://blob.test/';
 const backend = new Map<string, string>();
 let listedPrefixes: string[] = [];
 
+/** One-shot hook fired just after the event log is listed (see the rebuild test). */
+let onEventsListed: (() => void) | null = null;
+
 mock.module('@vercel/blob', () => ({
   list: async ({ prefix }: { prefix: string }) => {
     listedPrefixes.push(prefix);
-    return {
+    const page = {
       blobs: [...backend.keys()]
         .filter((pathname) => pathname.startsWith(prefix))
         .map((pathname) => ({ pathname, url: `${ORIGIN}${pathname}` })),
       hasMore: false,
     };
+    if (prefix === 'humanness/events/' && onEventsListed) {
+      const fire = onEventsListed;
+      onEventsListed = null;
+      fire();
+    }
+    return page;
   },
   put: async (
     pathname: string,
@@ -74,6 +83,15 @@ const vote = (): VoteEvent => {
     rightVariantId: right.id,
     createdAt: 1_700_000_000_000 + nextBattle,
   };
+};
+
+/** Write a vote straight to the backend the way `recordVote` does: log, then marker. */
+const file = (event: VoteEvent, generation: number) => {
+  backend.set(`humanness/events/${event.battleId}.json`, JSON.stringify(event));
+  backend.set(
+    `humanness/pending/g${generation}/${event.battleId}.json`,
+    JSON.stringify(event),
+  );
 };
 
 const snapshotBlob = () =>
@@ -152,12 +170,22 @@ describe('blob store: marker index', () => {
 
   it('replays a vote filed against the previous generation mid-roll', async () => {
     const before = await store.load();
+    // A vote that read the old generation while a roll moved the snapshot on;
+    // as on the real path, the event blob is written before the marker.
     const straggler = vote();
-    // A vote that read the old generation while a roll moved the snapshot on.
-    backend.set(
-      `humanness/pending/g${snapshotBlob().generation! - 1}/${straggler.battleId}.json`,
-      JSON.stringify(straggler),
-    );
+    file(straggler, snapshotBlob().generation! - 1);
+    expect((await store.load()).totalVotes).toBe(before.totalVotes + 1);
+  });
+
+  it('rebuilds onto the next generation without stranding a vote that lands mid-rebuild', async () => {
+    const before = await store.load();
+    // Lands after the rebuild has listed the log, so only its marker can
+    // account for it — exactly what a rebuild must not age out.
+    const late = vote();
+    onEventsListed = () => file(late, snapshotBlob().generation!);
+
+    const rebuilt = await store.rebuildSnapshot();
+    expect(rebuilt.generation).toBeGreaterThan(1); // continues, doesn't reset
     expect((await store.load()).totalVotes).toBe(before.totalVotes + 1);
   });
 
