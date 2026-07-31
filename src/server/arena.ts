@@ -202,8 +202,12 @@ export const getTotalUniqueVotes = async (): Promise<number> => {
 
 export const createBattle = async (): Promise<BattleResponse> => {
   const store = arenaStore();
+  // Pairing reads the snapshot rather than the exact counts: it only weights
+  // coverage across 88 variants, so trailing the log by a few dozen votes is
+  // invisible, and it keeps battle creation off the full event listing (which
+  // grows by a blob round trip per 1,000 votes).
   const [{ state }, standings] = await Promise.all([
-    store.load(),
+    store.loadSnapshotState(),
     store.loadStandings(),
   ]);
   // Close-matchup weighting reads the cached Bradley–Terry ratings (the same

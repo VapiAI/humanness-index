@@ -66,8 +66,19 @@ export type StoredStandings = {
 export class DuplicateVoteError extends Error {}
 
 type ArenaStore = {
-  /** Current variant-level counts + total unique votes (fast: snapshot + pending). */
+  /**
+   * Exact variant-level counts + total unique votes: the snapshot plus every
+   * vote recorded since it was written. Finding those pending votes means
+   * listing the whole event prefix, which costs one round trip per 1,000 votes
+   * ever cast — so this is for paths that must not miss a vote.
+   */
   load(): Promise<ArenaSnapshot>;
+  /**
+   * The folded snapshot only, at two blob reads flat however long the log
+   * grows. Trails `load` by up to SNAPSHOT_INTERVAL votes, so it suits readers
+   * that only need the shape of the standings rather than an exact count.
+   */
+  loadSnapshotState(): Promise<ArenaSnapshot>;
   /** Append a vote; throws DuplicateVoteError if the battle was already voted. */
   recordVote(event: VoteEvent): Promise<void>;
   /**
@@ -225,8 +236,8 @@ const blobStore = (token: string): ArenaStore => {
     return blobs;
   };
 
-  const load = async (): Promise<ArenaSnapshot> => {
-    const snapshot = await loadSnapshot();
+  /** The folded snapshot as working counts (no pending replay). */
+  const foldedState = (snapshot: SnapshotBlob | null): ArenaSnapshot => {
     const seeded = seededState();
     const state: StandingsState = snapshot
       ? new Map(
@@ -242,6 +253,15 @@ const blobStore = (token: string): ArenaStore => {
           ]),
         )
       : seeded.state;
+    return { state, totalVotes: snapshot?.totalVotes ?? seeded.totalVotes };
+  };
+
+  const loadSnapshotState = async (): Promise<ArenaSnapshot> =>
+    foldedState(await loadSnapshot());
+
+  const load = async (): Promise<ArenaSnapshot> => {
+    const snapshot = await loadSnapshot();
+    const { state, totalVotes: baseVotes } = foldedState(snapshot);
     const includedBattles = new Set(snapshot?.battleIds ?? []);
 
     const eventBlobs = await listEventBlobs();
@@ -254,7 +274,6 @@ const blobStore = (token: string): ArenaStore => {
     events.sort((a, b) => a.createdAt - b.createdAt);
     for (const event of events) applyEvent(state, event);
 
-    const baseVotes = snapshot?.totalVotes ?? seeded.totalVotes;
     return { state, totalVotes: baseVotes + events.length };
   };
 
@@ -273,6 +292,7 @@ const blobStore = (token: string): ArenaStore => {
 
   return {
     load,
+    loadSnapshotState,
     loadVoteEvents,
     loadStandings,
     writeStandings,
@@ -321,13 +341,15 @@ const memoryStore = (): ArenaStore => {
   const events: VoteEvent[] = [];
   let standings: StoredStandings | null = null;
 
+  const snapshot = async () => ({
+    state: new Map([...state.entries()].map(([id, stats]) => [id, { ...stats }])),
+    totalVotes,
+  });
+
   return {
-    async load() {
-      return {
-        state: new Map([...state.entries()].map(([id, stats]) => [id, { ...stats }])),
-        totalVotes,
-      };
-    },
+    load: snapshot,
+    // Nothing is deferred in memory, so the cheap read is the exact one.
+    loadSnapshotState: snapshot,
     async loadVoteEvents() {
       return [...events];
     },

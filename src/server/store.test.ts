@@ -81,6 +81,18 @@ describe('arenaStore (in-memory fallback)', () => {
     expect(second.state.get(variantId)).toEqual(original);
   });
 
+  // Battle pairing reads this instead of load() to stay off the full event
+  // listing; it must still be a complete state, just possibly a few votes old.
+  it('loadSnapshotState() covers every variant and copies defensively', async () => {
+    const store = arenaStore();
+    const variantId = variantsOfModel('xai-xai-tts')[0].id;
+    const cheap = await store.loadSnapshotState();
+    for (const variant of VARIANTS) expect(cheap.state.has(variant.id)).toBe(true);
+    const original = { ...cheap.state.get(variantId)! };
+    cheap.state.get(variantId)!.wins = 999_999;
+    expect((await store.loadSnapshotState()).state.get(variantId)).toEqual(original);
+  });
+
   it('folds a vote into the win/loss/tie counts (replayed from winner + ids)', async () => {
     const store = arenaStore();
     const left = variantsOfModel('inworld-tts-2')[1];
