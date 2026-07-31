@@ -7,7 +7,7 @@
  * the hosted MP3s. catalog.test.ts pins golden hashes on the server side;
  * this module is the generation-side twin.
  */
-import { createHash } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 
 import { ARENA_AUDIO_ORIGIN } from '../catalog/audio';
 
@@ -55,6 +55,42 @@ export const arenaEncodeArgs = (): string[] => [
   '-b:a',
   `${ARENA_CLIP_FORMAT.bitrateKbps}k`,
 ];
+
+/**
+ * Peak magnitude, in dB, of the unpredictable offset added to every loudness
+ * gain (see `gainJitterDb`).
+ *
+ * Sized to be unguessable without being audible: 0.2 dB sits far below the
+ * ~1 dB just-noticeable difference for programme loudness and well inside the
+ * normalizer's idempotence tolerance, so a jittered clip still measures
+ * on-target and is not needlessly re-encoded on the next pass.
+ */
+export const GAIN_JITTER_DB = 0.2;
+
+/**
+ * A fresh, unpredictable offset for a clip's loudness gain.
+ *
+ * `sha256(clip)` is a permanent label for a clip however its URL is sealed, so
+ * anyone who archives battle audio and reads the post-vote reveal can build a
+ * lookup table naming the model behind each clip. Re-encoding invalidates such
+ * a table — but only if they cannot reproduce the new bytes. This repo is
+ * public and the rest of the gain is `target + comp - measured`, all of which
+ * an attacker holding the old audio can recompute, so without this term a
+ * re-encode is something they can replay locally in one command.
+ *
+ * Drawn from the CSPRNG per clip and deliberately never persisted — not to a
+ * file, an env var, or a checkpoint. Nothing needs to reproduce these bytes
+ * once they are uploaded, so the value lives only in memory for one encode.
+ * That is what keeps this repo safe to publish: there is no rotation secret to
+ * leak, because there is no secret. Being per-clip, it is also uncorrelated
+ * with model identity and so cannot cue a listener toward any model.
+ *
+ * This defeats byte-exact lookup only. Gain is invertible, so an attacker who
+ * decodes to PCM and normalises before comparing is unaffected by any jitter,
+ * secret or otherwise; that rung is answered by the statistical vote sweep.
+ */
+export const gainJitterDb = (): number =>
+  randomInt(-1000 * GAIN_JITTER_DB, 1000 * GAIN_JITTER_DB + 1) / 1000;
 
 /** Blob store pathname for a clip hash. */
 export const clipBlobPathname = (hash: string): string => `audio/${hash}.mp3`;

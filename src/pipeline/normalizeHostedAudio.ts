@@ -47,6 +47,7 @@
  *   bun run src/pipeline/normalizeHostedAudio.ts --limit 40     # smoke test on the first 40 clips
  *   bun run src/pipeline/normalizeHostedAudio.ts --verify-only  # just re-measure a live sample
  *   bun run src/pipeline/normalizeHostedAudio.ts --force        # ignore checkpoints, re-process all
+ *   bun run src/pipeline/normalizeHostedAudio.ts --rotate       # re-encode clips a prior run skipped, changing their bytes
  * Flags: --target <LUFS> --comp <dB> --tol <LU> --tp-ceiling <dBTP>
  *        --shard-size <n> --workers <n> --sample <n>
  *
@@ -74,6 +75,7 @@ import {
   ARENA_CLIP_FORMAT,
   arenaEncodeArgs,
   clipHash,
+  gainJitterDb,
   looksLikeMp3,
   median,
   parseArgs,
@@ -180,6 +182,17 @@ type NormalizeOpts = {
   comp: number;
   tol: number;
   tpCeiling: number;
+  /**
+   * Re-encode even a clip that is already on target and in the arena format,
+   * changing its bytes. `sha256(clip)` is a stable label for a clip no matter
+   * how its URL is sealed, so anyone who archived audio from past battles and
+   * read the post-vote reveal holds a lookup table that never expires.
+   * Re-encoding invalidates every such table at once.
+   *
+   * Unpredictability of the new bytes comes from `gainJitterDb`, which every
+   * loudness gain carries; rotation only decides WHICH clips are re-encoded.
+   */
+  rotate: boolean;
 };
 
 /* --------------------------------- helpers -------------------------------- */
@@ -337,7 +350,9 @@ const encodeNormalized = (src: string, dest: string, gainDb: number): boolean =>
       '-i',
       src,
       '-af',
-      `volume=${gainDb.toFixed(2)}dB,alimiter=limit=${TP_LIMIT_LINEAR}:level=false`,
+      // 3dp, not 2: rotation jitter is drawn at 0.001 dB resolution, and
+      // rounding it to 0.01 dB would collapse it to a few dozen guessable values.
+      `volume=${gainDb.toFixed(3)}dB,alimiter=limit=${TP_LIMIT_LINEAR}:level=false`,
       ...arenaEncodeArgs(),
       '-f',
       'mp3',
@@ -442,7 +457,7 @@ const processOne = async (
       Math.round(audio.br / 1000) === ARENA_BITRATE_KBPS;
     const onTarget =
       Math.abs(before.i - opts.target) <= opts.tol && before.tp <= opts.tpCeiling;
-    if (onTarget && formatMatches) {
+    if (onTarget && formatMatches && !opts.rotate) {
       return {
         ...base,
         beforeI: before.i,
@@ -452,7 +467,8 @@ const processOne = async (
       };
     }
 
-    let gain = opts.target + opts.comp - before.i;
+    const jitter = gainJitterDb();
+    let gain = opts.target + opts.comp - before.i + jitter;
     let note: string | undefined;
     if (gain > GAIN_CAP_DB) {
       gain = GAIN_CAP_DB;
@@ -474,9 +490,11 @@ const processOne = async (
       outcome: 'normalized',
       note:
         note ??
-        (onTarget
-          ? `re-encoded for format only (was ${audio.sr} Hz / ${Math.round(audio.br / 1000)}k)`
-          : undefined),
+        (!onTarget
+          ? undefined
+          : formatMatches
+            ? `bytes rotated (jitter ${jitter >= 0 ? '+' : ''}${jitter.toFixed(3)} dB)`
+            : `re-encoded for format only (was ${audio.sr} Hz / ${Math.round(audio.br / 1000)}k)`),
     };
   } catch (error) {
     return {
@@ -507,6 +525,7 @@ const runNormalizeWorker = async (
     comp: flagNum(flags, 'comp', 0),
     tol: flagNum(flags, 'tol', IDEMPOTENT_TOL_LU),
     tpCeiling: flagNum(flags, 'tp-ceiling', TP_CEILING_DBTP),
+    rotate: flags.has('rotate'),
   };
 
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
@@ -788,6 +807,7 @@ const runNormalization = async (
             String(opts.tol),
             '--tp-ceiling',
             String(opts.tpCeiling),
+            ...(opts.rotate ? ['--rotate'] : []),
           ],
           WORKER_TIMEOUT_MS,
         );
@@ -994,6 +1014,26 @@ const orchestrate = async (
   const workers = flagNum(flags, 'workers', DEFAULT_WORKERS);
   const sampleSize = flagNum(flags, 'sample', DEFAULT_SAMPLE);
 
+  const rotate = flags.has('rotate');
+
+  // Rotation reopens only the clips a previous run left alone. Checkpoints for
+  // clips it already re-encoded stay, so they are not put through a second
+  // encode generation while the untouched ones catch up to their first.
+  if (rotate && !force && existsSync(CKPT_DIR)) {
+    let reopened = 0;
+    for (const name of readdirSync(CKPT_DIR)) {
+      if (!name.endsWith('.jsonl')) continue;
+      const file = resolve(CKPT_DIR, name);
+      const kept = readCkptFile(file).filter((line) => {
+        if (line.outcome !== 'already-on-target') return true;
+        reopened += 1;
+        return false;
+      });
+      writeFileSync(file, kept.map((line) => `${JSON.stringify(line)}\n`).join(''));
+    }
+    console.log(`reopened ${reopened} untouched clips for byte rotation (--rotate)`);
+  }
+
   if (force && existsSync(CKPT_DIR)) {
     for (const name of readdirSync(CKPT_DIR)) {
       if (name.endsWith('.jsonl')) rmSync(resolve(CKPT_DIR, name), { force: true });
@@ -1046,7 +1086,14 @@ const orchestrate = async (
   // ----- verify-only short circuit -----
   if (verifyOnly) {
     const { verify, abPairs } = await runVerification(manifest, target, false);
-    printReport(manifest, [], 0, { target, comp: 0, tol, tpCeiling }, verify, abPairs);
+    printReport(
+      manifest,
+      [],
+      0,
+      { target, comp: 0, tol, tpCeiling, rotate },
+      verify,
+      abPairs,
+    );
     return;
   }
 
@@ -1075,7 +1122,7 @@ const orchestrate = async (
       `-> MP3 comp ${comp >= 0 ? '+' : ''}${fmt(comp, 2)} dB`,
   );
 
-  const opts: NormalizeOpts = { target, comp, tol, tpCeiling };
+  const opts: NormalizeOpts = { target, comp, tol, tpCeiling, rotate };
 
   if (dryRun) {
     console.log('\n--dry-run: skipping normalization. Spread + target shown above.');

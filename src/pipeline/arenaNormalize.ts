@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 import { cleanFilterChain, type CleanOptions } from './audioClean';
-import { arenaEncodeArgs, looksLikeMp3 } from './lib';
+import { arenaEncodeArgs, gainJitterDb, looksLikeMp3 } from './lib';
 
 /**
  * Loudness target for ingested clips, matched to the GENERATED set's MEDIAN
@@ -118,12 +118,16 @@ export const toArenaMp3 = (
       throw new Error(`ffmpeg clean/trim failed: ${stage1.stderr?.toString().slice(-400)}`);
     }
     const measuredI = Number(measureLoudnorm(wavPath).i);
+    // gainJitterDb keeps the encoded bytes unpredictable: the rest of this gain
+    // is public arithmetic over a measurement anyone holding the clip can redo.
     const gainDb = Number.isFinite(measuredI)
-      ? ARENA_LUFS_TARGET + MP3_LOUDNESS_COMP_DB - measuredI
+      ? ARENA_LUFS_TARGET + MP3_LOUDNESS_COMP_DB - measuredI + gainJitterDb()
       : 0;
     const stage2 = spawnSync('ffmpeg', [
       '-y', '-filter_threads', '1', '-i', wavPath, '-af',
-      `volume=${gainDb.toFixed(2)}dB,alimiter=limit=${TP_LIMIT_LINEAR}:level=false`,
+      // 3dp, not 2: jitter is drawn at 0.001 dB resolution, and rounding to
+      // 0.01 dB would collapse it to a few dozen guessable values.
+      `volume=${gainDb.toFixed(3)}dB,alimiter=limit=${TP_LIMIT_LINEAR}:level=false`,
       ...arenaEncodeArgs(), '-f', 'mp3', outPath,
     ]);
     if (stage2.status !== 0 || !existsSync(outPath)) {
