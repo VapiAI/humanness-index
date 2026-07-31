@@ -21,6 +21,17 @@ const CACHE = cacheArg === -1 ? '/tmp/humanness-vote-events.json' : process.argv
 
 /** Chain a model's own votes into a listening session while gaps stay under this. */
 const SESSION_GAP_MS = 10 * 60 * 1000;
+/**
+ * A sitting is only one person if one person could have produced it. Voting
+ * means listening to two clips, so nobody sustains a vote every 10 seconds —
+ * when the whole arena is moving faster than this across a sitting's span, the
+ * sitting is many visitors interleaved and per-session attribution is a
+ * fiction. Launch day chains into 300-500 vote "sittings" of 3-7 hours at
+ * 6+ votes/min; the busiest sitting that is plausibly one person runs at 3.15,
+ * and the Fish Audio burst ran at 1.75. A script fast enough to clear this bar
+ * is caught by the fast-vote test instead.
+ */
+const MAX_SOLO_RATE_PER_MIN = 6;
 /** Sessions shorter than this are too small to distinguish from luck. */
 const SESSION_MIN = 15;
 /** A vote this soon after the previous one did not involve listening to two clips. */
@@ -211,6 +222,20 @@ const twoProportion = (kA: number, nA: number, kB: number, nB: number) => {
   return upperTail((kA / nA - kB / nB) / se);
 };
 
+/** Exact binomial lower tail, P(X <= k) in n trials at rate p. */
+const binomialAtMost = (k: number, n: number, p: number) => {
+  if (k >= n) return 1;
+  if (k < 0 || p <= 0) return k < 0 ? 0 : 1;
+  // Ratio-stepped pmf: no factorials, stable at the n a single sitting reaches.
+  let term = (1 - p) ** n;
+  let sum = term;
+  for (let i = 1; i <= k; i += 1) {
+    term *= ((n - i + 1) / i) * (p / (1 - p));
+    sum += term;
+  }
+  return Math.min(1, sum);
+};
+
 /** log odds ratio of winning on the right vs the left, and its standard error. */
 const sideOdds = (winRight: number, lossRight: number, winLeft: number, lossLeft: number) => {
   // Haldane correction keeps a zero cell from blowing the whole thing up.
@@ -361,6 +386,35 @@ console.log(
   'model                          n   winrate  streak  p(streak)   best30  p(best30)   side p   fast Δ   p(fast)',
 );
 
+/** How often a vote anywhere in the arena ends in a tie — the null for test 6. */
+const corpusTieRate = scored.filter((e) => e.winner === 'tie').length / scored.length;
+
+/** First index in the global vote stream at or after `t`. */
+const streamIndex = (t: number) => {
+  let lo = 0;
+  let hi = scored.length;
+  while (lo < hi) {
+    const m = (lo + hi) >> 1;
+    if (scored[m].at < t) lo = m + 1;
+    else hi = m;
+  }
+  return lo;
+};
+
+/** Could one person have produced this sitting, or was the arena too busy? */
+const isSolo = (session: ModelVote[]) => {
+  const from = session[0].at;
+  const to = session[session.length - 1].at;
+  const minutes = Math.max(1, (to - from) / 60_000);
+  return (streamIndex(to + 1) - streamIndex(from)) / minutes <= MAX_SOLO_RATE_PER_MIN;
+};
+
+/** Sittings the two session tests had to abstain on, counted per model. */
+let crowded = 0;
+let crowdedVotes = 0;
+/** Lowest-p tie sitting seen anywhere, so test 6 is visible even when it is quiet. */
+let quietest: { model: string; at: number; ties: number; n: number; p: number } | null = null;
+
 for (const id of models) {
   const votes = byModel.get(id)!;
   const decided = votes.filter((v) => v.result !== 'tie');
@@ -472,7 +526,10 @@ for (const id of models) {
     if (last && v.at - last[last.length - 1].at <= SESSION_GAP_MS) last.push(v);
     else sessions.push([v]);
   }
-  const eligible = sessions.filter((s) => s.filter((v) => v.result !== 'tie').length >= SESSION_MIN);
+  const solo = sessions.filter(isSolo);
+  crowded += sessions.length - solo.length;
+  crowdedVotes += sessions.reduce((a, s) => a + s.length, 0) - solo.reduce((a, s) => a + s.length, 0);
+  const eligible = solo.filter((s) => s.filter((v) => v.result !== 'tie').length >= SESSION_MIN);
   for (const session of eligible) {
     const inSession = session.filter((v) => v.result !== 'tie');
     const sessionSet = new Set(session);
@@ -496,7 +553,40 @@ for (const id of models) {
           `${iso(session[0].at)} vs ${(100 * (outside.filter((v) => v.result === 'win').length / Math.max(1, outside.length))).toFixed(1)}% across its other ${outside.length}`,
       });
   }
+
+  // Test 6 — silent sittings. Someone who cannot separate two clips ties;
+  // someone who knows which is which never needs to. Unlike every other test
+  // here, this one does not move with how good the model actually is — a strong
+  // model still draws ties against another strong one — so it separates "this
+  // voter can identify the model" from "this model deserves to win". One-sided:
+  // a tie-HEAVY sitting is just an honest listener finding the field close.
+  const talkative = solo.filter((s) => s.length >= SESSION_MIN);
+  for (const session of talkative) {
+    const ties = session.filter((v) => v.result === 'tie').length;
+    const p = Math.min(1, binomialAtMost(ties, session.length, corpusTieRate) * talkative.length);
+    if (quietest === null || p < quietest.p)
+      quietest = { model: id, at: session[0].at, ties, n: session.length, p };
+    if (p < ALPHA)
+      findings.push({
+        model: id,
+        test: 'silent sitting',
+        p,
+        detail:
+          `${ties} ties in ${session.length} votes from ${iso(session[0].at)} ` +
+          `(${(100 * corpusTieRate).toFixed(1)}% expected) — the voter was not guessing`,
+      });
+  }
 }
+
+if (quietest)
+  console.log(
+    `\nfewest ties in one sitting: ${label(quietest.model)}, ${quietest.ties} in ${quietest.n} from ` +
+      `${iso(quietest.at)} (p = ${quietest.p.toFixed(4)}); arena ties ${(100 * corpusTieRate).toFixed(1)}%`,
+  );
+console.log(
+  `the two session tests abstained on ${crowded} sittings (${crowdedVotes} model-appearances) where the arena\n` +
+    `ran hotter than ${MAX_SOLO_RATE_PER_MIN} votes/min — too many visitors interleaved to call any of it one person.`,
+);
 
 /* --- 2. Changepoints, read together --------------------------------------- */
 
