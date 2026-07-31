@@ -27,7 +27,15 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 import { loadPipelineEnv, requireEnv } from './env';
-import { clipHash, clipPublicUrl, looksLikeMp3, parseArgs, sleep, variantIdFor } from './lib';
+import {
+  arenaEncodeArgs,
+  clipHash,
+  clipPublicUrl,
+  looksLikeMp3,
+  parseArgs,
+  sleep,
+  variantIdFor,
+} from './lib';
 import { resolvePipelineModel } from './models';
 import { PROMPTS } from './prompts';
 import { transportFor, RateLimitedError, type SynthesisResult } from './transports';
@@ -59,14 +67,19 @@ type ClipRecord = {
 };
 
 /**
- * Transcode non-MP3 transport output to the arena MP3 format via ffmpeg.
+ * Transcode transport output to the arena MP3 format via ffmpeg.
+ *
+ * MP3 input is re-encoded rather than passed through: a provider's own sample
+ * rate survives passthrough and shows up in the frame header, which identifies
+ * the model in a blind battle (see ARENA_CLIP_FORMAT). One extra encode
+ * generation is the price of every clip looking alike.
+ *
  * Uses temp files, NOT pipes: with piped stdio, ffmpeg blocks writing MP3
  * once the 64 KB stdout pipe fills while spawnSync is still feeding stdin —
  * a deadlock for any clip-length audio (hit on the first wave-2 WAV/PCM
  * providers; the wave-1 providers returned MP3 and never transcoded).
  */
 const toMp3 = (audio: SynthesisResult): Uint8Array => {
-  if (audio.format === 'mp3') return audio.bytes;
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const inPath = resolve(tmpdir(), `humanness-clip-${stamp}.in`);
   const outPath = resolve(tmpdir(), `humanness-clip-${stamp}.mp3`);
@@ -79,10 +92,7 @@ const toMp3 = (audio: SynthesisResult): Uint8Array => {
     const result = spawnSync('ffmpeg', [
       '-y',
       ...inputArgs,
-      '-ac',
-      '1',
-      '-b:a',
-      '128k',
+      ...arenaEncodeArgs(),
       '-f',
       'mp3',
       outPath,

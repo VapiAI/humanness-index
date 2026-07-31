@@ -28,6 +28,34 @@ export const clipHash = (variantId: string, promptId: string): string =>
     .digest('hex')
     .slice(0, 32);
 
+/**
+ * The single MP3 encoding every hosted arena clip must share.
+ *
+ * Providers return their own sample rates and bitrates, and a battle that
+ * serves them verbatim leaks the model in the MP3 frame header: four bytes were
+ * once enough to name Grok TTS (Streaming) outright and cut MiniMax, Inworld
+ * and others down to a two- or three-way guess, without listening. Anything
+ * that writes a clip encodes to exactly this, so the header stays silent — and
+ * so no model gets a bitrate edge over the field.
+ */
+export const ARENA_CLIP_FORMAT = {
+  sampleRate: 44_100,
+  bitrateKbps: 128,
+  channels: 1,
+} as const;
+
+/** ffmpeg output args pinning a clip to `ARENA_CLIP_FORMAT`. */
+export const arenaEncodeArgs = (): string[] => [
+  '-ac',
+  String(ARENA_CLIP_FORMAT.channels),
+  '-ar',
+  String(ARENA_CLIP_FORMAT.sampleRate),
+  '-c:a',
+  'libmp3lame',
+  '-b:a',
+  `${ARENA_CLIP_FORMAT.bitrateKbps}k`,
+];
+
 /** Blob store pathname for a clip hash. */
 export const clipBlobPathname = (hash: string): string => `audio/${hash}.mp3`;
 

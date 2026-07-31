@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 import { cleanFilterChain, type CleanOptions } from './audioClean';
-import { looksLikeMp3 } from './lib';
+import { arenaEncodeArgs, looksLikeMp3 } from './lib';
 
 /**
  * Loudness target for ingested clips, matched to the GENERATED set's MEDIAN
@@ -124,7 +124,7 @@ export const toArenaMp3 = (
     const stage2 = spawnSync('ffmpeg', [
       '-y', '-filter_threads', '1', '-i', wavPath, '-af',
       `volume=${gainDb.toFixed(2)}dB,alimiter=limit=${TP_LIMIT_LINEAR}:level=false`,
-      '-ac', '1', '-ar', '44100', '-b:a', '128k', '-f', 'mp3', outPath,
+      ...arenaEncodeArgs(), '-f', 'mp3', outPath,
     ]);
     if (stage2.status !== 0 || !existsSync(outPath)) {
       throw new Error(`ffmpeg gain/limit/encode failed: ${stage2.stderr?.toString().slice(-400)}`);

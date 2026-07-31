@@ -45,6 +45,11 @@ The five frozen steps, in order. The full operational detail lives in
    is no reachable API, the entry keeps `latencyMs: null`.
 5. Browser-check the dev server: the table shows the model, battles pair
    it, its Listen sample plays, and `/models/<slug>` renders.
+6. Confirm the arena is still blind (`bun run scripts/audit-blindness.ts`).
+   The clip pipeline encodes everything to one MP3 format on the way in, but
+   run this anyway: a model whose clips reach the origin by any other route
+   keeps its provider's sample rate, and a lone encoding in the frame header
+   names that model without anyone having to listen.
 
 New models enter at Elo 1200 on their first live votes; no seed row is
 required.

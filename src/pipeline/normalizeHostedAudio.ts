@@ -1,14 +1,21 @@
 /// <reference types="bun" />
 /**
- * normalizeHostedAudio.ts — loudness-normalize EVERY hosted arena clip to ONE
- * uniform target, in place on the Vercel Blob store.
+ * normalizeHostedAudio.ts — put EVERY hosted arena clip on ONE loudness target
+ * and ONE encoding, in place on the Vercel Blob store.
  *
- * WHY: battles play per-(model x voice x prompt) clips off the Blob origin. The
- * Human baseline was normalized to ~-24.7 LUFS, but the TTS-generated clips vary
- * widely, so an A/B battle can be "spiky" (one voice much louder than the other).
- * This tool re-levels the WHOLE set (TTS + Human) to a single integrated
- * loudness with true-peak limiting, replacing each clip IN PLACE at its existing
- * audio/{hash}.mp3 path — the content hash / URL never changes, only the bytes.
+ * WHY (loudness): battles play per-(model x voice x prompt) clips off the Blob
+ * origin. The Human baseline was normalized to ~-24.7 LUFS, but the TTS-generated
+ * clips vary widely, so an A/B battle can be "spiky" (one voice much louder than
+ * the other). This tool re-levels the WHOLE set (TTS + Human) to a single
+ * integrated loudness with true-peak limiting, replacing each clip IN PLACE at
+ * its existing audio/{hash}.mp3 path — the content hash / URL never changes,
+ * only the bytes.
+ *
+ * WHY (encoding): each provider returns its own sample rate and bitrate, and
+ * preserving them left the MP3 frame header naming the model — four bytes are
+ * enough to identify some entrants without listening, which is fatal for a blind
+ * arena. Every clip is now re-encoded to the same container, so the header
+ * carries no signal. See ARENA_SAMPLE_RATE below.
  *
  * It is the batch sibling of ingestHumanClips.ts and uses the SAME normalization
  * chain that produced the -24.7 LUFS human clips:
@@ -64,6 +71,8 @@ import { list, put } from '@vercel/blob';
 
 import { loadPipelineEnv, requireEnv } from './env';
 import {
+  ARENA_CLIP_FORMAT,
+  arenaEncodeArgs,
   clipHash,
   looksLikeMp3,
   median,
@@ -92,6 +101,8 @@ const TP_CEILING_DBTP = -1.0;
 const TP_LIMIT_LINEAR = 0.794;
 /** Skip (idempotent) when within this many LU of target AND under the TP ceiling. */
 const IDEMPOTENT_TOL_LU = 0.75;
+const { sampleRate: ARENA_SAMPLE_RATE, bitrateKbps: ARENA_BITRATE_KBPS, channels: ARENA_CHANNELS } =
+  ARENA_CLIP_FORMAT;
 /** Sanity guard against amplifying a near-silent/defective clip into noise. */
 const GAIN_CAP_DB = 25;
 /** An MP3 smaller than this is an error payload, not a clip. */
@@ -244,7 +255,7 @@ const measureLoudness = (file: string): Loudness | null => {
   };
 };
 
-/** Source sample rate / channels / bitrate, so the re-encode changes only loudness. */
+/** Source sample rate / channels / bitrate, to test against the arena format. */
 const probeAudio = (file: string): { sr: number; ch: number; br: number } => {
   const result = spawnSync(
     'ffprobe',
@@ -315,13 +326,8 @@ const downloadClip = (url: string, dest: string): boolean => {
   return false;
 };
 
-/** Apply linear gain + true-peak limiter, re-encode preserving sr/ch/bitrate. */
-const encodeNormalized = (
-  src: string,
-  dest: string,
-  gainDb: number,
-  audio: { sr: number; ch: number; br: number },
-): boolean => {
+/** Apply linear gain + true-peak limiter, re-encode into the arena format. */
+const encodeNormalized = (src: string, dest: string, gainDb: number): boolean => {
   const result = spawnSync(
     'ffmpeg',
     [
@@ -332,14 +338,7 @@ const encodeNormalized = (
       src,
       '-af',
       `volume=${gainDb.toFixed(2)}dB,alimiter=limit=${TP_LIMIT_LINEAR}:level=false`,
-      '-ac',
-      String(audio.ch),
-      '-ar',
-      String(audio.sr),
-      '-c:a',
-      'libmp3lame',
-      '-b:a',
-      `${Math.round(audio.br / 1000)}k`,
+      ...arenaEncodeArgs(),
       '-f',
       'mp3',
       dest,
@@ -433,9 +432,17 @@ const processOne = async (
       return { ...base, beforeI: null, beforeTp: null, gainDb: null, outcome: 'failed', note: 'measure failed' };
     }
 
+    // Loudness alone is not "done" any more: a correctly levelled clip still
+    // needs a re-encode if it carries a provider-specific sample rate or
+    // bitrate, because that is what fingerprints the model.
+    const audio = probeAudio(src);
+    const formatMatches =
+      audio.sr === ARENA_SAMPLE_RATE &&
+      audio.ch === ARENA_CHANNELS &&
+      Math.round(audio.br / 1000) === ARENA_BITRATE_KBPS;
     const onTarget =
       Math.abs(before.i - opts.target) <= opts.tol && before.tp <= opts.tpCeiling;
-    if (onTarget) {
+    if (onTarget && formatMatches) {
       return {
         ...base,
         beforeI: before.i,
@@ -455,8 +462,7 @@ const processOne = async (
       note = `gain capped (-${GAIN_CAP_DB} dB); source ~${fmt(before.i)} LUFS`;
     }
 
-    const audio = probeAudio(src);
-    if (!encodeNormalized(src, out, gain, audio)) {
+    if (!encodeNormalized(src, out, gain)) {
       return { ...base, beforeI: before.i, beforeTp: before.tp, gainDb: gain, outcome: 'failed', note: 'encode failed' };
     }
     await uploadInPlace(entry.pathname, readFileSync(out), token);
@@ -466,7 +472,11 @@ const processOne = async (
       beforeTp: before.tp,
       gainDb: gain,
       outcome: 'normalized',
-      note,
+      note:
+        note ??
+        (onTarget
+          ? `re-encoded for format only (was ${audio.sr} Hz / ${Math.round(audio.br / 1000)}k)`
+          : undefined),
     };
   } catch (error) {
     return {
@@ -557,8 +567,7 @@ const runMeasureWorker = async (
         }
         let residual: number | null = null;
         if (calibrate) {
-          const audio = probeAudio(src);
-          if (encodeNormalized(src, out, target - measured.i, audio)) {
+          if (encodeNormalized(src, out, target - measured.i)) {
             const after = measureLoudness(out);
             if (after) residual = after.i - target;
           }
