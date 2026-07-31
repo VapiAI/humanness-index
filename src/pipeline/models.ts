@@ -90,6 +90,17 @@ const NEW_MODELS: PipelineModel[] = [
     name: 'TTS-1.5 Mini',
     registered: false,
   },
+  // Fish Audio s2.1-pro. Ids proposed in PR #3 (github.com/VapiAI/humanness-index/pull/3)
+  // and FROZEN here, because the vendor-rendered clip set is hashed against them.
+  {
+    id: 'fish-s21-pro',
+    slug: 'fish-s2-1-pro',
+    providerId: 'fish',
+    arenaApiId: 's2-1-pro',
+    vendorModelId: 's2.1-pro',
+    name: 's2.1-pro',
+    registered: false,
+  },
 ];
 
 const registryModels = (): PipelineModel[] =>

@@ -3,11 +3,13 @@
  * gradium) have no usable synthesis/bench surface from this
  * pipeline — see UNMEASURABLE_PROVIDERS for the sourced reasons. xai has a
  * bench-only transport (realtime WS; its HTTP config stays team-gated —
- * transports/xai.ts). LMNT was cut from the expansion 2026-06-11 and its
- * never-run transport deleted (see RUNBOOK).
+ * transports/xai.ts). fish is a full transport, but its arena clips were
+ * vendor-rendered, so only the bench path runs here. LMNT was cut from the
+ * expansion 2026-06-11 and its never-run transport deleted (see RUNBOOK).
  */
 import { cartesia } from './cartesia';
 import { elevenlabs } from './elevenlabs';
+import { fish } from './fish';
 import { hume } from './hume';
 import { inworld } from './inworld';
 import { minimax } from './minimax';
@@ -28,6 +30,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   neuphonic,
   hume,
   sesame,
+  fish,
   xai,
 };
 

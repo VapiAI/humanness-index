@@ -97,7 +97,8 @@ the first live fetch).
 Where a provider gives us no API access, it can render the 80 arena clips
 itself (four cloned source voices x the 20 frozen prompts, layout
 `voice-clara/clip-01.mp3`...) and supply them as a zip. Precedent: Gradium;
-first scripted use: Speechify Simba 3.2 (2026-07-23). Ingest is
+first scripted use: Speechify Simba 3.2 (2026-07-23); then Fish Audio
+S2.1-Pro (2026-07-30). Ingest is
 all-or-nothing (the run fails on an incomplete matrix) and each clip runs
 the shared arenaNormalize.ts chain (trim, single-gain loudnorm to the
 generated-field median -24.7 LUFS, true-peak limit, mono 44.1 kHz 128 kbps
@@ -111,6 +112,27 @@ Then register per the standard steps (the entry's copy must say the clips
 were vendor-rendered), leave `latencyMs: null` unless the bench can run
 with a real key, and add the provider to UNMEASURABLE_PROVIDERS with the
 sourced reason.
+
+Vendor-rendered clips do NOT imply an unmeasurable latency: the two are
+independent. Speechify is the worked example (2026-07-30) — the clips stay
+vendor-rendered and hash-frozen, but a key later arrived and a bench-only
+transport (no `synthesize`/`createClone`, like xai's) took Simba 3.2 from a
+dash to a measured 575 ms. When that happens, drop the provider's
+UNMEASURABLE_PROVIDERS row and rewrite the entry's "latency shows a dash"
+copy along with the stat.
+
+A vendor zip is unverified audio until it is checked, and the checks are
+cheap. Never trust the folder names: the Fish set arrived with FIVE voice
+folders (an extra "Elliot" alongside "Nelliot"), and folder-to-source-voice
+identity was settled by fingerprinting each folder (median F0 plus a
+long-term average spectrum) against hosted clips of the same source voice
+from two registered models. Also confirm every clip reads the line its
+name claims: transcribe the set (`brew install whisper-cpp` plus a
+`ggml-base.en.bin`) and match each transcript to the 20 frozen prompts, and
+sanity-check duration against prompt length (a clip far off the fitted
+speaking rate is a truncation or a runaway render, per the Smallest.ai
+clara/clip-05 defect). Fish's 80 clips scored a 0.98 median word match with
+zero wrong lines.
 
 ## The Human baseline (special case)
 
@@ -214,6 +236,21 @@ dropped in; the originals supersede them.)
   the documented batch route `POST /v1/tts` works with this key (200,
   audio/mpeg, single-probe first-byte ~463 ms); only the legacy
   `/v1/audio/speech` path 403s (re-probe: `results/probe-xai-http.ts`).
+- **Speechify (2026-07-30)**: bench-only transport against
+  `POST /v1/audio/stream` (`Authorization: Bearer`, body
+  `{input, voice_id, model}`). The `Accept` header is REQUIRED and picks the
+  container; we send `audio/mpeg` on purpose, because the docs call
+  `audio/pcm` the lowest-latency option and using it would flatter Simba
+  against a field benched on compressed streams. `loudness_normalization`
+  stays off (the docs say it adds latency). simba-3.2 serves a curated voice
+  allow list (`geffen_32` et al) and the arena's clones are NOT on it, so the
+  bench uses a stock voice. Response is raw chunked audio with no JSON
+  envelope, so `anyBytesMarker` is correct. 2026-07-30 run: 50/50 clean
+  trials, median 575 ms (`pipelineTtfb(575)`), p90 619 / min 558 / max 1033 /
+  stdev 73 — the second-slowest active model on the Index, behind Eleven v3
+  (758 ms), despite Speechify positioning simba-3.2 on time to first byte. No
+  Bun fetch wedge on Bun 1.3.14 (the Smallest.ai slicing workaround was a
+  1.0.3 problem).
 - **Blob store**: `audio/{hash}.mp3`, public access, `addRandomSuffix:
   false`. Uploads are idempotent (skip-if-exists); the token's store id must
   be the arena audio origin (bkvlbh5qphzaen1w...).
@@ -229,7 +266,11 @@ xai-xai-tts run (median 460) replaced the just-merged artifact, so as of
 2026-06-12 the artifact holds only that record and the rest live in the
 dated backups beside it (`.backup-20260612` = the wave-1 three,
 `.bak-20260612-pre-xai` = five records pre-xai, `.xai-only` =
-xai-streaming). All seven pipeline-measured medians are in the registry as
-`pipelineTtfb(...)`; re-merge from the backups (or re-run the bench) before
-citing the artifact wholesale. June 2026 run context: local dev machine,
+xai-streaming). Those dated backups are NOT on the current bench machine —
+`results/` came back with only `clips/` in it — so treat the registry's
+`pipelineTtfb(...)` values as the durable record and re-run the bench for
+anything you need the raw trials of. As of the 2026-07-30 Speechify run the
+artifact holds only the `speechify-simba-3-2` record (nothing was lost: the
+file did not exist before that run). Re-merge from backups (or re-run the
+bench) before citing the artifact wholesale. June 2026 run context: local dev machine,
 includes network RTT; relative ordering is the robust signal.

@@ -1,5 +1,5 @@
 /**
- * The 9 provider entries. ORDER IS FROZEN: it feeds the arena PROVIDERS
+ * The 12 provider entries. ORDER IS FROZEN: it feeds the arena PROVIDERS
  * array in server/catalog.ts, whose order shapes the derived MODELS array
  * (and so the first-paint identity surfaces). Append new providers at the
  * end, before any unlisted ones.
@@ -415,6 +415,51 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
         sourceUrls: [
           'https://speechify.ai/text-to-speech-api',
           'https://docs.speechify.ai/build/text-to-speech-api',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'fish',
+    slug: 'fish-audio',
+    name: 'Fish Audio',
+    websiteUrl: 'https://fish.audio',
+    mark: 'fish.svg',
+    stats: {
+      languages: {
+        value: 83,
+        sourceUrl:
+          'https://docs.fish.audio/developer-guide/models-pricing/models-overview',
+        asOf: '2026-07-30',
+        note: 'S2.1-Pro covers 83 languages with automatic language detection; S2-Pro lists 80+ and S1 lists 13, encoded per model.',
+      },
+      pricing: {
+        value: '$15',
+        sourceUrl:
+          'https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits',
+        asOf: '2026-07-30',
+        note: 'Pay as you go, billed per 1M UTF-8 bytes rather than characters: $15 on s2.1-pro, s2-pro, and s1. The s2.1-pro-free model string runs the same model at $0 under a fair use policy, with no SLA or latency guarantee.',
+      },
+    },
+    copy: [
+      {
+        heading: 'About Fish Audio',
+        paragraphs: [
+          'Fish Audio grew out of Fish Speech, the open source text to speech project started by Shijia Liao, and took its current name with the S1 release. The company kept publishing open weights as it commercialized: S2 is built on a Qwen3-4B backbone and shipped open source alongside the hosted API.',
+        ],
+        sourceUrls: [
+          'https://docs.fish.audio/developer-guide/getting-started/changelog',
+          'https://github.com/fishaudio/fish-speech',
+        ],
+      },
+      {
+        heading: 'Platform and pricing',
+        paragraphs: [
+          'The platform spans text to speech, speech to text, voice design from a text prompt, and voice cloning, over a REST API and a realtime WebSocket stream. Pricing is pay as you go with no monthly minimum, billed per 1M UTF-8 bytes of input rather than per character, and concurrency limits step up with total prepaid spend.',
+        ],
+        sourceUrls: [
+          'https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits',
+          'https://docs.fish.audio/api-reference/endpoint/websocket/tts-live',
         ],
       },
     ],

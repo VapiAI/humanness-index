@@ -1,5 +1,5 @@
 /**
- * The 23 model entries (21 active in the arena; ElevenLabs Multilingual v2
+ * The 24 model entries (22 active in the arena; ElevenLabs Multilingual v2
  * and Turbo v2.5 are retired but keep their pages).
  *
  * ADD A NEW MODEL CHECKLIST (the whole point of this registry):
@@ -71,10 +71,14 @@ const measuredTtfb = (value: number, note?: string): Sourced<number> => ({
 });
 
 /** Same 50-trial protocol, run by pipeline/ttfbBench.ts (the TS port). */
-const pipelineTtfb = (value: number, note?: string): Sourced<number> => ({
+const pipelineTtfb = (
+  value: number,
+  note?: string,
+  asOf = '2026-06-11',
+): Sourced<number> => ({
   value,
   sourceUrl: PIPELINE_TTFB_SOURCE,
-  asOf: '2026-06-11',
+  asOf,
   note:
     note ??
     'Median of 50 sequential live streaming trials, June 2026; includes network RTT from the benchmark machine.',
@@ -1497,10 +1501,15 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       note: 'API availability of simba-3.2 on the speech and stream endpoints.',
     },
     stats: {
-      // No Speechify API key on the benchmark machine; the arena clips were
-      // vendor-rendered (see the copy below). Measured-only rule: renders a
-      // dash until the 50-trial bench can run.
-      latencyMs: null,
+      // Measured 2026-07-30 on POST /v1/audio/stream via
+      // pipeline/transports/speechify.ts: 50 clean trials, zero errors, zero
+      // rate-limit hits (p90 619 / min 558 / max 1033 / stdev 73). The clips
+      // stay vendor-rendered; only the bench runs against our own key.
+      latencyMs: pipelineTtfb(
+        575,
+        'Measured on the chunked HTTP /v1/audio/stream endpoint at its default MP3 output, using an allow-list voice (the arena clones are not registered on simba-3.2); median of 50 sequential trials, July 2026, including network RTT.',
+        '2026-07-30',
+      ),
       languages: {
         value: 'English',
         sourceUrl: 'https://docs.speechify.ai/build/guides/concepts/models',
@@ -1538,7 +1547,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'The arena clips for Simba 3.2 were rendered by Speechify with the four licensed source voices cloned on its platform, then verified and hosted by the Index team under the same frozen content hash scheme as every other model, the same vendor supplied path used where the pipeline has no API access. Latency shows a dash because the 50 trial streaming benchmark has not run against a Speechify key yet; we never substitute vendor figures.',
+          'The arena clips for Simba 3.2 were rendered by Speechify with the four licensed source voices cloned on its platform, then verified and hosted by the Index team under the same frozen content hash scheme as every other model, the same vendor supplied path used where the pipeline has no API access. Latency is our own measurement: the 50 trial streaming benchmark ran against a Speechify key in July 2026 and returned a 575 ms median, so the figure here is measured rather than vendor supplied.',
         ],
         sourceUrls: [
           'https://docs.speechify.ai/build/guides/concepts/models',
@@ -1551,6 +1560,99 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         question: 'Where did the Simba 3.2 arena clips come from?',
         answer:
           'Speechify rendered the 80 arena clips (four cloned source voices reading the 20 frozen prompts) with simba-3.2 and supplied them to the Index team, who normalized, verified, and hosted them under the frozen content hash scheme. Blind battles and scoring work exactly as for every other model.',
+      },
+    ],
+  },
+
+  /* ------------------------------- Fish Audio ----------------------------- */
+  {
+    id: 'fish-s21-pro',
+    slug: 'fish-s2-1-pro',
+    providerId: 'fish',
+    name: 'S2.1-Pro',
+    apiModelId: 's2.1-pro',
+    // Frozen without the dots, like the Inworld and Speechify ids: it feeds
+    // the variant ids and audio content hashes.
+    arenaApiId: 's2-1-pro',
+    status: 'active',
+    releaseDate: {
+      value: '2026-06',
+      sourceUrl: 'https://fish.audio/blog/s2-1-pro-free-api/',
+      asOf: '2026-07-30',
+      confidence: 'medium',
+      note: 'Fish announced S2.1-Pro on the API in June 2026 and made it the recommended production model at its public launch in late July 2026; no finer vendor date is published.',
+    },
+    stats: {
+      latencyMs: pipelineTtfb(
+        141,
+        'Median of 50 sequential live streaming trials, July 2026, over the msgpack WebSocket stream on the default stock voice; includes network RTT from the benchmark machine.',
+        '2026-07-30',
+      ),
+      languages: {
+        value: 83,
+        sourceUrl:
+          'https://docs.fish.audio/developer-guide/models-pricing/models-overview',
+        asOf: '2026-07-30',
+        note: 'One model across all 83 languages with automatic language detection, no per-language endpoints.',
+      },
+      streaming: {
+        value: true,
+        sourceUrl:
+          'https://docs.fish.audio/api-reference/endpoint/websocket/tts-live',
+        asOf: '2026-07-30',
+        note: 'Realtime msgpack WebSocket stream alongside the batch HTTP endpoint.',
+      },
+      voiceCloning: {
+        value: 'instant, 10-30 s sample',
+        sourceUrl:
+          'https://docs.fish.audio/developer-guide/sdk-guide/cookbook/instant-voice-cloning',
+        asOf: '2026-07-30',
+        note: 'Reference audio can be passed per request or saved as a reusable voice model; the docs ask for 10 to 30 s of clean speech.',
+      },
+    },
+    voiceProfile: 26,
+    sample: {
+      fallbackClip: clip(
+        'voice-clara',
+        'fish',
+        's2-1-pro',
+        'clip-10',
+        '6c38a26b08616337c396e2218d68086b',
+      ),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: [
+          "S2.1-Pro is Fish Audio's recommended production model, an improved S2-Pro that the company put at the center of its July 2026 launch. It reads inline bracket cues such as [whispers sweetly] as natural language rather than a fixed tag set, handles multi-speaker dialogue, and holds one voice identity across all 83 languages it supports.",
+        ],
+        sourceUrls: [
+          'https://docs.fish.audio/developer-guide/models-pricing/models-overview',
+          'https://fish.audio/blog/s2-1-pro-free-api/',
+        ],
+      },
+      {
+        heading: 'At a glance',
+        paragraphs: [
+          'The arena clips for S2.1-Pro were rendered by Fish Audio with the four licensed source voices cloned on its platform, then verified and hosted by the Index team under the same frozen content hash scheme as every other model, the same vendor supplied path used where the pipeline has no API access. Latency is ours, not theirs: in our 50 trial benchmark over the realtime WebSocket it returned first audio in a median of 141 ms including network time, one of the three fastest models on the Index. Fish quotes roughly 90 ms, measured without that network leg.',
+        ],
+        sourceUrls: [
+          'https://fish.audio/blog/s2-1-pro-free-api/',
+          'https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits',
+        ],
+      },
+    ],
+    faq: [
+      HOW_TESTED('S2.1-Pro'),
+      {
+        question: 'Where did the S2.1-Pro arena clips come from?',
+        answer:
+          'Fish Audio rendered the 80 arena clips (four cloned source voices reading the 20 frozen prompts) with s2.1-pro and supplied them to the Index team, who checked every clip against the frozen script, normalized them, and hosted them under the frozen content hash scheme. Blind battles and scoring work exactly as for every other model.',
+      },
+      {
+        question: 'What does S2.1-Pro cost?',
+        answer:
+          'Fish Audio bills $15 per 1M UTF-8 bytes of input text on s2.1-pro, roughly 180,000 English words. A second model string, s2.1-pro-free, runs the same model at no cost under a fair use policy, without the SLA and latency guarantees of the paid tier.',
       },
     ],
   },

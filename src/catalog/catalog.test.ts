@@ -86,13 +86,13 @@ const MARKS_DIR = resolve(import.meta.dir, '../../public/marks');
 
 describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
-    // 11 providers / 23 models: the 10 vendors + 22 TTS models, plus the Human
+    // 12 providers / 24 models: the 11 vendors + 23 TTS models, plus the Human
     // baseline (provider `human`, model `human`). Two ElevenLabs entries are
-    // retired (2026-07-23), so the arena carries 21 of the 23.
-    expect(BASE_PROVIDER_ENTRIES.length).toBe(11);
-    expect(BASE_MODEL_ENTRIES.length).toBe(23);
-    expect(arenaProviderEntries().length).toBe(11);
-    expect(arenaModelEntries().length).toBe(21);
+    // retired (2026-07-23), so the arena carries 22 of the 24.
+    expect(BASE_PROVIDER_ENTRIES.length).toBe(12);
+    expect(BASE_MODEL_ENTRIES.length).toBe(24);
+    expect(arenaProviderEntries().length).toBe(12);
+    expect(arenaModelEntries().length).toBe(22);
     // The committed registry carries no unlisted entries today; embargoed
     // ones live in the private overlay until their providers announce them.
     expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual(
@@ -166,6 +166,7 @@ describe('registry: ids, slugs, refs', () => {
       'smallestai-lightning-v31',
       'neuphonic-neu-hq',
       'speechify-simba-3-2',
+      'fish-s21-pro',
     ]);
     const seedIds = SEED_STANDINGS.models.map((row) => row.id);
     expect(new Set(seedIds).size).toBe(seedIds.length);
@@ -441,6 +442,12 @@ const EXPECTED_MODELS = [
     name: 'Simba 3.2',
   },
   {
+    id: 'fish-s21-pro',
+    arenaId: 'fish:s2-1-pro',
+    providerId: 'fish',
+    name: 'S2.1-Pro',
+  },
+  {
     id: 'human',
     arenaId: 'human:human',
     providerId: 'human',
@@ -459,6 +466,7 @@ const EXPECTED_PROVIDERS = [
   { id: 'smallestai', name: 'Smallest.ai' },
   { id: 'neuphonic', name: 'Neuphonic' },
   { id: 'speechify', name: 'Speechify' },
+  { id: 'fish', name: 'Fish Audio' },
   { id: 'human', name: 'Human' },
 ];
 
@@ -499,9 +507,9 @@ describe('server/catalog derivation equality', () => {
         modelId: model.id,
       })),
     );
-    // 20 active TTS models x 4 voices + the Human baseline x 4 recorded
-    // voices = 84 (retired models leave the variant matrix with the arena).
-    expect(VARIANTS.length).toBe(84);
+    // 21 active TTS models x 4 voices + the Human baseline x 4 recorded
+    // voices = 88 (retired models leave the variant matrix with the arena).
+    expect(VARIANTS.length).toBe(88);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -904,9 +912,9 @@ const EXPECTED_VOICE_STATS: Array<[string, string, string, string, string]> = [
   // No published Neuphonic API pricing as of 2026-06-12 (renders a dash).
   ['Neuphonic', 'neu_hq', '276 ms', '9', '\u2014'],
   ['Smallest.ai', 'Lightning v3.1', '420 ms', '12', '$15'],
-  // Vendor-rendered clips; no Speechify key on the benchmark machine, so
-  // latency renders a dash (measured-only rule).
-  ['Speechify', 'Simba 3.2', '\u2014', 'English', '$10'],
+  // Vendor-rendered clips, but the latency is our own: benched 2026-07-30
+  // against a Speechify key once one arrived (bench-only transport).
+  ['Speechify', 'Simba 3.2', '575 ms', 'English', '$10'],
   // The Human baseline is a real person reading the line: no latency, no
   // languages count, no price. All dashes.
   ['Human', 'Homo Sapien', '\u2014', '\u2014', '\u2014'],
@@ -955,6 +963,7 @@ describe('data/providers derivation equality', () => {
       'Smallest.ai': 'smallestai.png',
       Neuphonic: 'neuphonic.png',
       Speechify: 'speechify.svg',
+      'Fish Audio': 'fish.svg',
       Human: 'human.svg',
       // Overlay providers keep their marks wired for re-listing.
       ...Object.fromEntries(
@@ -1074,8 +1083,8 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(23);
-    expect(listedProviderEntries().length).toBe(11);
+    expect(listedModelEntries().length).toBe(24);
+    expect(listedProviderEntries().length).toBe(12);
   });
 });
 
@@ -1124,6 +1133,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
     );
     expect(slugById.get('neuphonic-neu-hq')).toBe('neuphonic-neu-hq');
     expect(slugById.get('speechify-simba-3-2')).toBe('speechify-simba-3-2');
+    expect(slugById.get('fish-s21-pro')).toBe('fish-s2-1-pro');
     expect(slugById.get('human')).toBe('human');
     // Overlay slugs are frozen identity too: id and slug must already agree
     // with the store before an entry ever goes public.
@@ -1137,6 +1147,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
       'canopy-labs',
       'cartesia',
       'elevenlabs',
+      'fish-audio',
       'gradium',
       'human-baseline',
       'inworld',

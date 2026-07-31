@@ -29,6 +29,7 @@
     "humanness:ttfb": "bun run src/pipeline/ttfbBench.ts"
   },
   "dependencies": {
+    "@msgpack/msgpack": "^3.1.3",
     "@phosphor-icons/react": "^2.1.10",
     "@upstash/redis": "^1.35.6",
     "@vercel/blob": "^2.4.0",
