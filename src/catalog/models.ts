@@ -724,18 +724,18 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     slug: 'cartesia-sonic-3-6',
     providerId: 'cartesia',
     name: 'Sonic 3.6',
-    apiModelId: 'sonic-3.6-2026-08-14',
-    arenaApiId: 'sonic-3.6-2026-08-14',
+    apiModelId: 'sonic-3.6-2026-08-27',
+    arenaApiId: 'sonic-3.6-2026-08-27',
     status: 'active',
     releaseDate: {
-      value: '2026-08-14',
+      value: '2026-08-27',
       sourceUrl:
         'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
       asOf: '2026-08-26',
       note: 'Snapshot release.',
     },
     stats: {
-      // Measured only: needs a bench run against sonic-3.6-2026-08-14.
+      // Measured only: needs a bench run against sonic-3.6-2026-08-27.
       latencyMs: null,
       languages: {
         value: 44,
@@ -749,9 +749,9 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       fallbackClip: clip(
         'voice-emma',
         'cartesia',
-        'sonic-3.6-2026-08-14',
+        'sonic-3.6-2026-08-27',
         'clip-20',
-        'b70ab872a402c56c37c6367c290c062f',
+        'e2f28d30f2765eeecafc81c41a7981d6',
       ),
     },
     copy: [

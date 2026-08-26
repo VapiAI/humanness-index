@@ -370,7 +370,7 @@ const EXPECTED_MODELS = [
   },
   {
     id: 'cartesia-sonic-36',
-    arenaId: 'cartesia:sonic-3.6-2026-08-14',
+    arenaId: 'cartesia:sonic-3.6-2026-08-27',
     providerId: 'cartesia',
     name: 'Sonic 3.6',
   },
