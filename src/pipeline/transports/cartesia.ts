@@ -13,12 +13,21 @@ import { BENCH_TEXT, postFormForJson, postJsonForBytes, wsTtfbTrial } from './ht
 import type { ProviderTransport, TtfbPlan } from './types';
 
 const API = 'https://api.cartesia.ai';
-const VERSION = '2024-11-13';
-const WS_VERSION = '2025-04-16';
-/** The arena Clara clone — the voice the original 50-trial bench used. */
+
+/** Cartesia's current published API version, sent on every call. */
+const VERSION = '2026-08-14';
+
+/** The arena Clara clone, the voice the original 50-trial bench used. */
 const BENCH_VOICE = 'a5d537b0-4a5f-464d-ac12-d143fe1a0a36';
 
-const apiKey = (): string => requireEnv('CARTESIA_API_KEY');
+/** The four licensed source voices are English (see pipeline/voices.ts). */
+const VOICE_LANGUAGE = 'en';
+
+/** Bearer is the documented scheme; x-api-key is the pre-2026 form. */
+const headers = (): Record<string, string> => ({
+  Authorization: `Bearer ${requireEnv('CARTESIA_API_KEY')}`,
+  'Cartesia-Version': VERSION,
+});
 
 export const cartesia: ProviderTransport = {
   providerId: 'cartesia',
@@ -27,15 +36,13 @@ export const cartesia: ProviderTransport = {
   synthesize: async ({ vendorModelId, providerVoiceId, text }) => ({
     bytes: await postJsonForBytes(
       `${API}/tts/bytes`,
-      {
-        'x-api-key': apiKey(),
-        'cartesia-version': VERSION,
-        accept: 'audio/mpeg',
-      },
+      { ...headers(), accept: 'audio/mpeg' },
       {
         model_id: vendorModelId,
         transcript: text,
         voice: { mode: 'id', id: providerVoiceId },
+        // Cartesia recommends setting the language explicitly where possible.
+        language: VOICE_LANGUAGE,
         output_format: { container: 'mp3', sample_rate: 44100, bit_rate: 128000 },
       },
       'cartesia',
@@ -51,11 +58,11 @@ export const cartesia: ProviderTransport = {
       basename(sampleFiles[0]),
     );
     form.append('name', displayName);
-    form.append('language', 'en');
+    form.append('language', VOICE_LANGUAGE);
     form.append('mode', 'similarity');
     const result = await postFormForJson<{ id: string }>(
       `${API}/voices/clone`,
-      { 'x-api-key': apiKey(), 'cartesia-version': VERSION },
+      headers(),
       form,
       'cartesia voices/clone',
     );
@@ -67,10 +74,7 @@ export const cartesia: ProviderTransport = {
     trial: () =>
       wsTtfbTrial({
         url: 'wss://api.cartesia.ai/tts/websocket',
-        headers: {
-          Authorization: `Bearer ${apiKey()}`,
-          'Cartesia-Version': WS_VERSION,
-        },
+        headers: headers(),
         framesFor: () => [
           JSON.stringify({
             model_id: vendorModelId,
@@ -83,14 +87,12 @@ export const cartesia: ProviderTransport = {
             },
             context_id: `bench-${Date.now()}`,
             continue: false,
-            language: 'en',
+            language: VOICE_LANGUAGE,
           }),
         ],
         jsonHasAudio: (payload) => Boolean(payload.data),
         jsonError: (payload) =>
-          payload.type === 'error' || payload.error
-            ? JSON.stringify(payload)
-            : null,
+          payload.type === 'error' || payload.error ? JSON.stringify(payload) : null,
       }),
   }),
 };
