@@ -186,6 +186,9 @@ export const cartesia: ProviderTransport = {
       undefined,
       'cartesia fine-tunes/list-voices',
     );
+    // One fine-tune yields one voice; the models it serves sit a level below
+    // the fine-tune (Cartesia adapts the same clone onto newer models, which
+    // is why those adapted versions do not consume a PVC plan slot).
     const voiceId = voices.data[0]?.id;
     if (!voiceId) {
       throw new TransportError(
