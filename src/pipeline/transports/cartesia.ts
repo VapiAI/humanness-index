@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
 import { requireEnv } from '../env';
-import { BENCH_TEXT, postFormNoContent, postJsonForBytes, requestJson, wsTtfbTrial } from './http';
+import { BENCH_TEXT, postJsonForBytes, requestJson, throwForStatus, wsTtfbTrial } from './http';
 import { TransportError, type ProviderTransport, type TtfbPlan } from './types';
 
 const API = 'https://api.cartesia.ai';
@@ -37,6 +37,28 @@ type FineTune = { id: string };
 
 /** Where training is tracked and the finished voice id is collected. */
 const PVC_DASHBOARD = 'https://play.cartesia.ai';
+
+/**
+ * Upload one sample to a dataset. Separate from the shared postFormForJson
+ * helper because this endpoint answers 204 with no body, so there is nothing
+ * to parse.
+ */
+const uploadSample = async (
+  datasetId: string,
+  file: string,
+  headers: Record<string, string>,
+): Promise<void> => {
+  const form = new FormData();
+  form.append('file', new Blob([readFileSync(file)], { type: 'audio/wav' }), basename(file));
+  form.append('purpose', 'fine_tune');
+  const response = await fetch(`${API}/datasets/${datasetId}/files`, {
+    method: 'POST',
+    headers,
+    body: form,
+    signal: AbortSignal.timeout(180_000),
+  });
+  await throwForStatus(response, `cartesia datasets/upload-file ${basename(file)}`);
+};
 
 export const cartesia: ProviderTransport = {
   providerId: 'cartesia',
@@ -77,15 +99,7 @@ export const cartesia: ProviderTransport = {
 
     // A PVC trains on the whole dataset, so upload every sample.
     for (const file of sampleFiles) {
-      const form = new FormData();
-      form.append('file', new Blob([readFileSync(file)], { type: 'audio/wav' }), basename(file));
-      form.append('purpose', 'fine_tune');
-      await postFormNoContent(
-        `${API}/datasets/${dataset.id}/files`,
-        auth,
-        form,
-        `cartesia datasets/upload-file ${basename(file)}`,
-      );
+      await uploadSample(dataset.id, file, auth);
     }
 
     const fineTune = await requestJson<FineTune>(
