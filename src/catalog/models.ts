@@ -531,7 +531,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         question: "Is Sonic still Cartesia's current model?",
         answer:
-          'No. Cartesia continues to iterate on its Sonic family of TTS models, having just released Sonic-3.6.',
+          'No. Four newer generations have superseded it, with Sonic 3.6 as the current flagship. Sonic remains in the arena as the baseline of the family.',
       },
     ],
   },
