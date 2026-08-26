@@ -693,7 +693,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Sonic 3.5 is the May 2026 Sonic snapshot, and was Cartesia's flagship until Sonic 3.6 reached general availability in August 2026. Cartesia positioned it as its most natural and fastest model at release, with sub 90 ms latency and native support for 42 languages. It is tuned for production agent transcripts: it reads order numbers, emails, and confirmation codes correctly without preprocessing, and it resolves heteronyms like read and bow from the surrounding words.",
+          "Sonic 3.5 is the May 2026 Sonic snapshot, and was Cartesia's flagship until Sonic 3.6 shipped in August 2026. Cartesia positioned it as its most natural and fastest model at release, with sub 90 ms latency and native support for 42 languages. It is tuned for production agent transcripts: it reads order numbers, emails, and confirmation codes correctly without preprocessing, and it resolves heteronyms like read and bow from the surrounding words.",
         ],
         sourceUrls: [
           'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
