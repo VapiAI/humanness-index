@@ -3,7 +3,7 @@
  * Cartesia adapter (tts/bytes, mp3 44.1 kHz /
  * 128 kbps); pro voice cloning per
  * https://docs.cartesia.ai/build-with-cartesia/capability-guides/clone-voices-pro;
- * TTFB over the realtime WS, same 50-trial protocol (stock voice).
+ * TTFB over the realtime WS, same 50-trial protocol (arena Clara clone).
  */
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
@@ -17,17 +17,20 @@ const API = 'https://api.cartesia.ai';
 /** Cartesia's current published API version, sent on every call. */
 const VERSION = '2026-08-14';
 
-/** Stock library voice, so the bench matches how other providers are measured. */
-const BENCH_VOICE = 'f786b574-daa5-4673-aa0c-cbe3e8534c02';
-
-/** Sample uploads are large; matches the shared multipart timeout. */
-const UPLOAD_TIMEOUT_MS = 180_000;
+/** The arena Clara clone, the voice the original 50-trial bench used. */
+const BENCH_VOICE = 'a5d537b0-4a5f-464d-ac12-d143fe1a0a36';
 
 /** The four licensed source voices are English (see pipeline/voices.ts). */
 const VOICE_LANGUAGE = 'en';
 
 /** Train against Sonic 3.5; PVCs forward-fill onto new models as they ship. */
 const PVC_BASE_MODEL = 'sonic-3.5-2026-05-04';
+
+/** Where training is tracked and the finished voice id is collected. */
+const PVC_DASHBOARD = 'https://play.cartesia.ai';
+
+/** Sample uploads are large; matches the shared multipart timeout. */
+const UPLOAD_TIMEOUT_MS = 180_000;
 
 /** Bearer is the documented scheme; x-api-key is the pre-2026 form. */
 const headers = (): Record<string, string> => ({
@@ -38,9 +41,6 @@ const headers = (): Record<string, string> => ({
 type Dataset = { id: string };
 type FineTune = { id: string };
 
-/** Where training is tracked and the finished voice id is collected. */
-const PVC_DASHBOARD = 'https://play.cartesia.ai';
-
 /**
  * Upload one sample to a dataset. Separate from the shared postFormForJson
  * helper because this endpoint answers 204 with no body, so there is nothing
@@ -49,14 +49,14 @@ const PVC_DASHBOARD = 'https://play.cartesia.ai';
 const uploadSample = async (
   datasetId: string,
   file: string,
-  headers: Record<string, string>,
+  auth: Record<string, string>,
 ): Promise<void> => {
   const form = new FormData();
   form.append('file', new Blob([readFileSync(file)], { type: 'audio/wav' }), basename(file));
   form.append('purpose', 'fine_tune');
   const response = await fetch(`${API}/datasets/${datasetId}/files`, {
     method: 'POST',
-    headers,
+    headers: auth,
     body: form,
     signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
   });
