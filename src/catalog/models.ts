@@ -726,7 +726,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     name: 'Sonic 3.6',
     apiModelId: 'sonic-3.6-2026-08-27',
     arenaApiId: 'sonic-3.6-2026-08-27',
-    status: 'active',
+    status: 'unlisted',
     releaseDate: {
       value: '2026-08-27',
       sourceUrl:
@@ -745,15 +745,6 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       },
     },
     voiceProfile: 27,
-    sample: {
-      fallbackClip: clip(
-        'voice-emma',
-        'cartesia',
-        'sonic-3.6-2026-08-27',
-        'clip-20',
-        'e2f28d30f2765eeecafc81c41a7981d6',
-      ),
-    },
     copy: [
       {
         heading: 'Background',
