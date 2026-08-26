@@ -26,10 +26,6 @@ const VOICE_LANGUAGE = 'en';
 /** Train against Sonic 3.5; PVCs forward-fill onto new models as they ship. */
 const PVC_BASE_MODEL = 'sonic-3.5-2026-05-04';
 
-const POLL_INTERVAL_MS = 30_000;
-/** Cartesia documents PVC training as taking up to 3 hours. */
-const TRAINING_TIMEOUT_MS = 4 * 60 * 60 * 1000;
-
 /** Bearer is the documented scheme; x-api-key is the pre-2026 form. */
 const headers = (): Record<string, string> => ({
   Authorization: `Bearer ${requireEnv('CARTESIA_API_KEY')}`,
@@ -37,15 +33,10 @@ const headers = (): Record<string, string> => ({
 });
 
 type Dataset = { id: string };
-type FineTune = {
-  id: string;
-  status: 'created' | 'training' | 'completed' | 'failed';
-  user_errors?: Array<{ code: string; message: string }>;
-};
-type FineTuneVoices = { data: Array<{ id: string }> };
+type FineTune = { id: string };
 
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+/** Where a maintainer watches training and collects the finished voice id. */
+const PVC_DASHBOARD = 'https://play.cartesia.ai/pro-voice-cloning';
 
 export const cartesia: ProviderTransport = {
   providerId: 'cartesia',
@@ -68,7 +59,7 @@ export const cartesia: ProviderTransport = {
     format: 'mp3' as const,
   }),
 
-  /** Pro Voice Clone: dataset, files, fine-tune, then the voice it produced. */
+  /** Pro Voice Clone: dataset, files, then kick off the fine-tune. */
   createClone: async ({ displayName, sampleFiles }) => {
     if (sampleFiles.length === 0) {
       throw new TransportError('cartesia PVC needs at least one sample file');
@@ -97,7 +88,7 @@ export const cartesia: ProviderTransport = {
       );
     }
 
-    const started = await requestJson<FineTune>(
+    const { id } = await requestJson<FineTune>(
       'POST',
       `${API}/fine-tunes`,
       auth,
@@ -111,50 +102,10 @@ export const cartesia: ProviderTransport = {
       'cartesia fine-tunes/create',
     );
 
-    // The voice only exists once training completes, so poll for it.
-    const deadline = Date.now() + TRAINING_TIMEOUT_MS;
-    for (;;) {
-      const { status, user_errors } = await requestJson<FineTune>(
-        'GET',
-        `${API}/fine-tunes/${started.id}`,
-        auth,
-        undefined,
-        'cartesia fine-tunes/get',
-      );
-      if (status === 'completed') break;
-      if (status === 'failed') {
-        const detail = (user_errors ?? []).map((e) => `${e.code}: ${e.message}`).join('; ');
-        throw new TransportError(
-          `cartesia fine-tune ${started.id} failed${detail ? ` (${detail})` : ''}`,
-        );
-      }
-      if (Date.now() > deadline) {
-        throw new TransportError(
-          `cartesia fine-tune ${started.id} still ${status} after ` +
-            `${TRAINING_TIMEOUT_MS / 3_600_000}h. Re-attach with GET /fine-tunes/${started.id} ` +
-            `rather than starting a second one (PVC fine-tunes consume a plan slot).`,
-        );
-      }
-      console.log(`  cartesia fine-tune ${started.id}: ${status}`);
-      await sleep(POLL_INTERVAL_MS);
-    }
-
-    const voices = await requestJson<FineTuneVoices>(
-      'GET',
-      `${API}/fine-tunes/${started.id}/voices`,
-      auth,
-      undefined,
-      'cartesia fine-tunes/list-voices',
-    );
-    // One fine-tune yields one voice; the models it serves sit a level below
-    // the fine-tune.
-    const voiceId = voices.data[0]?.id;
-    if (!voiceId) {
-      throw new TransportError(
-        `cartesia fine-tune ${started.id} completed but produced no voices`,
-      );
-    }
-    return voiceId;
+    // Training runs for up to 3 hours, so return rather than hold the process
+    // open. All four voices kick off in one run and train concurrently.
+    console.log(`  ${id} training, watch it at ${PVC_DASHBOARD}`);
+    return null;
   },
 
   ttfbPlanFor: (vendorModelId): TtfbPlan => ({

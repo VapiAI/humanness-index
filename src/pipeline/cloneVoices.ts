@@ -166,8 +166,12 @@ const main = async (): Promise<void> => {
         displayName,
         sampleFiles: samples,
       });
-      additions[voiceId] = providerVoiceId;
-      console.log(`✓ ${voiceId} → ${providerVoiceId} (${samples.length} samples)`);
+      if (providerVoiceId) {
+        additions[voiceId] = providerVoiceId;
+        console.log(`✓ ${voiceId} → ${providerVoiceId} (${samples.length} samples)`);
+      } else {
+        console.log(`… ${voiceId}: training started (${samples.length} samples)`);
+      }
     } catch (error) {
       console.error(
         `✗ ${voiceId}: ${error instanceof Error ? error.message : String(error)}`,
