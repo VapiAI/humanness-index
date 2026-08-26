@@ -86,13 +86,13 @@ const MARKS_DIR = resolve(import.meta.dir, '../../public/marks');
 
 describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
-    // 12 providers / 24 models: the 11 vendors + 23 TTS models, plus the Human
+    // 12 providers / 25 models: the 11 vendors + 24 TTS models, plus the Human
     // baseline (provider `human`, model `human`). Two ElevenLabs entries are
-    // retired (2026-07-23), so the arena carries 22 of the 24.
+    // retired (2026-07-23), so the arena carries 23 of the 25.
     expect(BASE_PROVIDER_ENTRIES.length).toBe(12);
-    expect(BASE_MODEL_ENTRIES.length).toBe(24);
+    expect(BASE_MODEL_ENTRIES.length).toBe(25);
     expect(arenaProviderEntries().length).toBe(12);
-    expect(arenaModelEntries().length).toBe(22);
+    expect(arenaModelEntries().length).toBe(23);
     // The committed registry carries no unlisted entries today; embargoed
     // ones live in the private overlay until their providers announce them.
     expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual(
@@ -167,6 +167,7 @@ describe('registry: ids, slugs, refs', () => {
       'neuphonic-neu-hq',
       'speechify-simba-3-2',
       'fish-s21-pro',
+      'cartesia-sonic-36',
     ]);
     const seedIds = SEED_STANDINGS.models.map((row) => row.id);
     expect(new Set(seedIds).size).toBe(seedIds.length);
@@ -368,6 +369,12 @@ const EXPECTED_MODELS = [
     name: 'Sonic 3.5',
   },
   {
+    id: 'cartesia-sonic-36',
+    arenaId: 'cartesia:sonic-3.6-2026-08-14',
+    providerId: 'cartesia',
+    name: 'Sonic 3.6',
+  },
+  {
     id: 'xai-xai-tts',
     arenaId: 'xai:xai-tts',
     providerId: 'xai',
@@ -508,8 +515,8 @@ describe('server/catalog derivation equality', () => {
       })),
     );
     // 21 active TTS models x 4 voices + the Human baseline x 4 recorded
-    // voices = 88 (retired models leave the variant matrix with the arena).
-    expect(VARIANTS.length).toBe(88);
+    // voices = 92 (retired models leave the variant matrix with the arena).
+    expect(VARIANTS.length).toBe(92);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -1083,7 +1090,7 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(24);
+    expect(listedModelEntries().length).toBe(25);
     expect(listedProviderEntries().length).toBe(12);
   });
 });

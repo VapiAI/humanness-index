@@ -719,6 +719,71 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     ],
   },
 
+  {
+    id: 'cartesia-sonic-36',
+    slug: 'cartesia-sonic-3-6',
+    providerId: 'cartesia',
+    name: 'Sonic 3.6',
+    apiModelId: 'sonic-3.6-2026-08-14',
+    arenaApiId: 'sonic-3.6-2026-08-14',
+    status: 'active',
+    releaseDate: {
+      value: '2026-08-14',
+      sourceUrl:
+        'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+      asOf: '2026-08-26',
+      note: 'Snapshot release.',
+    },
+    stats: {
+      // Measured only: needs a bench run against sonic-3.6-2026-08-14.
+      latencyMs: null,
+      languages: {
+        value: 44,
+        sourceUrl:
+          'https://docs.cartesia.ai/build-with-cartesia/tts-models/preview',
+        asOf: '2026-08-26',
+      },
+    },
+    voiceProfile: 27,
+    sample: {
+      fallbackClip: clip(
+        'voice-emma',
+        'cartesia',
+        'sonic-3.6-2026-08-14',
+        'clip-20',
+        'b70ab872a402c56c37c6367c290c062f',
+      ),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: [
+          "Sonic 3.6 is Cartesia's current flagship model. Cartesia positions it as another step change in naturalness with sub 90 ms latency and native support for 44 languages. The model adapts intonation, pacing, and emotiveness to the conversation like a human would.",
+        ],
+        sourceUrls: [
+          'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+        ],
+      },
+      {
+        heading: 'At a glance',
+        paragraphs: [
+          'Alphanumerics and heteronyms without preprocessing, 44 languages, and a published sub 90 ms latency claim. It has not been through our 50 trial streaming benchmark yet.',
+        ],
+        sourceUrls: [
+          'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+        ],
+      },
+    ],
+    faq: [
+      HOW_TESTED('Sonic 3.6'),
+      {
+        question: 'How fast is Sonic 3.6?',
+        answer:
+          'Cartesia publishes sub 90 ms latency. We have not yet measured it in our 50 trial streaming benchmark.',
+      },
+    ],
+  },
+
   /* --------------------------------- xAI ---------------------------------- */
   {
     id: 'xai-xai-tts',

@@ -90,21 +90,6 @@ const NEW_MODELS: PipelineModel[] = [
     name: 'TTS-1.5 Mini',
     registered: false,
   },
-  // Cartesia Sonic 3.6, GA 2026-08-14. Staged rather than registered because
-  // clips come first (see CONTRIBUTING: maintainers run the clip pipeline).
-  // arenaApiId carries the dated snapshot so the hashed clip set is pinned to
-  // exact weights: Cartesia's bare aliases are repointed over time, and
-  // `sonic-latest` / `sonic-3-latest` / `sonic-preview` all currently resolve
-  // to this snapshot, so only the dated id is stable enough to freeze.
-  {
-    id: 'cartesia-sonic-36',
-    slug: 'cartesia-sonic-3-6',
-    providerId: 'cartesia',
-    arenaApiId: 'sonic-3.6-2026-08-14',
-    vendorModelId: 'sonic-3.6-2026-08-14',
-    name: 'Sonic 3.6',
-    registered: false,
-  },
   // Fish Audio s2.1-pro. Ids proposed in PR #3 (github.com/VapiAI/humanness-index/pull/3)
   // and FROZEN here, because the vendor-rendered clip set is hashed against them.
   {
