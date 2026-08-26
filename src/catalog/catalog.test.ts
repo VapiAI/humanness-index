@@ -363,7 +363,7 @@ const EXPECTED_MODELS = [
   },
   {
     id: 'cartesia-sonic-35',
-    arenaId: 'cartesia:sonic-3.5',
+    arenaId: 'cartesia:sonic-3.5-2026-05-04',
     providerId: 'cartesia',
     name: 'Sonic 3.5',
   },
@@ -545,9 +545,9 @@ describe('server/catalog derivation equality', () => {
         '2f77e73d0fe4bcfe4769ed7f4f44329c',
       ],
       [
-        'variant:voice-nelliot:cartesia:sonic-3.5',
+        'variant:voice-nelliot:cartesia:sonic-3.5-2026-05-04',
         'clip-20',
-        '7d3e067846de9940a7f4e3e0bde1cf68',
+        '76f803cefea4c90953672d0c763d8fc2',
       ],
     ];
     for (const [variantId, promptId, hash] of goldens) {

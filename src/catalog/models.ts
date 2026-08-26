@@ -531,7 +531,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         question: "Is Sonic still Cartesia's current model?",
         answer:
-          'No. Three newer generations have superseded it, with Sonic 3.5 as the current flagship. Sonic remains in the arena as the baseline of the family.',
+          'No. Newer generations have superseded it, with Sonic 3.6 as the current flagship. Sonic remains in the arena as the baseline of the family.',
       },
     ],
   },
@@ -665,8 +665,8 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     slug: 'cartesia-sonic-3-5',
     providerId: 'cartesia',
     name: 'Sonic 3.5',
-    apiModelId: 'sonic-3.5',
-    arenaApiId: 'sonic-3.5',
+    apiModelId: 'sonic-3.5-2026-05-04',
+    arenaApiId: 'sonic-3.5-2026-05-04',
     status: 'active',
     releaseDate: {
       value: '2026-05-04',
@@ -684,16 +684,16 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       fallbackClip: clip(
         'voice-emma',
         'cartesia',
-        'sonic-3.5',
+        'sonic-3.5-2026-05-04',
         'clip-20',
-        '5e21eefdad513597d684cb9ec3b0815d',
+        '3e36a1883267dd73b9e11f42b78ede03',
       ),
     },
     copy: [
       {
         heading: 'Background',
         paragraphs: [
-          "Sonic 3.5 is Cartesia's current flagship, released in May 2026. Cartesia positions it as its most natural and fastest model, with sub 90 ms latency and native support for 42 languages. It is tuned for production agent transcripts: it reads order numbers, emails, and confirmation codes correctly without preprocessing, and it resolves heteronyms like read and bow from the surrounding words.",
+          "Sonic 3.5 is the May 2026 Sonic snapshot, and was Cartesia's flagship until Sonic 3.6 reached general availability in August 2026. Cartesia positioned it as its most natural and fastest model at release, with sub 90 ms latency and native support for 42 languages. It is tuned for production agent transcripts: it reads order numbers, emails, and confirmation codes correctly without preprocessing, and it resolves heteronyms like read and bow from the surrounding words.",
         ],
         sourceUrls: [
           'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',

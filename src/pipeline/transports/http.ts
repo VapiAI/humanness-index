@@ -73,6 +73,22 @@ export const postFormForJson = async <T>(
   return (await response.json()) as T;
 };
 
+/** Multipart POST for endpoints that answer 204 No Content (no body to parse). */
+export const postFormNoContent = async (
+  url: string,
+  headers: Record<string, string>,
+  form: FormData,
+  label: string,
+): Promise<void> => {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: form,
+    signal: AbortSignal.timeout(TIMEOUT_MS * 3),
+  });
+  await throwForStatus(response, label);
+};
+
 export const decodeHexAudio = (hex: string): Uint8Array => {
   const compact = hex.replace(/\s+/g, '');
   const bytes = new Uint8Array(compact.length / 2);
