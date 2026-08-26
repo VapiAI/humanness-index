@@ -40,8 +40,8 @@ export type ProviderTransport = {
   providerId: string;
   apiKeyEnv: string;
   synthesize?: (args: SynthesizeArgs) => Promise<SynthesisResult>;
-  /** Registers a clone, returns the provider voice id. */
-  createClone?: (args: CloneArgs) => Promise<string>;
+  /** Registers a clone. Returns the provider voice id, or null if still training. */
+  createClone?: (args: CloneArgs) => Promise<string | null>;
   /** Steps to follow when clone creation is not API-automatable. */
   manualCloneRunbook?: string;
   ttfbPlanFor?: (vendorModelId: string) => TtfbPlan;
