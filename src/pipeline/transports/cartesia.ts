@@ -23,7 +23,7 @@ const BENCH_VOICE = 'f786b574-daa5-4673-aa0c-cbe3e8534c02';
 /** The four licensed source voices are English (see pipeline/voices.ts). */
 const VOICE_LANGUAGE = 'en';
 
-/** The only base model /fine-tunes accepts today; PVCs forward-fill to newer ones. */
+/** Train against Sonic 3.5; PVCs forward-fill onto new models as they ship. */
 const PVC_BASE_MODEL = 'sonic-3.5-2026-05-04';
 
 const POLL_INTERVAL_MS = 30_000;
