@@ -20,6 +20,9 @@ const VERSION = '2026-08-14';
 /** Stock library voice, so the bench matches how other providers are measured. */
 const BENCH_VOICE = 'f786b574-daa5-4673-aa0c-cbe3e8534c02';
 
+/** Sample uploads are large; matches the shared multipart timeout. */
+const UPLOAD_TIMEOUT_MS = 180_000;
+
 /** The four licensed source voices are English (see pipeline/voices.ts). */
 const VOICE_LANGUAGE = 'en';
 
@@ -55,7 +58,7 @@ const uploadSample = async (
     method: 'POST',
     headers,
     body: form,
-    signal: AbortSignal.timeout(180_000),
+    signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
   });
   await throwForStatus(response, `cartesia datasets/upload-file ${basename(file)}`);
 };
