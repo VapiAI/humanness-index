@@ -35,8 +35,8 @@ const headers = (): Record<string, string> => ({
 type Dataset = { id: string };
 type FineTune = { id: string };
 
-/** Where a maintainer watches training and collects the finished voice id. */
-const PVC_DASHBOARD = 'https://play.cartesia.ai/pro-voice-cloning';
+/** Where training is tracked and the finished voice id is collected. */
+const PVC_DASHBOARD = 'https://play.cartesia.ai';
 
 export const cartesia: ProviderTransport = {
   providerId: 'cartesia',
@@ -88,7 +88,7 @@ export const cartesia: ProviderTransport = {
       );
     }
 
-    const { id } = await requestJson<FineTune>(
+    const fineTune = await requestJson<FineTune>(
       'POST',
       `${API}/fine-tunes`,
       auth,
@@ -102,9 +102,14 @@ export const cartesia: ProviderTransport = {
       'cartesia fine-tunes/create',
     );
 
-    // Training runs for up to 3 hours, so return rather than hold the process
-    // open. All four voices kick off in one run and train concurrently.
-    console.log(`  ${id} training, watch it at ${PVC_DASHBOARD}`);
+    // Training can take up to 3 hours, so this returns instead of waiting.
+    // All four voices kick off in one run and train concurrently. Null means
+    // there is no voice id yet; collect it once training finishes and persist
+    // it with `humanness:clone cartesia --record <voice-key>=<voice-id>`.
+    console.log(
+      `  ${fineTune.id} started. Training takes up to 3 hours; collect the ` +
+        `voice id from ${PVC_DASHBOARD} once it completes.`,
+    );
     return null;
   },
 
