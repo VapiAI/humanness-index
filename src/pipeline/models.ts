@@ -101,6 +101,19 @@ const NEW_MODELS: PipelineModel[] = [
     name: 's2.1-pro',
     registered: false,
   },
+  // Atlas TTS. No clips exist yet, so these ids are proposed, not frozen:
+  // they freeze the moment the first clip is hashed against them. The API
+  // ignores `model` (the voice selects it); vendorModelId is the placeholder
+  // the Atlas docs pass for OpenAI SDK compatibility.
+  {
+    id: 'atlas-tts',
+    slug: 'atlas-tts',
+    providerId: 'atlas',
+    arenaApiId: 'atlas-tts',
+    vendorModelId: 'atlas-tts',
+    name: 'Atlas TTS',
+    registered: false,
+  },
 ];
 
 const registryModels = (): PipelineModel[] =>

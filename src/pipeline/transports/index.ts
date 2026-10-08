@@ -8,6 +8,7 @@
  * vendor-rendered, so only the bench path runs here. LMNT was cut from the
  * expansion 2026-06-11 and its never-run transport deleted (see RUNBOOK).
  */
+import { atlas } from './atlas';
 import { cartesia } from './cartesia';
 import { elevenlabs } from './elevenlabs';
 import { fish } from './fish';
@@ -35,6 +36,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   fish,
   speechify,
   xai,
+  atlas,
 };
 
 /** Why the remaining arena providers cannot be measured/generated live. */
