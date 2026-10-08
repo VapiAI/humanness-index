@@ -196,6 +196,7 @@ upload. No TTFB bench (Human has no API; `latencyMs: null`).
 | Neuphonic | neu_fast | **PARKED, hosted but unregistered (2026-06-12)**: 80 clips uploaded + HEAD-verified under arenaApiId `neu-fast` (FROZEN), but the API ignores the model param, so these clips came from the SAME served pool as neu_hq's; registering both would put two rows on one system (methodology integrity wins). The request body did send `model: neu_fast`, so the clips become retroactively correct if Neuphonic exposes true per-model selection | Revisit if Neuphonic exposes true per-model selection; the pre-registration row stays in pipeline/models.ts |
 | Hume | Octave, Octave 2 | Clone creation is **Platform-UI only** (the API uses clones but cannot create them), manual console work | `bun run humanness:clone hume` prints the console steps; record ids with `--record`; then steps 2-5. Octave 2 voices are not backward compatible with Octave 1, so clone on the right model family |
 | Sesame | CSM-1B | **Decision needed**: the hosted deployment's clone path expects source samples staged in its own private storage, which this pipeline cannot reach | Decide: get upload access / self-host CSM-1B cloning / drop Sesame. Transport synthesis works against the SESAME_URL host; `createClone` intentionally throws with this note |
+| Atlas | Atlas TTS | **Transport ready, no clips (2026-10-08)**: `transports/atlas.ts` synthesizes, clones (`POST /v1/voices`, the first source sample trimmed to 10 s of 24 kHz mono WAV, since Atlas takes 3-12 s), and benches. Pre-registration row `atlas-tts` in `pipeline/models.ts`; its ids are proposed until the first clip is hashed. Smoke-tested live: clone, synth on the clone, delete; a 10-trial bench on stock voice `capella` read a 514 ms median | Maintainers: `humanness:clone atlas <originals>`, then `humanness:clips atlas-tts --upload`, register, and run the 50-trial bench on the Clara clone (the bench picks it up from voices.local.json automatically) |
 
 Source clips for cloning: the licensed master recordings live at
 `pipeline/results/source-voices/originals/{clara,emma,godfrey,nelliot}/`
@@ -254,6 +255,17 @@ dropped in; the originals supersede them.)
   raw chunked audio with no JSON envelope, so `anyBytesMarker` is correct. No
   Bun fetch wedge on Bun 1.3.14 (the Smallest.ai slicing workaround was a
   1.0.3 problem).
+- **Atlas (2026-10-08)**: OpenAI-compatible gateway at
+  `https://api.tts.runatlas.com` (`Authorization: Bearer sk_…`). The
+  `model` field is ignored and the voice id selects the model, so
+  `vendorModelId` is a placeholder. Clones are private to the account that
+  made them (10 per account), so clone, generate, and bench with one key.
+  The bench streams `POST /v1/audio/speech` with `response_format: pcm`,
+  not the WebSocket: the WS sends one frame per whole sentence and measured
+  ~50 ms slower at the median (579 vs 528 ms, 10 trials each). If you ever
+  bench the WS from Bun, set a User-Agent: the Atlas edge 403s an upgrade
+  without one and Bun's client sends none. The docs' example voice `lylla`
+  is not in `/v1/models`; the stock bench voice is `capella`.
 - **Blob store**: `audio/{hash}.mp3`, public access, `addRandomSuffix:
   false`. Uploads are idempotent (skip-if-exists); the token's store id must
   be the arena audio origin (bkvlbh5qphzaen1w...).
