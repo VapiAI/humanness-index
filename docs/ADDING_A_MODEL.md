@@ -33,7 +33,7 @@ Everything below is the maintainer guide.
 | Code | [github.com/VapiAI/humanness-index](https://github.com/VapiAI/humanness-index) | Public repo. GitHub Actions is turned off, so nothing runs the tests for you (see Ship it). |
 | Hosting | Vercel, Vapi team, project `humanness-index` | Every PR gets a preview deploy. Merging to `main` deploys production. |
 | Clip storage | Vercel Blob store `store_BKVLbh5qPhzaeN1w` | Served from `https://bkvlbh5qphzaen1w.public.blob.vercel-storage.com`, one file per clip at `audio/{hash}.mp3`. The same store holds the live vote log. |
-| Source voices | The Vapi Voice Eval folder in Google Drive (maintainers only) | Clara, Emma, Godfrey and Nelliot are the four arena voices (32 licensed recordings). The Elliot folder is not part of the arena. |
+| Source voices | [Vapi Voice Eval](https://drive.google.com/drive/folders/1Wsf3_YIVAPd7irEz0RMmqtRTihg4PZ65) in Google Drive (Vapi accounts only) | Clara, Emma, Godfrey and Nelliot are the four arena voices (32 licensed recordings). The Elliot folder is not part of the arena. |
 | Provider API keys | Vercel project, Development environment | Keys for Vapi's own provider accounts, which hold the existing voice clones. They are added as each provider is needed; if one you need is missing, ask Jordan to add it. |
 | Pipeline secrets | `src/pipeline/.env` (gitignored) | Written by `vercel env pull`. What each key is for is in `src/pipeline/.env.example`. |
 
@@ -54,8 +54,9 @@ Everything below is the maintainer guide.
    token makes `bun run dev` use the live vote store over the network instead
    of a local in-memory one. The pull overwrites the file, so keep nothing
    else in it and run it again whenever a key changes.
-6. Download the Clara, Emma, Godfrey and Nelliot folders from the Vapi Voice
-   Eval Drive folder into `src/pipeline/results/source-voices/originals/` as
+6. Download the Clara, Emma, Godfrey and Nelliot folders from the
+   [Vapi Voice Eval](https://drive.google.com/drive/folders/1Wsf3_YIVAPd7irEz0RMmqtRTihg4PZ65)
+   Drive folder into `src/pipeline/results/source-voices/originals/` as
    `clara/`, `emma/`, `godfrey/` and `nelliot/` (lowercase). Skip the two
    "Copy of" files in Godfrey; they duplicate the originals. That path is
    gitignored: licensed audio never goes in git.
