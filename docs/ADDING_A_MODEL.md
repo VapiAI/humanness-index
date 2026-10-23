@@ -34,7 +34,7 @@ Everything below is the maintainer guide.
 | Hosting | Vercel, Vapi team, project `humanness-index` | Every PR gets a preview deploy. Merging to `main` deploys production. |
 | Clip storage | Vercel Blob store `store_BKVLbh5qPhzaeN1w` | Served from `https://bkvlbh5qphzaen1w.public.blob.vercel-storage.com`, one file per clip at `audio/{hash}.mp3`. The same store holds the live vote log. |
 | Source voices | The Vapi Voice Eval folder in Google Drive (maintainers only) | Clara, Emma, Godfrey and Nelliot are the four arena voices (32 licensed recordings). The Elliot folder is not part of the arena. |
-| Provider API keys | Vercel project, Development environment | Keys for Vapi's own provider accounts, which hold the existing voice clones. Setup pulls them all, with the Blob token, into `src/pipeline/.env`. |
+| Provider API keys | Vercel project, Development environment | Keys for Vapi's own provider accounts, which hold the existing voice clones. They are added as each provider is needed; if one you need is missing, ask Jordan to add it. |
 | Pipeline secrets | `src/pipeline/.env` (gitignored) | Written by `vercel env pull`. What each key is for is in `src/pipeline/.env.example`. |
 
 ## One-time setup
@@ -47,8 +47,8 @@ Everything below is the maintainer guide.
 3. Sign in to Vercel with your Vapi account: `vercel login`
 4. Link the Vercel project:
    `vercel link --yes --scope vapi --project humanness-index`
-5. Pull every pipeline key (the Blob token and all provider keys) into the
-   gitignored pipeline secrets file:
+5. Pull the pipeline keys (the Blob token plus whichever provider keys have
+   been added) into the gitignored pipeline secrets file:
    `vercel env pull src/pipeline/.env --environment=development --yes`
    Pull into that path, not the repo root: a root `.env.local` with the Blob
    token makes `bun run dev` use the live vote store over the network instead
@@ -313,8 +313,9 @@ Jordan before you start. It has not been done since launch, so expect
 ## When something breaks
 
 - `Missing required env var X`: the key is not in `src/pipeline/.env`. Pull
-  again (setup step 5); if it is still missing, it hasn't been added to the
-  Vercel project's Development environment yet.
+  again (setup step 5). If it is still missing, nobody has needed that
+  provider since keys moved to Vercel: ask Jordan to add Vapi's key for it to
+  the Development environment, then pull again.
 - `Provider X is missing cloned voice ids`: clone the voices, save
   console-made ids with `--record`, or add the ids to
   `src/pipeline/voices.ts`.
