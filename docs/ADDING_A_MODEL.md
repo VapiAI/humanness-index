@@ -30,7 +30,7 @@ Everything below is the maintainer guide.
 
 | What | Where | Notes |
 | --- | --- | --- |
-| Code | [github.com/VapiAI/humanness-index](https://github.com/VapiAI/humanness-index) | Public repo. CI runs typecheck, tests and build on every PR. |
+| Code | [github.com/VapiAI/humanness-index](https://github.com/VapiAI/humanness-index) | Public repo. GitHub Actions is turned off, so nothing runs the tests for you (see Ship it). |
 | Hosting | Vercel, Vapi team, project `humanness-index` | Every PR gets a preview deploy. Merging to `main` deploys production. |
 | Clip storage | Vercel Blob store `store_BKVLbh5qPhzaeN1w` | Served from `https://bkvlbh5qphzaen1w.public.blob.vercel-storage.com`, one file per clip at `audio/{hash}.mp3`. The same store holds the live vote log. |
 | Source voices | The Vapi Voice Eval folder in Google Drive (maintainers only) | Clara, Emma, Godfrey and Nelliot are the four arena voices (32 licensed recordings). The Elliot folder is not part of the arena. |
@@ -217,7 +217,7 @@ entry exists.
 ### Check it locally
 
 ```sh
-bun run check-types && bun test
+bun run check-types && bun test && bun run build
 bun run humanness:verify-clips <model-id>
 ```
 
@@ -226,9 +226,11 @@ it, its Listen sample plays, and `/models/<slug>` renders.
 
 ### Ship it
 
-Open a PR. CI runs typecheck, tests and build, and Vercel posts a preview
-link. Merging to `main` deploys production, and CI does not block a merge,
-so wait for the green check first. Once it is live, run
+Open a PR. Vercel builds a preview and posts the link, but that build only
+runs `next build`. GitHub Actions is turned off on this repo, so the
+workflow in `.github/workflows/ci.yml` does not run and nothing else checks
+the PR: the local checks above are the gate. Merging to `main` deploys
+production straight away. Once it is live, run
 `bun run scripts/audit-blindness.ts` to confirm battles are still blind. It
 fails if a new model's clips reached the store in a format no other model
 uses, which would let someone identify the model from the file header.
