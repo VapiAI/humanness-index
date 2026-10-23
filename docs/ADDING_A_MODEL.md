@@ -34,31 +34,37 @@ Everything below is the maintainer guide.
 | Hosting | Vercel, Vapi team, project `humanness-index` | Every PR gets a preview deploy. Merging to `main` deploys production. |
 | Clip storage | Vercel Blob store `store_BKVLbh5qPhzaeN1w` | Served from `https://bkvlbh5qphzaen1w.public.blob.vercel-storage.com`, one file per clip at `audio/{hash}.mp3`. The same store holds the live vote log. |
 | Source voices | The Vapi Voice Eval folder in Google Drive (maintainers only) | Clara, Emma, Godfrey and Nelliot are the four arena voices (32 licensed recordings). The Elliot folder is not part of the arena. |
-| Provider API keys | Each provider's own console | Not stored in Vercel or the repo. Use the team account that holds the existing clones; ask Jordan for access. |
+| Provider API keys | Each provider's own console | Not stored in Vercel or the repo. See setup step 7. |
 | Pipeline secrets | `src/pipeline/.env` (gitignored) | Every key name is listed in `src/pipeline/.env.example`. |
 
 ## One-time setup
 
-1. Install Bun, ffmpeg (`brew install ffmpeg`) and the Vercel CLI
-   (`npm i -g vercel`).
+1. Install Bun 1.3 or newer, ffmpeg (`brew install ffmpeg`) and the Vercel
+   CLI (`npm i -g vercel`). Older Bun stalls partway through long latency
+   benchmarks.
 2. Clone and install: `git clone https://github.com/VapiAI/humanness-index`,
    then `bun install` inside it.
-3. Link the Vercel project:
+3. Sign in to Vercel with your Vapi account: `vercel login`
+4. Link the Vercel project:
    `vercel link --yes --scope vapi --project humanness-index`
-4. Create the pipeline secrets file:
+5. Create the pipeline secrets file:
    `cp src/pipeline/.env.example src/pipeline/.env`
-5. Get the Blob token: run `vercel env pull`, move the
+6. Get the Blob token: run `vercel env pull`, move the
    `BLOB_READ_WRITE_TOKEN` line from the new root `.env.local` into
    `src/pipeline/.env`, and delete it from `.env.local`. Left at the root, it
    makes `bun run dev` use the live vote store over the network instead of a
    local in-memory one.
-6. Add the API key for each provider you are working with to
-   `src/pipeline/.env`.
-7. Download the Clara, Emma, Godfrey and Nelliot folders from the Vapi Voice
+7. Add provider API keys to `src/pipeline/.env`. For a provider already in
+   the Index, the existing voice clones live in Vapi's account with that
+   provider, so ask Jordan for that account's key rather than making your
+   own. For a new provider, sign up with your Vapi email and use that key.
+   Human-baseline work also needs a Deepgram key (`DEEPGRAM_API_KEY`).
+8. Download the Clara, Emma, Godfrey and Nelliot folders from the Vapi Voice
    Eval Drive folder into `src/pipeline/results/source-voices/originals/` as
-   `clara/`, `emma/`, `godfrey/` and `nelliot/` (lowercase). That path is
+   `clara/`, `emma/`, `godfrey/` and `nelliot/` (lowercase). Skip the two
+   "Copy of" files in Godfrey; they duplicate the originals. That path is
    gitignored: licensed audio never goes in git.
-8. Check everything runs: `bun run check-types && bun test`, then
+9. Check everything runs: `bun run check-types && bun test`, then
    `bun run dev` and open `http://localhost:3000`.
 
 ## Pick your path
@@ -76,14 +82,19 @@ Order matters: the clips must be uploaded and verified before the registry
 entry merges, because battles can serve a model the moment it is in the
 registry.
 
+If the model is under embargo, keep all of this on a local branch and don't
+push it until the provider announces. You can upload its clips early: their
+addresses can't be guessed without the model id.
+
 ### Choose the ids
 
 Add a row to `NEW_MODELS` in `src/pipeline/models.ts` with `id`, `slug`,
 `providerId`, `arenaApiId`, `vendorModelId`, `name` and `registered: false`.
 Once clips are generated, `id`, `slug` and `arenaApiId` can never change,
 because they feed the URLs and the clip addresses. Follow the existing
-pattern, for example Fish S2.1-Pro: id `fish-s21-pro`, arenaApiId `s2-1-pro`
-(no dots), vendorModelId `s2.1-pro` (the exact string the vendor API takes).
+pattern, for example Fish S2.1-Pro: id `fish-s21-pro`, slug `fish-s2-1-pro`,
+arenaApiId `s2-1-pro` (no dots), vendorModelId `s2.1-pro` (the exact string
+the vendor API takes).
 
 ### Add a transport (new provider only)
 
@@ -100,39 +111,61 @@ a logo file in `public/marks/`.
 
 ### Clone the four voices (new provider only)
 
+The original recordings are long (Nelliot is a single 115 MB file), and most
+clone APIs only take a short sample. Check the provider's limits, then cut
+one clean excerpt per voice into a separate folder with the same four
+subfolders:
+
 ```sh
-bun run humanness:clone <provider> src/pipeline/results/source-voices/originals
+mkdir -p clone-samples/clara
+ffmpeg -ss 30 -t 10 -i "src/pipeline/results/source-voices/originals/clara/<recording>.mp3" -ac 1 clone-samples/clara/clara.wav
+```
+
+Pick a stretch with clean speech and no long pauses, and listen to it before
+cloning. Most transports only send the first file in each voice folder, so
+put exactly one file in each. Known limits: Smallest.ai 5 to 15 seconds and
+5 MB, Neuphonic 3 to 10 seconds. Then:
+
+```sh
+bun run humanness:clone <provider> clone-samples
 ```
 
 The new clone ids are saved to `src/pipeline/voices.local.json`, which is
 gitignored. Copy them into `STATIC_CLONED_VOICE_IDS` in
-`src/pipeline/voices.ts` as well, so anyone can regenerate clips later. The
-Inworld, Smallest.ai and Neuphonic ids are not in the repo yet; if you need
-them, they are in each provider's console.
+`src/pipeline/voices.ts` and commit them, so anyone can regenerate clips
+later. Where cloning is console-only (Hume), create the clones by hand and
+save the ids with
+`bun run humanness:clone <provider> --record voice-clara=<id> voice-emma=<id> voice-godfrey=<id> voice-nelliot=<id>`.
 
-Some providers cap sample length (Neuphonic 3 to 10 seconds, Smallest.ai 5 to
-15 seconds and 5 MB). For those, trim one clean excerpt per voice into a
-separate folder and point the command at that. Where cloning is console-only
-(Hume), create the clones by hand and save the ids with
-`--record voice-clara=<id> voice-emma=<id> voice-godfrey=<id> voice-nelliot=<id>`.
+The Inworld, Smallest.ai and Neuphonic clone ids from earlier runs are not in
+the repo yet. If you need one of those providers, recover them first:
+`bun run humanness:clone inworld --list` prints Inworld's, and the
+Smallest.ai and Neuphonic consoles list theirs under the names Arena Clara,
+Arena Emma, Arena Godfrey and Arena Nelliot. Save them with `--record` and
+add them to `src/pipeline/voices.ts`.
 
 ### Generate and upload the clips
 
-Do a small trial first, then the full run:
+Render locally first, listen, then upload:
 
 ```sh
-bun run humanness:clips <model-id> --voices clara --limit 3
-bun run humanness:clips <model-id> --upload
+bun run humanness:clips <model-id> --voices clara --limit 3   # quick check that the key and transport work
+bun run humanness:clips <model-id>                            # all 80 clips, local only
+bun run humanness:clips <model-id> --upload                   # upload and verify
 ```
 
-The full run renders 80 clips (four voices by 20 lines) into
-`src/pipeline/results/clips/<model-id>/`, uploads them, and checks that every
-one resolves; exit code 0 means they all do. Listen to a spread of them
-before moving on. Models fail in odd ways: Smallest.ai once read most of a
-line, cut off the final question, then screamed for 87 seconds.
+The local run writes 80 clips (four voices by 20 lines) to
+`src/pipeline/results/clips/<model-id>/`, named by hash; `manifest.json` in
+that folder says which file is which voice and line. Listen to a spread of
+them. Models fail in odd ways: Smallest.ai once read most of a line, cut off
+the final question, then screamed for 87 seconds. To redo a bad clip, delete
+its file and run the local command again; only missing clips are
+regenerated.
 
-Never upload placeholder audio. Uploads skip any clip that already exists, so
-a placeholder would block the real clip later.
+The upload run sends the local files and checks that every clip resolves;
+exit code 0 means they all do. Once a clip is hosted, the pipeline will not
+replace it, so never upload placeholder audio and always listen before
+uploading.
 
 ### Benchmark latency
 
@@ -140,12 +173,11 @@ a placeholder would block the real clip later.
 bun run humanness:ttfb <model-id>
 ```
 
-This runs 50 sequential trials after two warm-ups. The median goes in the
-registry entry as `pipelineTtfb(<median>, '<note>', '<YYYY-MM-DD>')`. The run
+This runs 50 sequential trials after two warm-ups and prints the median. It
+goes in the registry entry as
+`pipelineTtfb(<median>, '<how it was measured>', '<YYYY-MM-DD>')`. The run
 overwrites `src/pipeline/results/ttfb_results_50trial.json`, so copy that
-file aside first if it holds anything you need. If a long HTTP benchmark
-hangs partway, run it in slices (`--trials 10`) in fresh processes and
-combine the results.
+file aside first if it holds anything you need.
 
 Latency is measured by us or left blank. If the model has no reachable API,
 the entry keeps `latencyMs: null` and the site shows a dash. Never use a
@@ -167,13 +199,20 @@ S2.1-Pro are good templates. Each entry needs:
 - at least two `copy` blocks and two `faq` entries (`HOW_TESTED('<name>')`
   plus one of your own), with no em dashes anywhere
 
-Then, in `src/catalog/catalog.test.ts`, bump the pinned model counts (and the
-provider counts for a new provider) and add the id to `UNSEEDED_MODEL_IDS`.
+`src/catalog/catalog.test.ts` pins the whole catalog on purpose, so
+`bun test` will fail until you update it. For a new model:
+
+- add it to `EXPECTED_MODELS`, in the same position as in `models.ts`
+- add its id to `UNSEEDED_MODEL_IDS` and its slug to the slug checks
+- add one to each model count (`BASE_MODEL_ENTRIES`, `arenaModelEntries`,
+  `listedModelEntries`) and four to `VARIANTS.length`
+
+A new provider also goes in `EXPECTED_PROVIDERS`, the provider marks map and
+the provider slug table, and adds one to each provider count. Each failing
+test names the line to change.
+
 The `NEW_MODELS` row in `src/pipeline/models.ts` can be deleted once the
 entry exists.
-
-If the model is under embargo, do not commit it to the repo, which is public.
-Talk to Jordan about the private registry overlay instead.
 
 ### Check it locally
 
@@ -188,7 +227,8 @@ it, its Listen sample plays, and `/models/<slug>` renders.
 ### Ship it
 
 Open a PR. CI runs typecheck, tests and build, and Vercel posts a preview
-link. Merging to `main` deploys production. Once it is live, run
+link. Merging to `main` deploys production, and CI does not block a merge,
+so wait for the green check first. Once it is live, run
 `bun run scripts/audit-blindness.ts` to confirm battles are still blind. It
 fails if a new model's clips reached the store in a format no other model
 uses, which would let someone identify the model from the file header.
@@ -211,8 +251,10 @@ itself. Speechify Simba 3.2, Fish S2.1-Pro and Gradium all came in this way.
   `clip-01` to `clip-20`, for example `voice-clara/clip-01.mp3`.
 - Check the delivery before ingesting it. Folder names are not proof of which
   voice is inside: the Fish set arrived with an extra Elliot folder.
-  Transcribe the clips (whisper-cpp works) to confirm each one reads its
-  line, and look for any clip far too long or short for its line.
+  Transcribe the clips to confirm each one reads its line
+  (`brew install whisper-cpp`, plus the `ggml-base.en.bin` model from
+  huggingface.co/ggerganov/whisper.cpp), and look for any clip far too long
+  or short for its line.
 - Run `bun run humanness:vendor-clips <model-id> <folder>` to validate and
   convert locally, then the same command with `--upload`. It refuses to
   upload anything unless all 80 clips are present.
@@ -225,19 +267,39 @@ itself. Speechify Simba 3.2, Fish S2.1-Pro and Gradium all came in this way.
 
 Every model in the Index is heard through clones of the same four licensed
 voices: Clara, Emma, Godfrey and Nelliot. That shared roster is what makes
-battles fair, so it is frozen.
+battles fair.
 
-- The Human baseline (shown as "Homo Sapien") is the four voice actors
-  reading the same 20 lines. To replace a take, put the new recording under
-  `src/pipeline/results/source-voices/human-readings/<voice>/` and run
-  `bun run humanness:human-clips --voices <voice> --upload --overwrite`. The
-  full recording, cutting and cleaning flow is in the RUNBOOK.
-- Adding a fifth source voice is a much larger change. The roster is defined
-  in `src/catalog/voices.ts`, `src/pipeline/voices.ts` and
-  `src/server/catalog.ts`, and every model serves the whole roster by
-  default. A new voice therefore needs a clone on every provider and 20 new
-  clips for every model, or a `sourceVoices` restriction on each model
-  without them. Talk to Jordan before starting one.
+### The Human baseline
+
+The Human baseline (shown as "Homo Sapien") is the four voice actors reading
+the same 20 lines. To replace a take, put the new recording under
+`src/pipeline/results/source-voices/human-readings/<voice>/` and run
+`bun run humanness:human-clips --voices <voice> --upload --overwrite`. The
+full recording, cutting and cleaning flow is in the RUNBOOK.
+
+### Adding a source voice
+
+A new source voice changes the benchmark for every model, so agree it with
+Jordan before you start. It has not been done since launch, so expect
+`bun test` to point out anything missed here.
+
+1. Add the recordings to the Drive folder and to
+   `src/pipeline/results/source-voices/originals/<name>/`.
+2. Append `voice-<name>` to `SOURCE_VOICE_IDS` in `src/catalog/voices.ts` and
+   `src/pipeline/voices.ts`, and `{ id: 'voice-<name>', name: '<Name>' }` to
+   `SOURCE_VOICES` in `src/server/catalog.ts`. Append only: the existing
+   order is frozen.
+3. Clone the new voice on every provider with
+   `bun run humanness:clone <provider> clone-samples` (voices already cloned
+   are skipped), and commit the new ids in `src/pipeline/voices.ts`.
+4. Generate its clips for every active model:
+   `bun run humanness:clips <model-id> --voices <name> --upload`.
+5. Every model serves every voice by default. Models we cannot generate for
+   (the vendor-rendered ones, Canopy's Orpheus, and Human until the actor
+   records the lines) need a `sourceVoices` list of the voices they have, so
+   they are never paired on the new one.
+6. Update the voice and variant pins in `src/catalog/catalog.test.ts`, and
+   the "four voices" wording in `docs/METHODOLOGY.md` and the registry copy.
 
 ## Rules that don't bend
 
@@ -254,6 +316,8 @@ battles fair, so it is frozen.
 - `Provider X is missing cloned voice ids`: clone the voices, save
   console-made ids with `--record`, or add the ids to
   `src/pipeline/voices.ts`.
+- `Unknown model "X"`: the `NEW_MODELS` row or registry entry is missing, or
+  the id is misspelled. The error lists every known id.
 - Provider-specific problems (rate limits, sample limits, unusual
   endpoints): the Provider quirks section of `src/pipeline/RUNBOOK.md` covers
   every provider already in the Index.
