@@ -6,9 +6,8 @@
  * token via `onToken`. Only mounted when NEXT_PUBLIC_TURNSTILE_SITE_KEY is
  * configured (see ../hooks/useVoteGate).
  *
- * Rendered `interaction-only`, so it solves silently and takes no space unless
- * Cloudflare actually wants a human. Tokens are single-use: bump `resetSignal`
- * after spending one and the widget solves again for the next.
+ * Mounted in a visible vote dialog, with Cloudflare's own progress UI shown.
+ * Each mount creates a fresh, single-use challenge.
  */
 import { useEffect, useRef } from 'react';
 
@@ -16,7 +15,8 @@ type TurnstileRenderOptions = {
   sitekey: string;
   callback: (token: string) => void;
   'expired-callback'?: () => void;
-  'error-callback'?: () => void;
+  'error-callback'?: (code: string) => void;
+  'timeout-callback'?: () => void;
   theme?: 'light' | 'dark' | 'auto';
   appearance?: 'always' | 'execute' | 'interaction-only';
   'refresh-expired'?: 'auto' | 'manual' | 'never';
@@ -38,22 +38,30 @@ const SCRIPT_SRC =
   'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
 let scriptPromise: Promise<TurnstileApi> | null = null;
+const SCRIPT_TIMEOUT_MS = 15_000;
 
 const loadTurnstile = (): Promise<TurnstileApi> => {
   if (window.turnstile) return Promise.resolve(window.turnstile);
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = SCRIPT_SRC;
-      script.async = true;
-      script.onload = () => {
-        if (window.turnstile) resolve(window.turnstile);
-        else reject(new Error('Turnstile script loaded without its API'));
-      };
-      script.onerror = () => {
+      const fail = () => {
+        clearTimeout(timeout);
+        script.onload = null;
+        script.onerror = null;
+        script.remove();
         scriptPromise = null;
         reject(new Error('Failed to load the Turnstile script'));
       };
+      const timeout = setTimeout(fail, SCRIPT_TIMEOUT_MS);
+      script.src = SCRIPT_SRC;
+      script.async = true;
+      script.onload = () => {
+        if (!window.turnstile) { fail(); return; }
+        clearTimeout(timeout);
+        resolve(window.turnstile);
+      };
+      script.onerror = fail;
       document.head.appendChild(script);
     });
   }
@@ -63,24 +71,23 @@ const loadTurnstile = (): Promise<TurnstileApi> => {
 type TurnstileWidgetProps = {
   siteKey: string;
   onToken: (token: string) => void;
-  /** Fired when the challenge errors, expires, or the script fails to load. */
-  onError?: () => void;
-  /** Bump to discard the current token and solve for a fresh one. */
-  resetSignal?: number;
+  onReady?: () => void;
+  /** No token or secret is included in these diagnostic codes. */
+  onError?: (code: string) => void;
 };
 
 export const TurnstileWidget = ({
   siteKey,
   onToken,
+  onReady,
   onError,
-  resetSignal = 0,
 }: TurnstileWidgetProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   // Keep latest callbacks without re-rendering the widget.
-  const callbacksRef = useRef({ onToken, onError });
+  const callbacksRef = useRef({ onToken, onReady, onError });
   useEffect(() => {
-    callbacksRef.current = { onToken, onError };
+    callbacksRef.current = { onToken, onReady, onError };
   });
 
   useEffect(() => {
@@ -92,15 +99,19 @@ export const TurnstileWidget = ({
         widgetIdRef.current = turnstile.render(containerRef.current, {
           sitekey: siteKey,
           theme: 'light',
-          appearance: 'interaction-only',
+          appearance: 'always',
           'refresh-expired': 'auto',
-          callback: (token) => callbacksRef.current.onToken(token),
-          'expired-callback': () => callbacksRef.current.onError?.(),
-          'error-callback': () => callbacksRef.current.onError?.(),
+          callback: (token) => { if (!cancelled) callbacksRef.current.onToken(token); },
+          'expired-callback': () => { if (!cancelled) callbacksRef.current.onError?.('expired'); },
+          'timeout-callback': () => { if (!cancelled) callbacksRef.current.onError?.('timeout'); },
+          'error-callback': (code) => {
+            if (!cancelled) callbacksRef.current.onError?.(code);
+          },
         });
+        callbacksRef.current.onReady?.();
       })
       .catch(() => {
-        if (!cancelled) callbacksRef.current.onError?.();
+        if (!cancelled) callbacksRef.current.onError?.('script-load');
       });
 
     return () => {
@@ -111,11 +122,6 @@ export const TurnstileWidget = ({
       }
     };
   }, [siteKey]);
-
-  useEffect(() => {
-    if (resetSignal === 0 || widgetIdRef.current === null) return;
-    window.turnstile?.reset(widgetIdRef.current);
-  }, [resetSignal]);
 
   return <div ref={containerRef} className="hi-gate-widget" />;
 };

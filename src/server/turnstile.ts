@@ -1,7 +1,7 @@
 /**
  * Cloudflare Turnstile verification for the vote endpoint. Every vote must
- * carry a freshly solved token (see ../hooks/useVoteGate, which keeps one warm
- * so the check stays invisible); this module verifies it server-side.
+ * carry a freshly solved token (see ../hooks/useVoteGate); this module verifies
+ * it server-side.
  *
  * Rate limiting is NOT here and is not in application code at all: it runs as
  * Vercel Firewall rules on /api/vote, at the edge ahead of this function. That

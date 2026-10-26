@@ -279,8 +279,7 @@ export const HumannessIndexPage = ({
     setVoting(true);
 
     // Every vote carries a Turnstile token (no-op without keys — castVote then
-    // runs immediately); the gate keeps one warm, so it only stalls if the vote
-    // beats it. The reveal is built entirely from the vote response
+    // runs immediately); a visible check starts on demand. The reveal is built entirely from the vote response
     // (identities, deltas, correctness); the client never held the pre-vote
     // identities. Abandoning the check releases the lock via the cancel
     // callback.
