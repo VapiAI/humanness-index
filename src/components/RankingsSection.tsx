@@ -370,7 +370,7 @@ export const RankingsSection = ({
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'price')}>
                 <SortHeader label="Price" sortKey="price" sort={sort} onSortChange={onSortChange} />
-                <InfoTip tip="Published pay-as-you-go API pricing, in US dollars per 1 million characters. Open-source models show no price." />
+                <InfoTip tip="API pricing in US dollars per 1 million characters. Some rates use credits included in a subscription; see each model page for the pricing basis and plan conditions. Open-source models show no price." />
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'votes')}>
                 <SortHeader label="Votes" sortKey="votes" sort={sort} onSortChange={onSortChange} />

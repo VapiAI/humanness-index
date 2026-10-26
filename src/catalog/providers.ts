@@ -68,9 +68,9 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       },
       pricing: {
         value: '$50',
-        sourceUrl: 'https://cartesia.ai/pricing',
-        asOf: '2026-06-10',
-        note: '1 credit per character (docs.cartesia.ai/pricing); entry self-serve Pro plan is $5/mo for 100K credits, a $50 per 1M effective rate; larger plans drop to $37-39 per 1M. Same credit rate for every Sonic.',
+        sourceUrl: 'https://www.cartesia.ai/pricing',
+        asOf: '2026-10-26',
+        note: 'The displayed $50 per 1M characters is the effective rate of Pro included credits ($5/month for 100K), assuming full use, rather than an overage rate. Startup included credits are about $39.20/1M ($49 for 1.25M); Scale about $37.38/1M ($299 for 8M). Overages cost $65/$45/$38 per 1M credits on Pro/Startup/Scale. TTS uses approximately 1 credit per character; preprocessing can affect usage (docs.cartesia.ai/pricing). Professional voice clones require Startup or higher; custom Enterprise rates may differ.',
       },
     },
     copy: [
@@ -84,7 +84,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'Platform and compliance',
         paragraphs: [
-          'Four Sonic generations sit on the Humanness Index™, from the May 2024 debut model to the current Sonic 3.5 flagship. Since Sonic 3 the platform has carried SOC 2 Type II, HIPAA, and PCI Level 1 compliance, aimed at regulated phone work.',
+          'Five Sonic generations sit on the Humanness Index™, from the May 2024 debut model to Sonic 3.6. Since Sonic 3 the platform has carried SOC 2 Type II, HIPAA, and PCI Level 1 compliance, aimed at regulated phone work.',
         ],
         sourceUrls: ['https://docs.cartesia.ai'],
       },
