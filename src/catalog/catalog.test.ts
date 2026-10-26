@@ -88,17 +88,12 @@ describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
     // 12 providers / 25 models: the 11 vendors + 24 TTS models, plus the Human
     // baseline (provider `human`, model `human`). Two ElevenLabs entries are
-    // retired (2026-07-23) and Sonic 3.6 is unlisted pending its clips, so the
-    // arena carries 22 of the 25.
+    // retired (2026-07-23), so the arena carries 23 of the 25.
     expect(BASE_PROVIDER_ENTRIES.length).toBe(12);
     expect(BASE_MODEL_ENTRIES.length).toBe(25);
     expect(arenaProviderEntries().length).toBe(12);
-    expect(arenaModelEntries().length).toBe(22);
-    // Sonic 3.6 is committed but unlisted until its clips are generated;
-    // flipping status to 'active' is the one-line re-list.
-    expect(
-      BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted').map((m) => m.id),
-    ).toEqual(['cartesia-sonic-36']);
+    expect(arenaModelEntries().length).toBe(23);
+    expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual([]);
   });
 
   it('constrains the overlay to unlisted models with resolvable providers', () => {
@@ -370,6 +365,12 @@ const EXPECTED_MODELS = [
     name: 'Sonic 3.5',
   },
   {
+    id: 'cartesia-sonic-36',
+    arenaId: 'cartesia:sonic-3.6-2026-08-27',
+    providerId: 'cartesia',
+    name: 'Sonic 3.6',
+  },
+  {
     id: 'xai-xai-tts',
     arenaId: 'xai:xai-tts',
     providerId: 'xai',
@@ -488,7 +489,7 @@ describe('server/catalog derivation equality', () => {
     expect([...PROVIDERS_BY_ID.values()]).toEqual(EXPECTED_PROVIDERS);
   });
 
-  it('derives the exact 88-variant matrix (ids feed the audio hashes)', () => {
+  it('derives the exact 92-variant matrix (ids feed the audio hashes)', () => {
     // The Human baseline now has clips for all four source voices, like every
     // other model.
     const HUMAN_VOICES = [
@@ -509,9 +510,9 @@ describe('server/catalog derivation equality', () => {
         modelId: model.id,
       })),
     );
-    // 21 active TTS models x 4 voices + the Human baseline x 4 recorded
-    // voices = 88 (retired models leave the variant matrix with the arena).
-    expect(VARIANTS.length).toBe(88);
+    // 22 active TTS models x 4 voices + the Human baseline x 4 recorded
+    // voices = 92 (retired models leave the variant matrix with the arena).
+    expect(VARIANTS.length).toBe(92);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -550,6 +551,11 @@ describe('server/catalog derivation equality', () => {
         'variant:voice-nelliot:cartesia:sonic-3.5',
         'clip-20',
         '7d3e067846de9940a7f4e3e0bde1cf68',
+      ],
+      [
+        'variant:voice-emma:cartesia:sonic-3.6-2026-08-27',
+        'clip-20',
+        'e2f28d30f2765eeecafc81c41a7981d6',
       ],
     ];
     for (const [variantId, promptId, hash] of goldens) {
@@ -1085,7 +1091,7 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(24);
+    expect(listedModelEntries().length).toBe(25);
     expect(listedProviderEntries().length).toBe(12);
   });
 });
@@ -1125,6 +1131,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
     expect(slugById.get('xai-xai-tts')).toBe('grok-tts');
     expect(slugById.get('xai-streaming')).toBe('grok-tts-streaming');
     expect(slugById.get('cartesia-sonic-35')).toBe('cartesia-sonic-3-5');
+    expect(slugById.get('cartesia-sonic-36')).toBe('cartesia-sonic-3-6');
     expect(slugById.get('elevenlabs-turbo-v25')).toBe('elevenlabs-turbo-v2-5');
     expect(slugById.get('elevenlabs-flash-v25')).toBe('elevenlabs-flash-v2-5');
     expect(slugById.get('minimax-minimax-tts')).toBe('minimax-tts');

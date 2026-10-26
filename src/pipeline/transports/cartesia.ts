@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
 import { requireEnv } from '../env';
+import { requireVoiceMap } from '../voices';
 import { BENCH_TEXT, postFormForJson, postJsonForBytes, wsTtfbTrial } from './http';
 import type { ProviderTransport, TtfbPlan } from './types';
 
@@ -17,8 +18,8 @@ const API = 'https://api.cartesia.ai';
 /** Cartesia's current published API version, sent on every call. */
 const VERSION = '2026-08-14';
 
-/** The arena Clara clone, the voice the original 50-trial bench used. */
-const BENCH_VOICE = 'a5d537b0-4a5f-464d-ac12-d143fe1a0a36';
+/** The arena Clara professional clone; honor the same map as synthesis. */
+const benchVoice = (): string => requireVoiceMap('cartesia')['voice-clara'];
 
 /** The four licensed source voices are English (see pipeline/voices.ts). */
 const VOICE_LANGUAGE = 'en';
@@ -79,7 +80,7 @@ export const cartesia: ProviderTransport = {
           JSON.stringify({
             model_id: vendorModelId,
             transcript: BENCH_TEXT,
-            voice: BENCH_VOICE,
+            voice: benchVoice(),
             output_format: {
               container: 'raw',
               encoding: 'pcm_s16le',

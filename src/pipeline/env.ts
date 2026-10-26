@@ -11,10 +11,18 @@ import { resolve } from 'node:path';
 const ENV_PATH = resolve(import.meta.dir, '.env');
 
 export const loadPipelineEnv = (): void => {
+  // The shared Development credential is named CARTESIA. Normalize the alias
+  // for transports and benchmark key discovery; the standard name takes priority.
+  const useAliases = (): void => {
+    if (!process.env.CARTESIA_API_KEY?.trim() && process.env.CARTESIA?.trim()) {
+      process.env.CARTESIA_API_KEY = process.env.CARTESIA;
+    }
+  };
   if (!existsSync(ENV_PATH)) {
     console.error(
       'pipeline/.env not found — copy pipeline/.env.example and fill in keys.',
     );
+    useAliases();
     return;
   }
   for (const rawLine of readFileSync(ENV_PATH, 'utf8').split('\n')) {
@@ -35,6 +43,7 @@ export const loadPipelineEnv = (): void => {
       process.env[key] = value;
     }
   }
+  useAliases();
 };
 
 /** Required env lookup with a clear, value-free error. */

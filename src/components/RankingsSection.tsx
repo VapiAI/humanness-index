@@ -366,7 +366,7 @@ export const RankingsSection = ({
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'latency')}>
                 <SortHeader label="Latency" sortKey="latency" sort={sort} onSortChange={onSortChange} />
-                <InfoTip tip="Median time to first audio across 50 sequential streaming API requests per model, measured June 2026. Models without a publicly accessible API show a dash." />
+                <InfoTip tip="Median time to first audio across 50 sequential streaming API requests per model. Measurement dates and methods appear on each model page. Unmeasured models show a dash." />
               </th>
               <th className="rt-num" aria-sort={ariaSortFor(sort, 'price')}>
                 <SortHeader label="Price" sortKey="price" sort={sort} onSortChange={onSortChange} />

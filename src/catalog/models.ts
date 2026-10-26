@@ -1,6 +1,6 @@
 /**
- * The 25 model entries: 22 active in the arena, Sonic 3.6 unlisted pending
- * clips, and ElevenLabs Multilingual v2 and Turbo v2.5 retired with pages.
+ * The 25 model entries: 23 active in the arena, with ElevenLabs
+ * Multilingual v2 and Turbo v2.5 retired but retaining their pages.
  *
  * ADD A NEW MODEL CHECKLIST (the whole point of this registry):
  *  1. Generate + host the model's audio clips (each source voice x 20
@@ -38,11 +38,11 @@
  * at the end of their provider group; keep unlisted entries last.
  *
  * Latency provenance (measured-only, hard rule): median of 50 sequential
- * live streaming trials per model (June 2026) against each provider's
+ * live streaming trials per model against each provider's
  * streaming API (WebSocket where offered; Eleven v3 and MiniMax stream over
  * HTTP), fixed 12-word prompt, timed from request send on a pre-established
  * connection to the first audio chunk. Includes network RTT from the
- * benchmark machine, so the relative ordering is the robust signal. Script +
+ * benchmark machine; each entry records its measurement date. Script +
  * raw trials: src/pipeline/ (ttfbBench.ts and its results convention).
  * Models with `latencyMs: null` have no
  * reachable API to measure (Orpheus has no hosted API) and display a dash;
@@ -57,7 +57,7 @@ import type { FaqEntry, ModelEntry, Sourced } from './types';
 /** The original prototype's 50-trial run (June 2026), same artifact convention. */
 const TTFB_BENCHMARK_SOURCE =
   'src/pipeline/results/ttfb_results_50trial.json';
-/** The in-repo pipeline port of the same 50-trial protocol (June 2026 runs). */
+/** The in-repo pipeline port of the same 50-trial protocol. */
 const PIPELINE_TTFB_SOURCE =
   'src/pipeline/results/ttfb_results_50trial.json';
 
@@ -702,7 +702,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'Alphanumerics and heteronyms without preprocessing, 42 languages, and a published sub 90 ms latency claim. In our 50 trial streaming benchmark it returned first audio in a median of 128 ms, the fastest measured time among current generation models on the Index.',
+          'Alphanumerics and heteronyms without preprocessing, 42 languages, and a published sub 90 ms latency claim. In our 50 trial streaming benchmark it returned first audio in a median of 128 ms including network time from the benchmark machine.',
         ],
         sourceUrls: [
           'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
@@ -726,7 +726,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
     name: 'Sonic 3.6',
     apiModelId: 'sonic-3.6-2026-08-27',
     arenaApiId: 'sonic-3.6-2026-08-27',
-    status: 'unlisted',
+    status: 'active',
     releaseDate: {
       value: '2026-08-27',
       sourceUrl:
@@ -735,8 +735,11 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       note: 'Snapshot release.',
     },
     stats: {
-      // Measured only: needs a bench run against sonic-3.6-2026-08-27.
-      latencyMs: null,
+      latencyMs: pipelineTtfb(
+        101,
+        'Median of 50 sequential WebSocket trials after two discarded warm-ups, using the Clara professional clone and raw 24 kHz PCM. Measured on a local macOS machine; excludes connection setup and includes network RTT.',
+        '2026-10-26',
+      ),
       languages: {
         value: 44,
         sourceUrl:
@@ -745,6 +748,15 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       },
     },
     voiceProfile: 27,
+    sample: {
+      fallbackClip: clip(
+        'voice-emma',
+        'cartesia',
+        'sonic-3.6-2026-08-27',
+        'clip-20',
+        'e2f28d30f2765eeecafc81c41a7981d6',
+      ),
+    },
     copy: [
       {
         heading: 'Background',
@@ -758,7 +770,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'English arena clips use the same four licensed source voice clones and 20 frozen scripts as the rest of the field. Clip generation and the separate 50 trial streaming latency benchmark are pending; the model stays unlisted until its audio is verified.',
+          'English arena clips use the same four licensed source voice clones and 20 frozen scripts as the rest of the field. In our separate 50 trial WebSocket benchmark, this snapshot returned first audio in a median of 101 ms, including network time from the benchmark machine.',
         ],
         sourceUrls: [
           'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
@@ -770,7 +782,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         question: 'How fast is Sonic 3.6?',
         answer:
-          'We have not yet measured this snapshot in our 50 trial streaming benchmark. Latency will remain blank until that measurement is complete.',
+          'Our October 26, 2026 benchmark measured a median of 101 ms from request send to first audio over an established WebSocket connection, using the Clara professional clone and raw PCM. All 50 measured trials succeeded after two discarded warm-ups. This includes network RTT and does not measure a full voice agent turn.',
       },
     ],
   },

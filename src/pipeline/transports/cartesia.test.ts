@@ -92,7 +92,7 @@ describe('Cartesia snapshot integration', () => {
     expect(options?.headers['Cartesia-Version']).toBe('2026-08-14');
     expect(frame.model_id).toBe('sonic-3.6-2026-08-27');
     expect(frame.transcript).toBe(BENCH_TEXT);
-    expect(frame.voice).toBe('a5d537b0-4a5f-464d-ac12-d143fe1a0a36');
+    expect(frame.voice).toBe('ab8dcf7d-107f-49b4-8a04-19e77470e6a5');
     expect(frame.language).toBe('en');
     expect(frame.output_format).toEqual({ container: 'raw', encoding: 'pcm_s16le', sample_rate: 24000 });
     expect(result.ttfbMs).toBeGreaterThanOrEqual(0);

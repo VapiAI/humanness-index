@@ -34,11 +34,14 @@ const STATIC_CLONED_VOICE_IDS: Record<string, VoiceMap> = {
     'voice-godfrey': '0jNCeOHaNZsiWL2WCbBV',
     'voice-nelliot': 'YcoL0DQXdQl4JjCqteDM',
   },
+  // Existing Vapi-owned V3 professional clones, recovered 2026-10-26.
+  // Each lists sonic-3.6-2026-08-27 in fine_tunes.public_model_id.
+  // Provider handles changed; arena voice identities and hosted hashes do not.
   cartesia: {
-    'voice-clara': 'a5d537b0-4a5f-464d-ac12-d143fe1a0a36',
-    'voice-emma': '2206880c-55e3-445a-a83c-fa2196a9f304',
-    'voice-godfrey': '589d6fbc-d04d-46c3-91e4-a97979eca151',
-    'voice-nelliot': '621a0684-2a58-4693-b762-a54093bf0c4c',
+    'voice-clara': 'ab8dcf7d-107f-49b4-8a04-19e77470e6a5',
+    'voice-emma': '2f3dc5c2-03c8-4e4f-a99a-75966faa7cec',
+    'voice-godfrey': '09a27b75-0045-4195-b016-0f844a3a35a3',
+    'voice-nelliot': 'b21691f2-a798-4835-8c1f-016a0d04f77c',
   },
   minimax: {
     // MiniMax voice_ids are caller-chosen at clone time, so the four source
