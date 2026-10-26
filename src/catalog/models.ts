@@ -1,6 +1,6 @@
 /**
- * The 24 model entries (22 active in the arena; ElevenLabs Multilingual v2
- * and Turbo v2.5 are retired but keep their pages).
+ * The 25 model entries: 22 active in the arena, Sonic 3.6 unlisted pending
+ * clips, and ElevenLabs Multilingual v2 and Turbo v2.5 retired with pages.
  *
  * ADD A NEW MODEL CHECKLIST (the whole point of this registry):
  *  1. Generate + host the model's audio clips (each source voice x 20
@@ -512,7 +512,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Sonic was Cartesia's debut voice model, released in May 2024 as the first text to speech engine built on the state space model architecture its founders pioneered in academia. At launch it generated lifelike speech with 135 ms model latency, the fastest in its class at the time, with instant voice cloning and speed and emotion controls. Three newer Sonic generations have since superseded it, but it remains the baseline that started Cartesia's run at real time voice.",
+          "Sonic was Cartesia's debut voice model, released in May 2024 as the first text to speech engine built on the state space model architecture its founders pioneered in academia. At launch it generated lifelike speech with 135 ms model latency, the fastest in its class at the time, with instant voice cloning and speed and emotion controls. Four newer Sonic generations have since superseded it, but it remains the baseline that started Cartesia's run at real time voice.",
         ],
         sourceUrls: ['https://cartesia.ai/blog/sonic'],
       },
@@ -531,7 +531,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         question: "Is Sonic still Cartesia's current model?",
         answer:
-          'No. Three newer generations have superseded it, with Sonic 3.5 as the current flagship. Sonic remains in the arena as the baseline of the family.',
+          'No. Four newer generations have superseded it, with Sonic 3.6 as the current flagship. Sonic remains in the arena as the baseline of the family.',
       },
     ],
   },
@@ -693,7 +693,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Sonic 3.5 is Cartesia's current flagship, released in May 2026. Cartesia positions it as its most natural and fastest model, with sub 90 ms latency and native support for 42 languages. It is tuned for production agent transcripts: it reads order numbers, emails, and confirmation codes correctly without preprocessing, and it resolves heteronyms like read and bow from the surrounding words.",
+          "Sonic 3.5 is the May 2026 Sonic snapshot, and was Cartesia's flagship until Sonic 3.6 shipped in August 2026. Cartesia positioned it as its most natural and fastest model at release, with sub 90 ms latency and native support for 42 languages. It is tuned for production agent transcripts: it reads order numbers, emails, and confirmation codes correctly without preprocessing, and it resolves heteronyms like read and bow from the surrounding words.",
         ],
         sourceUrls: [
           'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
@@ -715,6 +715,62 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         question: 'How fast is Sonic 3.5?',
         answer:
           'Cartesia publishes sub 90 ms latency. In our 50 trial streaming benchmark it returned first audio in a median of 128 ms including network time from the benchmark machine.',
+      },
+    ],
+  },
+
+  {
+    id: 'cartesia-sonic-36',
+    slug: 'cartesia-sonic-3-6',
+    providerId: 'cartesia',
+    name: 'Sonic 3.6',
+    apiModelId: 'sonic-3.6-2026-08-27',
+    arenaApiId: 'sonic-3.6-2026-08-27',
+    status: 'unlisted',
+    releaseDate: {
+      value: '2026-08-27',
+      sourceUrl:
+        'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+      asOf: '2026-10-26',
+      note: 'Snapshot release.',
+    },
+    stats: {
+      // Measured only: needs a bench run against sonic-3.6-2026-08-27.
+      latencyMs: null,
+      languages: {
+        value: 44,
+        sourceUrl:
+          'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+        asOf: '2026-10-26',
+      },
+    },
+    voiceProfile: 27,
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: [
+          "Sonic 3.6 is Cartesia's current flagship model. The stable snapshot released on August 27, 2026 supports 44 languages and works with professional voice clones created on older models. This entry pins that dated snapshot for reproducibility.",
+        ],
+        sourceUrls: [
+          'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+        ],
+      },
+      {
+        heading: 'At a glance',
+        paragraphs: [
+          'English arena clips use the same four licensed source voice clones and 20 frozen scripts as the rest of the field. Clip generation and the separate 50 trial streaming latency benchmark are pending; the model stays unlisted until its audio is verified.',
+        ],
+        sourceUrls: [
+          'https://docs.cartesia.ai/build-with-cartesia/tts-models/latest',
+        ],
+      },
+    ],
+    faq: [
+      HOW_TESTED('Sonic 3.6'),
+      {
+        question: 'How fast is Sonic 3.6?',
+        answer:
+          'We have not yet measured this snapshot in our 50 trial streaming benchmark. Latency will remain blank until that measurement is complete.',
       },
     ],
   },

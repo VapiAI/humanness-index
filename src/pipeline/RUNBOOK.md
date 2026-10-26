@@ -211,6 +211,17 @@ dropped in; the originals supersede them.)
   mp3_44100_128. Keep these or the new clips will not match the family
   sound. Multilingual v2 and v3 are rejected by the realtime stream-input
   WS; their TTFB runs on the chunked HTTP /stream endpoint.
+- **Cartesia (2026-10-26)**: Sonic 3.6 is staged as `cartesia-sonic-36`,
+  snapshot `sonic-3.6-2026-08-27`. Reuse the four professional clone IDs in
+  `voices.ts`; older PVCs are compatible per
+  https://docs.cartesia.ai/build-with-cartesia/tts-models/latest. No new
+  cloning or fine-tuning is needed. The transport uses Bearer authentication,
+  API version `2026-08-14`, string voice IDs and explicit English, with MP3
+  for clips and raw PCM over WebSocket for TTFB. Sonic 3.5 synthesis is pinned
+  independently in `VENDOR_MODEL_ID_OVERRIDES`; its arena ID, hashes,
+  fallback and existing votes stay frozen. Keep 3.6 unlisted until all 80
+  clips have passed QA, upload and verification; leave latency blank until
+  the two warm-ups and 50 measured trials complete successfully.
 - **MiniMax**: hosted clips are mp3 32 kHz/128 kbps mono (`audio_setting`);
   `voice_id`s are caller-chosen at clone time. The arena's are
   `minimax-clara|emma|godfrey|nelliot`. `MINIMAX_GROUP_ID` is appended as
