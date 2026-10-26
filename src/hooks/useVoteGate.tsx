@@ -1,19 +1,10 @@
 'use client';
 
 /**
- * Turnstile vote gate: every vote carries a freshly solved Cloudflare token,
- * which the server requires whenever TURNSTILE_SECRET_KEY is set (see
- * ../server/turnstile.ts). Charging every vote is what makes scripted voting
- * expensive — the old every-10th cadence let a script simply omit the field.
- *
- * The widget stays mounted and solves in the background, so one token is
- * always warm: a vote spends it and asks for the next, and the listener sees
- * nothing. Only a vote that arrives before its token does has to wait, and
- * that wait is the sole time the gate is on screen.
- *
- * Gracefully no-ops when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is unset: votes pass
- * straight through, matching how the repo's other integrations degrade
- * without keys.
+ * Check each vote in a visible dialog. A hidden background challenge can fail
+ * before a listener votes; clearing that error without restarting the widget
+ * left the old gate waiting forever. Each vote/retry now mounts a fresh check.
+ * The vote stays pending until verification succeeds or the listener cancels.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 
@@ -21,6 +12,7 @@ import { TurnstileWidget } from '../components/TurnstileWidget';
 import '../styles/vote-gate.css';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+export const VOTE_CHECK_TIMEOUT_MS = 60_000;
 
 type PendingVote = {
   cast: (captchaToken?: string) => void;
@@ -28,92 +20,85 @@ type PendingVote = {
 };
 
 type VoteGate = {
-  /**
-   * Spend the warm token on `castVote`, or hold the vote until one lands.
-   * Abandoning a held vote fires the optional `onCancel` so the caller can
-   * release any in-flight lock.
-   */
-  guardVote: (
-    castVote: (captchaToken?: string) => void,
-    onCancel?: () => void,
-  ) => void;
-  /** The gate; render it once near the page root. */
+  guardVote: (castVote: (captchaToken?: string) => void, onCancel?: () => void) => void;
   challenge: ReactNode;
-  /** True while a vote waits on the challenge (page shortcuts stand down). */
   challengeOpen: boolean;
 };
 
-export const useVoteGate = (): VoteGate => {
-  const tokenRef = useRef<string | null>(null);
-  const pendingRef = useRef<PendingVote | null>(null);
-  const [waiting, setWaiting] = useState(false);
-  const [failed, setFailed] = useState(false);
-  // Bumped whenever a token is spent or abandoned, so the widget mints the next.
-  const [resetSignal, setResetSignal] = useState(0);
+const errorMessage = (code: string) => {
+  if (code === '110200') return 'The security check is not configured for this site. Please contact us.';
+  if (code === 'script-load') return 'The security check could not load. Check your connection or browser content blocker, then retry.';
+  if (code === 'timeout' || code === 'expired') return 'The security check timed out. Please retry.';
+  return 'Cloudflare could not verify this browser. Please retry, or try another browser if it keeps failing.';
+};
 
-  const requestToken = useCallback(() => {
-    tokenRef.current = null;
-    setResetSignal((count) => count + 1);
+export const useVoteGate = (): VoteGate => {
+  const pendingRef = useRef<PendingVote | null>(null);
+  // Reject late callbacks from failed, dismissed or already spent challenges.
+  const acceptingRef = useRef(false);
+  const [waiting, setWaiting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  const guardVote = useCallback<VoteGate['guardVote']>((castVote, onCancel) => {
+    if (!TURNSTILE_SITE_KEY) { castVote(); return; }
+    if (pendingRef.current) return;
+    pendingRef.current = { cast: castVote, cancel: onCancel };
+    acceptingRef.current = true;
+    setError(null);
+    setReady(false);
+    setAttempt((count) => count + 1);
+    setWaiting(true);
   }, []);
 
-  const guardVote = useCallback<VoteGate['guardVote']>(
-    (castVote, onCancel) => {
-      if (!TURNSTILE_SITE_KEY) {
-        castVote();
-        return;
-      }
-      const token = tokenRef.current;
-      if (token !== null) {
-        requestToken();
-        castVote(token);
-        return;
-      }
-      pendingRef.current = { cast: castVote, cancel: onCancel };
-      setFailed(false);
-      setWaiting(true);
-    },
-    [requestToken],
-  );
-
-  const handleToken = useCallback(
-    (token: string) => {
-      setFailed(false);
-      const pending = pendingRef.current;
-      if (!pending) {
-        tokenRef.current = token;
-        return;
-      }
-      pendingRef.current = null;
-      setWaiting(false);
-      requestToken();
-      pending.cast(token);
-    },
-    [requestToken],
-  );
-
-  // The challenge expired, errored, or the script never loaded. Release the
-  // held vote so the page unlocks, but keep the gate up carrying the error —
-  // without a token the vote cannot count, so silently dropping it would look
-  // like the arena had broken.
-  const handleError = useCallback(() => {
-    tokenRef.current = null;
-    setFailed(true);
+  const handleToken = useCallback((token: string) => {
+    if (!acceptingRef.current || !token) return;
     const pending = pendingRef.current;
     pendingRef.current = null;
-    pending?.cancel?.();
+    acceptingRef.current = false;
+    setWaiting(false);
+    pending?.cast(token);
+  }, []);
+
+  const handleError = useCallback((code: string) => {
+    if (!acceptingRef.current) return;
+    acceptingRef.current = false;
+    console.warn('[humanness] Turnstile check failed:', code);
+    setError(code);
+  }, []);
+
+  const handleReady = useCallback(() => {
+    if (acceptingRef.current) setReady(true);
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    if (!pendingRef.current) return;
+    acceptingRef.current = true;
+    setError(null);
+    setReady(false);
+    setAttempt((count) => count + 1);
   }, []);
 
   const handleDismiss = useCallback(() => {
     const pending = pendingRef.current;
     pendingRef.current = null;
+    acceptingRef.current = false;
     setWaiting(false);
-    setFailed(false);
-    requestToken();
+    setError(null);
     pending?.cancel?.();
-  }, [requestToken]);
+  }, []);
 
   useEffect(() => {
-    if (!waiting) return undefined;
+    if (!waiting || error) return;
+    const timeout = setTimeout(() => handleError('timeout'), VOTE_CHECK_TIMEOUT_MS);
+    return () => clearTimeout(timeout);
+  }, [waiting, error, attempt, handleError]);
+
+  useEffect(() => {
+    if (!waiting) return;
+    cancelRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') handleDismiss();
     };
@@ -121,45 +106,30 @@ export const useVoteGate = (): VoteGate => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [waiting, handleDismiss]);
 
-  // Mounted for the whole session to keep a token warm; `data-waiting` is what
-  // turns it into a visible modal. It is never unmounted — Turnstile needs a
-  // laid-out element to solve into, so the idle state is transparent rather
-  // than hidden.
-  const challenge = TURNSTILE_SITE_KEY ? (
-    <div
-      className="hi-gate-overlay"
-      data-waiting={waiting ? 'true' : 'false'}
-      role={waiting ? 'dialog' : undefined}
-      aria-modal={waiting ? 'true' : undefined}
-      aria-hidden={waiting ? undefined : 'true'}
-      aria-label="Confirm you're human"
-    >
+  useEffect(() => () => {
+    acceptingRef.current = false;
+    const pending = pendingRef.current;
+    pendingRef.current = null;
+    pending?.cancel?.();
+  }, []);
+
+  const challenge = TURNSTILE_SITE_KEY && waiting ? (
+    <div className="hi-gate-overlay" role="dialog" aria-modal="true" aria-labelledby="hi-gate-title">
       <div className="hi-gate-card">
-        <h2 className="hi-gate-title">Quick human check</h2>
-        <p className="hi-gate-note">
-          One short check keeps the rankings honest. It usually clears itself —
-          your vote goes through the moment it does.
-        </p>
-        <TurnstileWidget
-          siteKey={TURNSTILE_SITE_KEY}
-          onToken={handleToken}
-          onError={handleError}
-          resetSignal={resetSignal}
-        />
-        {failed && (
-          <p className="hi-gate-error">
-            The check didn&apos;t load or expired. Close this and try voting
-            again.
-          </p>
+        <h2 className="hi-gate-title" id="hi-gate-title">Quick human check</h2>
+        <p className="hi-gate-note">One short check keeps the rankings honest. Your vote is sent only after verification succeeds.</p>
+        {error ? (
+          <>
+            <p className="hi-gate-error" role="alert">{errorMessage(error)} Your vote has not been sent.</p>
+            <button className="hi-gate-retry" type="button" onClick={handleRetry}>Retry check</button>
+          </>
+        ) : (
+          <>
+            <p className="hi-gate-status" role="status">{ready ? 'Verifying your browser…' : 'Loading security check…'}</p>
+            <TurnstileWidget key={attempt} siteKey={TURNSTILE_SITE_KEY} onToken={handleToken} onReady={handleReady} onError={handleError} />
+          </>
         )}
-        <button
-          className="hi-gate-cancel"
-          type="button"
-          onClick={handleDismiss}
-          tabIndex={waiting ? undefined : -1}
-        >
-          Cancel vote
-        </button>
+        <button ref={cancelRef} className="hi-gate-cancel" type="button" onClick={handleDismiss}>Cancel vote</button>
       </div>
     </div>
   ) : null;
