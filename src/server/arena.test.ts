@@ -308,6 +308,54 @@ describe('createBattle', () => {
 });
 
 describe('getModels', () => {
+  it('includes a newly active model when shared standings predate it, without refitting or persisting', async () => {
+    const store = arenaStore();
+    const current = await recomputeStandings();
+    const pendingId = 'cartesia-sonic-36';
+    const older = {
+      ...current,
+      models: current.models.filter((row) => row.id !== pendingId),
+      ratings: { ...current.ratings },
+    };
+    delete older.ratings[pendingId];
+    await store.writeStandings(older);
+    const readEvents = store.loadVoteEvents;
+    const writeStandings = store.writeStandings;
+    let fullLogReads = 0;
+    let standingsWrites = 0;
+    store.loadVoteEvents = async () => {
+      fullLogReads += 1;
+      throw new Error('A cached standings read must not refit the vote log');
+    };
+    store.writeStandings = async () => { standingsWrites += 1; };
+    try {
+      const result = await getModels();
+      const added = result.models.find((row) => row.id === pendingId);
+      expect(added).toEqual({
+        id: pendingId,
+        provider: 'Cartesia',
+        model: 'Sonic 3.6',
+        elo: 1200,
+        uncertainty: 160,
+        rankRange: 'Provisional',
+        wins: 0,
+        losses: 0,
+        ties: 0,
+        voteCount: 0,
+      });
+      expect(result.models.filter((row) => row.id !== pendingId)).toEqual(older.models);
+      expect(result.models.filter((row) => row.id === pendingId).length).toBe(1);
+      expect(result.totalUniqueVotes).toBe(older.totalUniqueVotes);
+      expect(fullLogReads).toBe(0);
+      expect(standingsWrites).toBe(0);
+      expect(await store.loadStandings()).toEqual(older);
+    } finally {
+      store.loadVoteEvents = readEvents;
+      store.writeStandings = writeStandings;
+      await store.writeStandings(current);
+    }
+  });
+
   it('returns the full Bradley–Terry leaderboard with the store vote total', async () => {
     // getModels serves the cached fit; refresh it so the total matches the
     // store after this suite's votes (the background refit's role in prod).
