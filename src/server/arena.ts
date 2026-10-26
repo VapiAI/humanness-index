@@ -189,7 +189,34 @@ const loadStandings = async (): Promise<StoredStandings> => {
 
 export const getModels = async (): Promise<ModelsResponse> => {
   const { models, totalUniqueVotes } = await loadStandings();
-  return { models, totalUniqueVotes };
+  // A shared fit can predate a newly active registry entry. Reconcile its
+  // presentation on read instead of waiting for 50 votes or refitting the
+  // full log. Existing ratings and the stored fit remain untouched.
+  const active = models.filter((row) => MODELS_BY_ID.has(row.id));
+  const present = new Set(active.map((row) => row.id));
+  for (const model of MODELS) {
+    if (present.has(model.id)) continue;
+    active.push({
+      id: model.id,
+      provider: PROVIDERS_BY_ID.get(model.providerId)!.name,
+      model: model.name,
+      elo: BT_CENTER,
+      uncertainty: ratingStandardError(0),
+      rankRange: 'Provisional',
+      wins: 0,
+      losses: 0,
+      ties: 0,
+      voteCount: 0,
+    });
+  }
+  active.sort(
+    (a, b) =>
+      b.elo - a.elo ||
+      b.voteCount - a.voteCount ||
+      a.provider.localeCompare(b.provider) ||
+      a.model.localeCompare(b.model),
+  );
+  return { models: active, totalUniqueVotes };
 };
 
 /**

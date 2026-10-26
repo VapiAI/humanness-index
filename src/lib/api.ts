@@ -13,7 +13,7 @@ export type ArenaModelRow = {
   /** Raw arena Elo (the UI applies the Humanness rubric transform on top). */
   elo: number;
   uncertainty: number;
-  /** e.g. `#3-10` — the table/search's "likely rank". */
+  /** e.g. `#3-10`, or `Provisional` before a new model enters the fitted standings. */
   rankRange: string;
   wins: number;
   losses: number;

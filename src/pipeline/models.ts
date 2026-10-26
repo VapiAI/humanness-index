@@ -28,6 +28,8 @@ export type PipelineModel = {
  * literal id the provider endpoint accepts today.
  */
 const VENDOR_MODEL_ID_OVERRIDES: Record<string, string> = {
+  // Pin synthesis independently of Sonic 3.5's frozen arena identity and hashes.
+  'cartesia-sonic-35': 'sonic-3.5-2026-05-04',
   // Inworld's registry ids are frozen without dots; the API wants the
   // `inworld-` prefixed dotted form (docs.inworld.ai/tts/tts-models).
   'inworld-tts-15-max': 'inworld-tts-1.5-max',
