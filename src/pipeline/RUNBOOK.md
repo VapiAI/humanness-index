@@ -206,6 +206,14 @@ dropped in; the originals supersede them.)
 
 ## Provider quirks worth knowing
 
+- **OpenAI GPT-Live (2026-10-27, pending eligibility)**: exact vendor ID
+  `gpt-live-1`; recording-based custom voices are documented, but same-project
+  API access, actual actor consents and fixed-script fidelity still need live
+  verification. See [GPT-LIVE.md](GPT-LIVE.md) for the access checklist,
+  consent/clone receipts and bounded single-line probe. No batch synthesis or
+  published TTFB is enabled until the protocol is verified; no active model
+  entry or invented score is included.
+
 - **Murf (2026-10-27)**: Falcon 2.1 uses `falcon-2.1` explicitly. Older
   Falcon aliases now serve 2.1; Gen2 does not accept instant clones.
   `MURF_API_KEY` accepts the shared Development alias `MURF`. Cloning needs
