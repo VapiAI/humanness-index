@@ -42,6 +42,17 @@ const VENDOR_MODEL_ID_OVERRIDES: Record<string, string> = {
  * a model's clips are hashed — graduated rows get deleted, never edited.
  */
 const NEW_MODELS: PipelineModel[] = [
+  // Pending eligibility: recording clones are supported, but exact-script
+  // speech must pass the bounded probe in GPT-LIVE.md before batch rendering.
+  {
+    id: 'openai-gpt-live-1',
+    slug: 'openai-gpt-live-1',
+    providerId: 'openai',
+    arenaApiId: 'gpt-live-1',
+    vendorModelId: 'gpt-live-1',
+    name: 'GPT-Live 1',
+    registered: false,
+  },
   // The Human baseline. FROZEN ids (provider/arenaApiId both `human`) feed the
   // clip hashes. It is not synthesized: real actors recorded the 20 lines and
   // ingestHumanClips.ts (humanness:human-clips) uploads them. The row keeps

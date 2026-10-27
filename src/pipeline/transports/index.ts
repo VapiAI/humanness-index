@@ -16,6 +16,7 @@ import { inworld } from './inworld';
 import { minimax } from './minimax';
 import { murf } from './murf';
 import { neuphonic } from './neuphonic';
+import { openai } from './openai';
 import { sesame } from './sesame';
 import { smallest } from './smallest';
 import { speechify } from './speechify';
@@ -37,6 +38,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   speechify,
   xai,
   murf,
+  openai,
 };
 
 /** Why the remaining arena providers cannot be measured/generated live. */
