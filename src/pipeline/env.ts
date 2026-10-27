@@ -14,6 +14,9 @@ export const loadPipelineEnv = (): void => {
   // Normalize shared Development names for transports and benchmark discovery.
   // Standard names take priority over aliases.
   const useAliases = (): void => {
+    if (!process.env.MURF_API_KEY?.trim() && process.env.MURF?.trim()) {
+      process.env.MURF_API_KEY = process.env.MURF;
+    }
     if (!process.env.CARTESIA_API_KEY?.trim() && process.env.CARTESIA?.trim()) {
       process.env.CARTESIA_API_KEY = process.env.CARTESIA;
     }

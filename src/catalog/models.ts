@@ -1,5 +1,5 @@
 /**
- * The 27 model entries: 25 active in the arena, with ElevenLabs
+ * The 28 model entries: 26 active in the arena, with ElevenLabs
  * Multilingual v2 and Turbo v2.5 retired but retaining their pages.
  *
  * ADD A NEW MODEL CHECKLIST (the whole point of this registry):
@@ -516,7 +516,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         note: 'The benchmark uses fresh Instant Voice Clones from 30 second licensed reference samples, rather than the earlier models\' professional clones.',
       },
     },
-    voiceProfile: 28,
+    voiceProfile: 29,
     sample: {
       fallbackClip: clip('voice-clara', 'elevenlabs', 'eleven_v4', 'clip-01', '17d6989e9041b64197bac2c032945c5b'),
     },
@@ -583,7 +583,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         note: 'The benchmark uses fresh Instant Voice Clones from 30 second licensed reference samples, rather than the earlier models\' professional clones.',
       },
     },
-    voiceProfile: 29,
+    voiceProfile: 30,
     sample: {
       fallbackClip: clip('voice-clara', 'elevenlabs', 'eleven_v4_turbo', 'clip-01', 'c1f6869597f47529698486cced781df6'),
     },
@@ -1930,6 +1930,78 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         question: 'How is the Human baseline recorded and scored?',
         answer:
           'The same four actors read all 20 lines exactly as written in a quiet room, one line per file. The recordings are loudness normalized and converted to MP3, then battle head to head against the cloned TTS of the same voice. Human is pinned to a Humanness score of 100 and the rest of the field is normalized against that anchor.',
+      },
+    ],
+  },
+
+  /* --------------------------------- Murf -------------------------------- */
+  {
+    id: 'murf-falcon-21',
+    slug: 'murf-falcon-2-1',
+    providerId: 'murf',
+    name: 'Falcon 2.1',
+    apiModelId: 'falcon-2.1',
+    arenaApiId: 'falcon-2-1',
+    status: 'active',
+    releaseDate: {
+      value: '2026-10-19',
+      sourceUrl: 'https://murf.ai/api/docs/changelog/2026/10/19',
+      asOf: '2026-10-27',
+    },
+    stats: {
+      latencyMs: pipelineTtfb(
+        117,
+        'Median of 50 sequential Falcon 2.1 WebSocket trials after two discarded warm-ups, arena Clara instant clone, en-US, mono 24 kHz PCM over the global router. Request send after connection open to first audio; includes benchmark-machine network RTT. Zero errors and rate limits.',
+        '2026-10-27',
+      ),
+      languages: {
+        value: 34,
+        sourceUrl: 'https://help.murf.ai/murf-api-languages',
+        asOf: '2026-10-27',
+        note: 'Count of distinct languages in the Falcon list, excluding regional accent variants. Only English is evaluated by the Index.',
+      },
+      streaming: {
+        value: true,
+        sourceUrl: 'https://murf.ai/api/docs/text-to-speech/web-sockets',
+        asOf: '2026-10-27',
+      },
+      voiceCloning: {
+        value: 'Instant cloning, up to 30 seconds of reference audio',
+        sourceUrl: 'https://murf.ai/api/docs/voices-styles/instant-voice-cloning',
+        asOf: '2026-10-27',
+        note: 'Requires workspace enablement. Tested with 25-second, 24 kHz mono excerpts of the four licensed source voices.',
+      },
+    },
+    voiceProfile: 28,
+    sample: {
+      fallbackClip: clip(
+        'voice-clara',
+        'murf',
+        'falcon-2-1',
+        'clip-01',
+        'e0e0d7e77fc28cc8dd612faa22abf8cb',
+      ),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: [
+          'Falcon 2.1 launched on October 19, 2026 as Murf’s streaming speech model. The API accepts the explicit falcon-2.1 identifier over HTTP and WebSocket. Earlier Falcon aliases now route to this generation, so the Index uses the published 2.1 identifier.',
+        ],
+        sourceUrls: ['https://murf.ai/api/docs/changelog/2026/10/19'],
+      },
+      {
+        heading: 'On the Index',
+        paragraphs: [
+          'The Index generated 80 fixed English clips through the Murf API using four Instant Voice Cloning voices made from licensed source recordings. Every voice reads the same 20 scripts as the other models. Listener votes determine its Humanness score; this scripted evaluation does not measure live turn taking or multilingual performance.',
+        ],
+      },
+    ],
+    faq: [
+      HOW_TESTED('Falcon 2.1'),
+      {
+        question: 'Which Murf model and voices does the Index test?',
+        answer: 'The tested API model is falcon-2.1, using instant clones of Clara, Emma, Godfrey and Nelliot. Gen2 and stock library voices are not part of this result. Murf requires cloning access to be enabled on the workspace.',
       },
     ],
   },

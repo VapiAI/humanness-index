@@ -206,6 +206,28 @@ dropped in; the originals supersede them.)
 
 ## Provider quirks worth knowing
 
+- **Murf (2026-10-27)**: Falcon 2.1 uses `falcon-2.1` explicitly. Older
+  Falcon aliases now serve 2.1; Gen2 does not accept instant clones.
+  `MURF_API_KEY` accepts the shared Development alias `MURF`. Cloning needs
+  workspace enablement (otherwise 403); prepare one WAV per voice, <=30 s,
+  >=24 kHz and <=40 MB. The four committed clones use 25-second, mono 24 kHz
+  excerpts of the licensed masters. Create is asynchronous; the transport
+  recovers matching workspace tags and persists job receipts in gitignored
+  `results/murf/clone-jobs/` before polling to avoid duplicate creation.
+  `humanness:clone murf --list` lists workspace clones. Synthesis uses the
+  global HTTP stream in mono 24 kHz PCM, then canonical arena MP3 encoding.
+  WebSocket TTFB uses the same Clara clone and global router, PCM (no WAV
+  header), en-US, matching voice/text context IDs and default rate/pitch.
+  Empty audio is ignored and fallback warnings fail the trial. Credentials
+  appear in the WS handshake query per Murf's protocol; never log that URL.
+  The run returned 50/50 timings after two discarded warmups: median 117 ms,
+  p90 140 ms, min 109 ms, max 190 ms, stdev 16 ms, zero errors/rate limits.
+  Raw trials/configuration are in gitignored `results/murf/`. All 80 clips
+  passed local whisper.cpp base.en transcription and duration/format checks
+  (median normalized WER 0.020, no flags); no regeneration or manual edits.
+  Official references: https://murf.ai/api/docs/voices-styles/instant-voice-cloning
+  and https://murf.ai/api/docs/text-to-speech/web-sockets .
+
 - **ElevenLabs**: synthesis pins the arena's settings-v3 voice settings
   (stability 0.35 / similarity 0.95 / style 0.5 / speaker boost) at
   mp3_44100_128. Keep these or the new clips will not match the family

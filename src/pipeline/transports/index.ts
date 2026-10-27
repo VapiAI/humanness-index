@@ -14,6 +14,7 @@ import { fish } from './fish';
 import { hume } from './hume';
 import { inworld } from './inworld';
 import { minimax } from './minimax';
+import { murf } from './murf';
 import { neuphonic } from './neuphonic';
 import { sesame } from './sesame';
 import { smallest } from './smallest';
@@ -35,6 +36,7 @@ export const TRANSPORTS: Record<string, ProviderTransport> = {
   fish,
   speechify,
   xai,
+  murf,
 };
 
 /** Why the remaining arena providers cannot be measured/generated live. */

@@ -1,5 +1,5 @@
 /**
- * The 12 provider entries. ORDER IS FROZEN: it feeds the arena PROVIDERS
+ * The 13 provider entries. ORDER IS FROZEN: it feeds the arena PROVIDERS
  * array in server/catalog.ts, whose order shapes the derived MODELS array
  * (and so the first-paint identity surfaces). Append new providers at the
  * end, before any unlisted ones.
@@ -502,6 +502,37 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
         question: 'How is the Human baseline recorded?',
         answer:
           'The same four actors read all 20 customer support lines exactly as written, in a quiet room at a consistent level. The recordings are loudness normalized and converted to MP3 on ingest, the same handling the synthetic clips get, so the only difference a listener hears is the voice itself.',
+      },
+    ],
+  },
+  {
+    id: 'murf',
+    slug: 'murf',
+    name: 'Murf',
+    websiteUrl: 'https://murf.ai',
+    mark: 'murf.svg',
+    stats: {
+      pricing: {
+        value: '$10',
+        sourceUrl: 'https://murf.ai/api/docs/text-to-speech-models/falcon-2-1',
+        asOf: '2026-10-27',
+        note: 'Falcon 2.1 public API rate: $0.01 per 1,000 characters, equivalent to $10 per 1M. Workspace agreements may differ. Instant cloning requires workspace enablement.',
+      },
+    },
+    copy: [
+      {
+        heading: 'About Murf',
+        paragraphs: [
+          'Murf offers speech APIs for conversational agents and studio narration. Falcon 2.1 is its streaming model; Gen2 serves studio voiceovers. The Index evaluates Falcon 2.1 with the same licensed source voices as the rest of the field.',
+        ],
+        sourceUrls: ['https://murf.ai/api/docs/text-to-speech/overview'],
+      },
+      {
+        heading: 'Shared voices',
+        paragraphs: [
+          'Murf Instant Voice Cloning creates private workspace voices from short reference recordings. The four Index clones use licensed recordings of Clara, Emma, Godfrey and Nelliot. Cloning access must be enabled on a Murf workspace before these endpoints can be used.',
+        ],
+        sourceUrls: ['https://murf.ai/api/docs/voices-styles/instant-voice-cloning'],
       },
     ],
   },

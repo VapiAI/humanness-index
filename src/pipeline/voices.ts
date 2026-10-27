@@ -28,6 +28,13 @@ export type VoiceMap = Partial<Record<SourceVoiceId, string>>;
 
 /** Clone ids for the active source voices (match the hosted clips). */
 const STATIC_CLONED_VOICE_IDS: Record<string, VoiceMap> = {
+  // Falcon 2.1 instant clones of the licensed masters, created 2026-10-27.
+  murf: {
+    'voice-clara': 'cln_017930245726003MM_017931182460928G3',
+    'voice-emma': 'cln_017930245726003MM_017931182516193HD',
+    'voice-godfrey': 'cln_017930245726003MM_017931182581654CJ',
+    'voice-nelliot': 'cln_017930245726003MM_017931182650377KC',
+  },
   elevenlabs: {
     'voice-clara': 'ScCxrqX5aNtDVkIsrVZ1',
     'voice-emma': 'xMG5lL0U1x81qhneSMar',
