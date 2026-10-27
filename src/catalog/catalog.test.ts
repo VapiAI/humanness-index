@@ -86,13 +86,13 @@ const MARKS_DIR = resolve(import.meta.dir, '../../public/marks');
 
 describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
-    // 12 providers / 25 models: the 11 vendors + 24 TTS models, plus the Human
+    // 13 providers / 26 models: the 12 vendors + 25 TTS models, plus the Human
     // baseline (provider `human`, model `human`). Two ElevenLabs entries are
-    // retired (2026-07-23), so the arena carries 23 of the 25.
-    expect(BASE_PROVIDER_ENTRIES.length).toBe(12);
-    expect(BASE_MODEL_ENTRIES.length).toBe(25);
-    expect(arenaProviderEntries().length).toBe(12);
-    expect(arenaModelEntries().length).toBe(23);
+    // retired (2026-07-23), so the arena carries 24 of the 26.
+    expect(BASE_PROVIDER_ENTRIES.length).toBe(13);
+    expect(BASE_MODEL_ENTRIES.length).toBe(26);
+    expect(arenaProviderEntries().length).toBe(13);
+    expect(arenaModelEntries().length).toBe(24);
     expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual([]);
   });
 
@@ -164,6 +164,7 @@ describe('registry: ids, slugs, refs', () => {
       'speechify-simba-3-2',
       'fish-s21-pro',
       'cartesia-sonic-36',
+      'murf-falcon-21',
     ]);
     const seedIds = SEED_STANDINGS.models.map((row) => row.id);
     expect(new Set(seedIds).size).toBe(seedIds.length);
@@ -456,6 +457,12 @@ const EXPECTED_MODELS = [
     providerId: 'human',
     name: 'Homo Sapien',
   },
+  {
+    id: 'murf-falcon-21',
+    arenaId: 'murf:falcon-2-1',
+    providerId: 'murf',
+    name: 'Falcon 2.1',
+  },
 ];
 
 const EXPECTED_PROVIDERS = [
@@ -471,6 +478,7 @@ const EXPECTED_PROVIDERS = [
   { id: 'speechify', name: 'Speechify' },
   { id: 'fish', name: 'Fish Audio' },
   { id: 'human', name: 'Human' },
+  { id: 'murf', name: 'Murf' },
 ];
 
 const SOURCE_VOICE_IDS = [
@@ -489,7 +497,7 @@ describe('server/catalog derivation equality', () => {
     expect([...PROVIDERS_BY_ID.values()]).toEqual(EXPECTED_PROVIDERS);
   });
 
-  it('derives the exact 92-variant matrix (ids feed the audio hashes)', () => {
+  it('derives the exact 96-variant matrix (ids feed the audio hashes)', () => {
     // The Human baseline now has clips for all four source voices, like every
     // other model.
     const HUMAN_VOICES = [
@@ -510,9 +518,9 @@ describe('server/catalog derivation equality', () => {
         modelId: model.id,
       })),
     );
-    // 22 active TTS models x 4 voices + the Human baseline x 4 recorded
-    // voices = 92 (retired models leave the variant matrix with the arena).
-    expect(VARIANTS.length).toBe(92);
+    // 23 active TTS models x 4 voices + the Human baseline x 4 recorded
+    // voices = 96 (retired models leave the variant matrix with the arena).
+    expect(VARIANTS.length).toBe(96);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -972,6 +980,7 @@ describe('data/providers derivation equality', () => {
       Neuphonic: 'neuphonic.png',
       Speechify: 'speechify.svg',
       'Fish Audio': 'fish.svg',
+      Murf: 'murf.svg',
       Human: 'human.svg',
       // Overlay providers keep their marks wired for re-listing.
       ...Object.fromEntries(
@@ -1091,8 +1100,8 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(25);
-    expect(listedProviderEntries().length).toBe(12);
+    expect(listedModelEntries().length).toBe(26);
+    expect(listedProviderEntries().length).toBe(13);
   });
 });
 
@@ -1144,6 +1153,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
     expect(slugById.get('speechify-simba-3-2')).toBe('speechify-simba-3-2');
     expect(slugById.get('fish-s21-pro')).toBe('fish-s2-1-pro');
     expect(slugById.get('human')).toBe('human');
+    expect(slugById.get('murf-falcon-21')).toBe('murf-falcon-2-1');
     // Overlay slugs are frozen identity too: id and slug must already agree
     // with the store before an entry ever goes public.
     for (const model of OVERLAY.models) {
@@ -1161,6 +1171,7 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
       'human-baseline',
       'inworld',
       'minimax',
+      'murf',
       'neuphonic',
       'smallest-ai',
       'speechify',
