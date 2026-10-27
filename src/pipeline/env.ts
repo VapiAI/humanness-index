@@ -11,9 +11,12 @@ import { resolve } from 'node:path';
 const ENV_PATH = resolve(import.meta.dir, '.env');
 
 export const loadPipelineEnv = (): void => {
-  // The shared Development credential is named CARTESIA. Normalize the alias
+  // Shared Development credentials use CARTESIA and MURF. Normalize aliases
   // for transports and benchmark key discovery; the standard name takes priority.
   const useAliases = (): void => {
+    if (!process.env.MURF_API_KEY?.trim() && process.env.MURF?.trim()) {
+      process.env.MURF_API_KEY = process.env.MURF;
+    }
     if (!process.env.CARTESIA_API_KEY?.trim() && process.env.CARTESIA?.trim()) {
       process.env.CARTESIA_API_KEY = process.env.CARTESIA;
     }

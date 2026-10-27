@@ -25,6 +25,7 @@ import { parseArgs } from './lib';
 import { transportFor } from './transports';
 import { inworldListVoices } from './transports/inworld';
 import { minimaxListClonedVoices } from './transports/minimax';
+import { murfListClones } from './transports/murf';
 import {
   clonedVoiceIds,
   LOCAL_VOICES_PATH,
@@ -63,6 +64,12 @@ const sampleFilesFor = (dir: string, voiceId: SourceVoiceId): string[] => {
 };
 
 const listProviderVoices = async (providerId: string): Promise<void> => {
+  if (providerId === 'murf') {
+    const voices = await murfListClones();
+    console.log(`murf workspace clones (${voices.length}):`);
+    for (const voice of voices) console.log(`  ${voice.voiceId} (${voice.displayName}, ${voice.tag})`);
+    return;
+  }
   if (providerId === 'minimax') {
     const voices = await minimaxListClonedVoices();
     console.log(`minimax cloned voices (${voices.length}):`);
