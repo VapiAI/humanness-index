@@ -67,7 +67,7 @@ Everything below is the maintainer guide.
 
 | Situation | Path |
 | --- | --- |
-| New model from a provider already in the Index (for example a new ElevenLabs or Cartesia model) | Standard path. Skip the transport and cloning steps: the four clones already exist on that provider. |
+| New model from a provider already in the Index (for example a new ElevenLabs or Cartesia model) | Standard path. Check model-family compatibility before reusing the transport and four clones. Some families need a separate clone map or streaming protocol. |
 | New provider whose API supports voice cloning | Standard path, including the transport and cloning steps. |
 | Provider cannot give us API access, or gates cloning behind manual approval | Vendor-rendered clip set. |
 | Model cannot clone a voice | Not eligible. Every model is judged on clones of the same four voices, so cloning is the entry requirement. |
@@ -135,6 +135,13 @@ gitignored. Copy them into `STATIC_CLONED_VOICE_IDS` in
 later. Where cloning is console-only (Hume), create the clones by hand and
 save the ids with
 `bun run humanness:clone <provider> --record voice-clara=<id> voice-emma=<id> voice-godfrey=<id> voice-nelliot=<id>`.
+
+For a model with a separate clone family, pass `--model <model-id>` when
+cloning, listing, or recording IDs. For example,
+`bun run humanness:clone elevenlabs clone-samples --model elevenlabs-eleven-v4`
+uses the `elevenlabs-v4` map shared by v4 and v4 Turbo, preserving the
+earlier ElevenLabs models' clone IDs. Generation selects the correct map
+from the model automatically.
 
 The Inworld, Smallest.ai and Neuphonic clone ids from earlier runs are not in
 the repo yet. If you need one of those providers, recover them first:

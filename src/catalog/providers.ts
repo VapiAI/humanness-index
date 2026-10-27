@@ -44,7 +44,7 @@ export const PROVIDER_ENTRIES: ProviderEntry[] = [
       {
         heading: 'Model families and pricing',
         paragraphs: [
-          'Four ElevenLabs models compete in the arena, spanning the Turbo, Flash, and v3 families; the Multilingual v2 and Turbo v2.5 entries are retired from battles but keep their pages. ElevenLabs bills in credits: Flash and Turbo models bill one credit per two characters, while Eleven v3 and Multilingual v2 bill one credit per character, which is why those two carry a higher effective rate.',
+          'Six ElevenLabs models compete in the arena, spanning the Turbo, Flash, v3, and v4 families; Multilingual v2 and Turbo v2.5 are retired from battles but retain their pages. Published API rates vary by model: as of October 2026, Eleven v4 is $80 per million characters and v4 Turbo is $40 per million. Each model carries its own sourced pricing and measurement date.',
         ],
         sourceUrls: [
           'https://elevenlabs.io/docs/overview/models',

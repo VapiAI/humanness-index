@@ -1,5 +1,5 @@
 /**
- * The 25 model entries: 23 active in the arena, with ElevenLabs
+ * The 27 model entries: 25 active in the arena, with ElevenLabs
  * Multilingual v2 and Turbo v2.5 retired but retaining their pages.
  *
  * ADD A NEW MODEL CHECKLIST (the whole point of this registry):
@@ -315,7 +315,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'Flash v2.5 pairs the Flash latency tier with 32 languages. In our 50 trial streaming benchmark it returned first audio in a median of 197 ms, the fastest ElevenLabs result on the Index.',
+          'Flash v2.5 pairs the Flash latency tier with 32 languages. In our 50 trial streaming benchmark it returned first audio in a median of 197 ms in the June 2026 run.',
         ],
         sourceUrls: ['https://elevenlabs.io/docs/overview/models'],
       },
@@ -373,7 +373,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'Background',
         paragraphs: [
-          "Eleven v3 is ElevenLabs' flagship expressive model, launched in alpha in June 2025 and generally available since March 2026. It supports more than 70 languages, multi speaker dialogue, and inline audio tags like [whispers] and [laughs] that direct emotion and delivery. ElevenLabs itself does not recommend v3 for real time conversation because of its higher latency, which makes its blind test scores here an interesting comparison against the faster models it sells alongside.",
+          "Eleven v3 is ElevenLabs' previous generation expressive model, launched in alpha in June 2025 and generally available since March 2026. It supports more than 70 languages, multi speaker dialogue, and inline audio tags like [whispers] and [laughs] that direct emotion and delivery. ElevenLabs itself does not recommend v3 for real time conversation because of its higher latency, which makes its blind test scores here an interesting comparison against the faster models it sells alongside.",
         ],
         sourceUrls: [
           'https://elevenlabs.io/blog/eleven-v3',
@@ -383,7 +383,7 @@ export const MODEL_ENTRIES: ModelEntry[] = [
       {
         heading: 'At a glance',
         paragraphs: [
-          'v3 is built for expressiveness first: audio tags, dialogue mode, and the widest language coverage on the ElevenLabs platform. In our 50 trial streaming benchmark it returned first audio in a median of 758 ms, well above every realtime model on the Index.',
+          'v3 is built for expressiveness first: audio tags, dialogue mode, and support for more than 70 languages. In our 50 trial streaming benchmark it returned first audio in a median of 758 ms, well above every realtime model on the Index.',
         ],
         sourceUrls: ['https://elevenlabs.io/docs/overview/models'],
       },
@@ -470,6 +470,140 @@ export const MODEL_ENTRIES: ModelEntry[] = [
         question: 'Why use Multilingual v2 over Flash or Turbo?',
         answer:
           'Quality over latency. Multilingual v2 is tuned for lifelike, emotionally rich output and posts the best word error rate of any ElevenLabs model on the independent Coval benchmark, but we measured a 1006 ms median time to first audio. Real time agents should look at the Flash and Turbo families; narration and pre rendered audio is where Multilingual v2 fits.',
+      },
+    ],
+  },
+
+  {
+    id: 'elevenlabs-eleven-v4',
+    slug: 'elevenlabs-eleven-v4',
+    providerId: 'elevenlabs',
+    name: 'Eleven v4',
+    apiModelId: 'eleven_v4',
+    arenaApiId: 'eleven_v4',
+    status: 'active',
+    releaseDate: {
+      value: '2026-09-28',
+      sourceUrl: 'https://elevenlabs.io/blog/eleven-v4',
+      asOf: '2026-10-27',
+    },
+    stats: {
+      latencyMs: pipelineTtfb(
+        671,
+        'Median of 50 sequential Text to Dialogue WebSocket trials after two discarded warm ups, October 27, 2026; PCM 24 kHz; Clara v4 Instant Voice Clone; stability 0.35, similarity 0.95. Includes network RTT, excludes WebSocket connection setup.',
+        '2026-10-27',
+      ),
+      languages: {
+        value: '90+',
+        sourceUrl: 'https://elevenlabs.io/docs/overview/models',
+        asOf: '2026-10-27',
+      },
+      pricing: {
+        value: '$80',
+        sourceUrl: 'https://elevenlabs.io/pricing/api',
+        asOf: '2026-10-27',
+        note: 'Published ElevenAPI rate of $0.08 per 1K characters, normalized to $80 per 1M. Enterprise contract rates may differ.',
+      },
+      streaming: {
+        value: true,
+        sourceUrl: 'https://elevenlabs.io/docs/api-reference/text-to-dialogue/ttd-websocket',
+        asOf: '2026-10-27',
+      },
+      voiceCloning: {
+        value: 'Instant voice cloning',
+        sourceUrl: 'https://elevenlabs.io/v4',
+        asOf: '2026-10-27',
+        note: 'The benchmark uses fresh Instant Voice Clones from 30 second licensed reference samples, rather than the earlier models\' professional clones.',
+      },
+    },
+    voiceProfile: 28,
+    sample: {
+      fallbackClip: clip('voice-clara', 'elevenlabs', 'eleven_v4', 'clip-01', '17d6989e9041b64197bac2c032945c5b'),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: ["Eleven v4 is the quality focused member of the v4 family, released on September 28, 2026. ElevenLabs describes a new architecture with greater control over emotional delivery, more reliable speaker identity, and support for more than 90 languages. The Index evaluates its plain English scripted output using the same licensed source speakers as every other model."],
+        sourceUrls: ['https://elevenlabs.io/blog/eleven-v4', 'https://elevenlabs.io/docs/overview/models'],
+      },
+      {
+        heading: 'On the Index',
+        paragraphs: ["The arena clips use four fresh Instant Voice Clones made from 30 second excerpts of the licensed Clara, Emma, Godfrey, and Nelliot recordings. Each clone reads all 20 frozen prompts through the Text to Dialogue WebSocket with stability 0.35 and similarity 0.95. Our October 27, 2026 benchmark measured a median of 671 ms to first audio over 50 sequential PCM streaming trials after two discarded warm ups, using the same Clara clone and including network RTT."],
+        sourceUrls: ['https://elevenlabs.io/docs/api-reference/text-to-dialogue/ttd-websocket', 'https://elevenlabs.io/v4'],
+      },
+    ],
+    faq: [
+      HOW_TESTED('Eleven v4'),
+      {
+        question: 'How does Eleven v4 differ from Eleven v4 Turbo?',
+        answer: 'Eleven v4 is tuned for produced speech where quality is the priority. Eleven v4 Turbo targets realtime speech generation. Both use the same four cloned benchmark speakers and the same 20 English prompts here; synthesis latency is measured separately from listener votes.',
+      },
+    ],
+  },
+
+  {
+    id: 'elevenlabs-eleven-v4-turbo',
+    slug: 'elevenlabs-eleven-v4-turbo',
+    providerId: 'elevenlabs',
+    name: 'Eleven v4 Turbo',
+    apiModelId: 'eleven_v4_turbo',
+    arenaApiId: 'eleven_v4_turbo',
+    status: 'active',
+    releaseDate: {
+      value: '2026-09-28',
+      sourceUrl: 'https://elevenlabs.io/blog/eleven-v4',
+      asOf: '2026-10-27',
+    },
+    stats: {
+      latencyMs: pipelineTtfb(
+        158,
+        'Median of 50 sequential Text to Dialogue WebSocket trials after two discarded warm ups, October 27, 2026; PCM 24 kHz; Clara v4 Instant Voice Clone; stability 0.35, similarity 0.95. Includes network RTT, excludes WebSocket connection setup.',
+        '2026-10-27',
+      ),
+      languages: {
+        value: '90+',
+        sourceUrl: 'https://elevenlabs.io/docs/overview/models',
+        asOf: '2026-10-27',
+      },
+      pricing: {
+        value: '$40',
+        sourceUrl: 'https://elevenlabs.io/pricing/api',
+        asOf: '2026-10-27',
+        note: 'Published ElevenAPI rate of $0.04 per 1K characters, normalized to $40 per 1M. Enterprise contract rates may differ.',
+      },
+      streaming: {
+        value: true,
+        sourceUrl: 'https://elevenlabs.io/docs/api-reference/text-to-dialogue/ttd-websocket',
+        asOf: '2026-10-27',
+      },
+      voiceCloning: {
+        value: 'Instant voice cloning',
+        sourceUrl: 'https://elevenlabs.io/v4',
+        asOf: '2026-10-27',
+        note: 'The benchmark uses fresh Instant Voice Clones from 30 second licensed reference samples, rather than the earlier models\' professional clones.',
+      },
+    },
+    voiceProfile: 29,
+    sample: {
+      fallbackClip: clip('voice-clara', 'elevenlabs', 'eleven_v4_turbo', 'clip-01', 'c1f6869597f47529698486cced781df6'),
+    },
+    copy: [
+      {
+        heading: 'Background',
+        paragraphs: ["Eleven v4 Turbo is the realtime member of the v4 family, released on September 28, 2026. It brings the expressive v4 architecture to streaming voice agents and supports more than 90 languages. The Index evaluates the speech synthesizer on fixed English scripts; these clips do not measure the surrounding agent or turn taking system."],
+        sourceUrls: ['https://elevenlabs.io/blog/eleven-v4', 'https://elevenlabs.io/docs/overview/models'],
+      },
+      {
+        heading: 'On the Index',
+        paragraphs: ["The arena clips use four fresh Instant Voice Clones made from 30 second excerpts of the licensed Clara, Emma, Godfrey, and Nelliot recordings. Each clone reads all 20 frozen prompts through the Text to Dialogue WebSocket with stability 0.35 and similarity 0.95. Our October 27, 2026 benchmark measured a median of 158 ms to first audio over 50 sequential PCM streaming trials after two discarded warm ups, using the same Clara clone and including network RTT."],
+        sourceUrls: ['https://elevenlabs.io/docs/api-reference/text-to-dialogue/ttd-websocket', 'https://elevenlabs.io/v4'],
+      },
+    ],
+    faq: [
+      HOW_TESTED('Eleven v4 Turbo'),
+      {
+        question: 'How does Eleven v4 Turbo differ from Eleven v4?',
+        answer: 'Eleven v4 is tuned for produced speech where quality is the priority. Eleven v4 Turbo targets realtime speech generation. Both use the same four cloned benchmark speakers and the same 20 English prompts here; synthesis latency is measured separately from listener votes.',
       },
     ],
   },

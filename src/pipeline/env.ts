@@ -11,11 +11,14 @@ import { resolve } from 'node:path';
 const ENV_PATH = resolve(import.meta.dir, '.env');
 
 export const loadPipelineEnv = (): void => {
-  // The shared Development credential is named CARTESIA. Normalize the alias
-  // for transports and benchmark key discovery; the standard name takes priority.
+  // Normalize shared Development names for transports and benchmark discovery.
+  // Standard names take priority over aliases.
   const useAliases = (): void => {
     if (!process.env.CARTESIA_API_KEY?.trim() && process.env.CARTESIA?.trim()) {
       process.env.CARTESIA_API_KEY = process.env.CARTESIA;
+    }
+    if (!process.env.ELEVENLABS_API_KEY?.trim() && process.env.ELEVEN_LABS?.trim()) {
+      process.env.ELEVENLABS_API_KEY = process.env.ELEVEN_LABS;
     }
   };
   if (!existsSync(ENV_PATH)) {

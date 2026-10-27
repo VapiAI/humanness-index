@@ -130,7 +130,7 @@ const main = async (): Promise<void> => {
     process.exit(1);
   }
   const synthesize = transport.synthesize;
-  const voiceMap = requireVoiceMap(model.providerId);
+  const voiceMap = requireVoiceMap(model.providerId, model.vendorModelId);
 
   const upload = flags.has('upload');
   const force = flags.has('force');
