@@ -3,7 +3,7 @@
  * Register the four licensed source voices (Clara, Emma, Godfrey, Nelliot)
  * as clones on a provider, persisting ids to pipeline/voices.local.json.
  *
- *   bun run humanness:clone <provider> <source-clips-dir>
+ *   bun run humanness:clone <provider> <source-clips-dir> [--model <model-id>]
  *   bun run humanness:clone <provider> --list
  *   bun run humanness:clone <provider> --record voice-clara=<id> [...]
  *
@@ -22,6 +22,7 @@ import { join, resolve } from 'node:path';
 
 import { loadPipelineEnv } from './env';
 import { parseArgs } from './lib';
+import { resolvePipelineModel } from './models';
 import { transportFor } from './transports';
 import { inworldListVoices } from './transports/inworld';
 import { minimaxListClonedVoices } from './transports/minimax';
@@ -32,6 +33,7 @@ import {
   SOURCE_VOICE_IDS,
   type SourceVoiceId,
   type VoiceMap,
+  voiceMapKeyForModel,
 } from './voices';
 
 const AUDIO_EXTENSIONS = /\.(wav|mp3|flac|m4a)$/i;
@@ -63,7 +65,7 @@ const sampleFilesFor = (dir: string, voiceId: SourceVoiceId): string[] => {
     .map((name) => join(dir, name));
 };
 
-const listProviderVoices = async (providerId: string): Promise<void> => {
+const listProviderVoices = async (providerId: string, mapKey = providerId): Promise<void> => {
   if (providerId === 'murf') {
     const voices = await murfListClones();
     console.log(`murf workspace clones (${voices.length}):`);
@@ -86,7 +88,7 @@ const listProviderVoices = async (providerId: string): Promise<void> => {
   }
   console.log(
     `no list helper for ${providerId}; current known ids:\n` +
-      JSON.stringify(clonedVoiceIds()[providerId] ?? {}, null, 2),
+      JSON.stringify(clonedVoiceIds()[mapKey] ?? {}, null, 2),
   );
 };
 
@@ -101,8 +103,15 @@ const main = async (): Promise<void> => {
     process.exit(2);
   }
 
+  const modelKey = flags.get('model');
+  const model = typeof modelKey === 'string' ? resolvePipelineModel(modelKey) : null;
+  if (model && model.providerId !== providerId) {
+    throw new Error(`Model ${model.id} belongs to ${model.providerId}, not ${providerId}`);
+  }
+  const mapKey = voiceMapKeyForModel(providerId, model?.vendorModelId);
+
   if (flags.has('list')) {
-    await listProviderVoices(providerId);
+    await listProviderVoices(providerId, mapKey);
     return;
   }
 
@@ -126,7 +135,7 @@ const main = async (): Promise<void> => {
       }
       additions[voiceId as SourceVoiceId] = providerVoiceId;
     }
-    persistVoices(providerId, additions);
+    persistVoices(mapKey, additions);
     return;
   }
 
@@ -155,7 +164,7 @@ const main = async (): Promise<void> => {
   }
 
   const additions: VoiceMap = {};
-  const existing = clonedVoiceIds()[providerId] ?? {};
+  const existing = clonedVoiceIds()[mapKey] ?? {};
   for (const voiceId of SOURCE_VOICE_IDS) {
     if (existing[voiceId] && !flags.has('force')) {
       console.log(`= ${voiceId}: already registered (${existing[voiceId]})`);
@@ -166,7 +175,8 @@ const main = async (): Promise<void> => {
       console.error(`✗ ${voiceId}: no sample files found in ${dir}`);
       continue;
     }
-    const displayName = `Arena ${voiceId.replace(/^voice-/, '').replace(/^./, (c) => c.toUpperCase())}`;
+    const displayName = `Arena ${voiceId.replace(/^voice-/, '').replace(/^./, (c) => c.toUpperCase())}` +
+      (mapKey === 'elevenlabs-v4' ? ' v4' : '');
     try {
       const providerVoiceId = await transport.createClone({
         voiceKey: voiceId,
@@ -183,7 +193,7 @@ const main = async (): Promise<void> => {
   }
 
   if (Object.keys(additions).length > 0) {
-    persistVoices(providerId, additions);
+    persistVoices(mapKey, additions);
   }
   const stillMissing = SOURCE_VOICE_IDS.filter(
     (voiceId) => !{ ...existing, ...additions }[voiceId],

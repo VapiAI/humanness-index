@@ -86,13 +86,13 @@ const MARKS_DIR = resolve(import.meta.dir, '../../public/marks');
 
 describe('registry: ids, slugs, refs', () => {
   it('pins the collection counts (bump intentionally when adding entries)', () => {
-    // 13 providers / 26 models: the 12 vendors + 25 TTS models, plus the Human
+    // 13 providers / 28 models: the 12 vendors + 27 TTS models, plus the Human
     // baseline (provider `human`, model `human`). Two ElevenLabs entries are
-    // retired (2026-07-23), so the arena carries 24 of the 26.
+    // retired (2026-07-23), so the arena carries 26 of the 28.
     expect(BASE_PROVIDER_ENTRIES.length).toBe(13);
-    expect(BASE_MODEL_ENTRIES.length).toBe(26);
+    expect(BASE_MODEL_ENTRIES.length).toBe(28);
     expect(arenaProviderEntries().length).toBe(13);
-    expect(arenaModelEntries().length).toBe(24);
+    expect(arenaModelEntries().length).toBe(26);
     expect(BASE_MODEL_ENTRIES.filter((m) => m.status === 'unlisted')).toEqual([]);
   });
 
@@ -157,6 +157,8 @@ describe('registry: ids, slugs, refs', () => {
     // Elo 1200 on first live votes and join the table on first fetch.
     const UNSEEDED_MODEL_IDS = new Set([
       'elevenlabs-multilingual-v2',
+      'elevenlabs-eleven-v4',
+      'elevenlabs-eleven-v4-turbo',
       'minimax-speech-02-hd',
       'minimax-speech-02-turbo',
       'smallestai-lightning-v31',
@@ -342,6 +344,18 @@ const EXPECTED_MODELS = [
     name: 'Eleven v3',
   },
   {
+    id: 'elevenlabs-eleven-v4',
+    arenaId: 'elevenlabs:eleven_v4',
+    providerId: 'elevenlabs',
+    name: 'Eleven v4',
+  },
+  {
+    id: 'elevenlabs-eleven-v4-turbo',
+    arenaId: 'elevenlabs:eleven_v4_turbo',
+    providerId: 'elevenlabs',
+    name: 'Eleven v4 Turbo',
+  },
+  {
     id: 'cartesia-sonic',
     arenaId: 'cartesia:sonic',
     providerId: 'cartesia',
@@ -497,7 +511,7 @@ describe('server/catalog derivation equality', () => {
     expect([...PROVIDERS_BY_ID.values()]).toEqual(EXPECTED_PROVIDERS);
   });
 
-  it('derives the exact 96-variant matrix (ids feed the audio hashes)', () => {
+  it('derives the exact 104-variant matrix (ids feed the audio hashes)', () => {
     // The Human baseline now has clips for all four source voices, like every
     // other model.
     const HUMAN_VOICES = [
@@ -518,9 +532,9 @@ describe('server/catalog derivation equality', () => {
         modelId: model.id,
       })),
     );
-    // 23 active TTS models x 4 voices + the Human baseline x 4 recorded
-    // voices = 96 (retired models leave the variant matrix with the arena).
-    expect(VARIANTS.length).toBe(96);
+    // 25 active TTS models x 4 voices + the Human baseline x 4 recorded
+    // voices = 104 (retired models leave the variant matrix with the arena).
+    expect(VARIANTS.length).toBe(104);
     expect(VARIANTS).toEqual(expectedVariants);
   });
 
@@ -919,6 +933,8 @@ const EXPECTED_VOICE_STATS: Array<[string, string, string, string, string]> = [
   ['ElevenLabs', 'Flash v2', '226 ms', 'English', '$50'],
   ['ElevenLabs', 'Flash v2.5', '197 ms', '32', '$50'],
   ['ElevenLabs', 'Eleven v3', '758 ms', '70+', '$100'],
+  ['ElevenLabs', 'Eleven v4', '671 ms', '90+', '$80'],
+  ['ElevenLabs', 'Eleven v4 Turbo', '158 ms', '90+', '$40'],
   ['MiniMax', 'Speech 2.8', '325 ms', '40', '$60'],
   ['MiniMax', 'Speech 2 HD', '357 ms', '32', '$100'],
   ['MiniMax', 'Speech 2 Turbo', '315 ms', '32', '$60'],
@@ -1100,7 +1116,7 @@ describe('unlisted entries are excluded from every derived surface', () => {
         listedProviderEntries().some((entry) => entry.id === provider.id),
       ).toBe(false);
     }
-    expect(listedModelEntries().length).toBe(26);
+    expect(listedModelEntries().length).toBe(28);
     expect(listedProviderEntries().length).toBe(13);
   });
 });
@@ -1143,6 +1159,8 @@ describe('frozen URL slugs (adjusted for the Grok rename)', () => {
     expect(slugById.get('cartesia-sonic-36')).toBe('cartesia-sonic-3-6');
     expect(slugById.get('elevenlabs-turbo-v25')).toBe('elevenlabs-turbo-v2-5');
     expect(slugById.get('elevenlabs-flash-v25')).toBe('elevenlabs-flash-v2-5');
+    expect(slugById.get('elevenlabs-eleven-v4')).toBe('elevenlabs-eleven-v4');
+    expect(slugById.get('elevenlabs-eleven-v4-turbo')).toBe('elevenlabs-eleven-v4-turbo');
     expect(slugById.get('minimax-minimax-tts')).toBe('minimax-tts');
     expect(slugById.get('gradium-gradium-tts')).toBe('gradium-tts');
     expect(slugById.get('inworld-tts-15-max')).toBe('inworld-tts-1-5-max');

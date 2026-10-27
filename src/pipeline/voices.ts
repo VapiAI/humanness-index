@@ -41,6 +41,14 @@ const STATIC_CLONED_VOICE_IDS: Record<string, VoiceMap> = {
     'voice-godfrey': '0jNCeOHaNZsiWL2WCbBV',
     'voice-nelliot': 'YcoL0DQXdQl4JjCqteDM',
   },
+  // Fresh IVCs from the licensed source recordings, verified on both v4
+  // models. Keep the earlier models' professional-clone map unchanged.
+  'elevenlabs-v4': {
+    'voice-clara': '8gfyLJBl74bSIkLdjo6i',
+    'voice-emma': 'lMvwNeETciJrFHgoxr14',
+    'voice-godfrey': 'bK0wdWcE86kPv8pU6AUv',
+    'voice-nelliot': 'PC50bwd8nb5m2FErOfAW',
+  },
   // Existing Vapi-owned V3 professional clones, recovered 2026-10-26.
   // Each lists sonic-3.6-2026-08-27 in fine_tunes.public_model_id.
   // Provider handles changed; arena voice identities and hosted hashes do not.
@@ -98,16 +106,27 @@ export const clonedVoiceIds = (): Record<string, VoiceMap> => {
   return merged;
 };
 
-/** Full 4-voice map for a provider, or a clear error naming what is missing. */
+/** Some model families need different clones without changing older renders. */
+export const voiceMapKeyForModel = (providerId: string, vendorModelId?: string): string =>
+  providerId === 'elevenlabs' &&
+  (vendorModelId === 'eleven_v4' || vendorModelId === 'eleven_v4_turbo')
+    ? 'elevenlabs-v4'
+    : providerId;
+
+/** Full 4-voice map for a provider/model, or a clear missing-clone error. */
 export const requireVoiceMap = (
   providerId: string,
+  vendorModelId?: string,
 ): Record<SourceVoiceId, string> => {
-  const map = clonedVoiceIds()[providerId] ?? {};
+  const mapKey = voiceMapKeyForModel(providerId, vendorModelId);
+  const map = clonedVoiceIds()[mapKey] ?? {};
   const missing = SOURCE_VOICE_IDS.filter((voiceId) => !map[voiceId]);
   if (missing.length > 0) {
     throw new Error(
-      `Provider ${providerId} is missing cloned voice ids for: ${missing.join(', ')}. ` +
-        `Run \`bun run humanness:clone ${providerId} <source-clips-dir>\` first (see pipeline/RUNBOOK.md).`,
+      `Voice map ${mapKey} is missing cloned voice ids for: ${missing.join(', ')}. ` +
+        `Run \`bun run humanness:clone ${providerId} <source-clips-dir>\`` +
+        (vendorModelId ? ' with --model <catalog-model-id>' : '') +
+        ' first (see pipeline/RUNBOOK.md).',
     );
   }
   return map as Record<SourceVoiceId, string>;

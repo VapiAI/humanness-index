@@ -10,6 +10,8 @@ import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
 import { requireEnv } from '../env';
+import { requireVoiceMap } from '../voices';
+import { dialogueTtfbPlan, synthesizeDialogue } from './elevenlabsDialogue';
 import {
   anyBytesMarker,
   BENCH_TEXT,
@@ -39,24 +41,30 @@ const REALTIME_WS_MODELS = new Set([
 ]);
 
 const apiKey = (): string => requireEnv('ELEVENLABS_API_KEY');
+const isV4 = (model: string): boolean => model === 'eleven_v4' || model === 'eleven_v4_turbo';
 
 export const elevenlabs: ProviderTransport = {
   providerId: 'elevenlabs',
   apiKeyEnv: 'ELEVENLABS_API_KEY',
 
-  synthesize: async ({ vendorModelId, providerVoiceId, text }) => ({
-    bytes: await postJsonForBytes(
-      `${API}/v1/text-to-speech/${providerVoiceId}?output_format=mp3_44100_128`,
-      { 'xi-api-key': apiKey(), accept: 'audio/mpeg' },
-      {
-        text,
-        model_id: vendorModelId,
-        voice_settings: ARENA_VOICE_SETTINGS,
-      },
-      'elevenlabs',
-    ),
-    format: 'mp3' as const,
-  }),
+  synthesize: async ({ vendorModelId, providerVoiceId, text }) => {
+    if (isV4(vendorModelId)) {
+      return synthesizeDialogue(vendorModelId, providerVoiceId, text, apiKey());
+    }
+    return {
+      bytes: await postJsonForBytes(
+        `${API}/v1/text-to-speech/${providerVoiceId}?output_format=mp3_44100_128`,
+        { 'xi-api-key': apiKey(), accept: 'audio/mpeg' },
+        {
+          text,
+          model_id: vendorModelId,
+          voice_settings: ARENA_VOICE_SETTINGS,
+        },
+        'elevenlabs',
+      ),
+      format: 'mp3' as const,
+    };
+  },
 
   createClone: async ({ displayName, sampleFiles }) => {
     const form = new FormData();
@@ -78,6 +86,10 @@ export const elevenlabs: ProviderTransport = {
   },
 
   ttfbPlanFor: (vendorModelId): TtfbPlan => {
+    if (isV4(vendorModelId)) {
+      const clara = requireVoiceMap('elevenlabs', vendorModelId)['voice-clara'];
+      return dialogueTtfbPlan(vendorModelId, clara, apiKey());
+    }
     if (REALTIME_WS_MODELS.has(vendorModelId)) {
       return {
         transport: 'websocket',

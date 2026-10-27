@@ -233,6 +233,35 @@ dropped in; the originals supersede them.)
   mp3_44100_128. Keep these or the new clips will not match the family
   sound. Multilingual v2 and v3 are rejected by the realtime stream-input
   WS; their TTFB runs on the chunked HTTP /stream endpoint.
+- **ElevenLabs v4 (2026-10-27)**: `eleven_v4` and `eleven_v4_turbo` use
+  the Text to Dialogue WebSocket, with the exact model ID in the URL and
+  one complete, unchanged prompt per connection. Send the voice/settings
+  frame, the single-speaker input, then `close_socket: true` to flush short
+  lines. Collect audio until `is_final`, rejecting an earlier close.
+  Settings are stability 0.35 and similarity 0.95; this protocol does not
+  use the older adapter's style/speaker-boost settings. Synthesis requests
+  MP3 44.1 kHz/128 kbps and uses the canonical mono conversion.
+  Four fresh Instant Voice Clones were created from 30-second excerpts of
+  the licensed source recordings: Clara Recording 2, Emma Recording 2,
+  Godfrey Recording 1 and Nelliot's Jordan recording. All four work on both
+  exact model IDs. The `elevenlabs-v4` map in `voices.ts` keeps these separate
+  from the earlier models' professional clones. Use `humanness:clone
+  elevenlabs <samples> --model elevenlabs-eleven-v4` for this family.
+  The Development variable `ELEVEN_LABS` is accepted as an alias for
+  `ELEVENLABS_API_KEY`; the standard name takes priority.
+  Each model has 80 generated, uploaded and HEAD-verified clips, with no
+  regeneration or manual audio edits. All 160 passed duration, encoding
+  and local Whisper transcript checks; Amanda approved samples covering
+  all four voices on both models before upload. QA and manifests are in
+  gitignored `results/elevenlabs-v4/` and `results/clips/<model-id>/`.
+  TTFB uses the same Clara IVC, English and settings, with raw 24 kHz PCM
+  on the established WebSocket. Each run returned 50/50 timings after two
+  discarded warm-ups, zero errors and zero rate limits. v4: median 671 ms,
+  p90 727, min 563, max 836, stdev 63. v4 Turbo: median 158 ms, p90 213,
+  min 141, max 353, stdev 40. These include local-machine network RTT and
+  exclude connection setup. Raw trials and configuration are archived in
+  `results/elevenlabs-v4/ttfb-2026-10-27-50trial.json`.
+  Protocol: https://elevenlabs.io/docs/api-reference/text-to-dialogue/ttd-websocket.
 - **Cartesia (2026-10-26)**: Sonic 3.6 uses snapshot
   `sonic-3.6-2026-08-27`, with four existing Vapi-owned V3 professional clones.
   Three old committed handles returned 404; the recovered IDs in `voices.ts`
