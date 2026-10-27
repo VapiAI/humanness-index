@@ -5,8 +5,21 @@ and slug `openai-gpt-live-1`, provider `openai`, arena API id `gpt-live-1`.
 These identities become frozen once arena clips exist.
 
 OpenAI documents recording-based custom voices for this model. That satisfies
-the documented cloning capability, but access and fixed-script fidelity have
-not been tested. There is no active catalog entry, score, published latency,
+the documented cloning capability, but recording-voice access and fixed-script
+fidelity remain unverified. A project key was provisioned on 2026-10-27:
+authenticated model listing includes `gpt-live-1`, and a silent WebSocket session
+successfully returned `session.started` with that exact model, followed by
+`session.closed` with `close_requested` and zero usage seconds. No speech was
+requested or used from that connectivity check.
+
+Both documented consent read routes returned HTTP 404; the consent-list body
+said `Endpoint not found.` These responses do not distinguish entitlement,
+key scopes or route availability and do not establish that consent creation
+would fail. Stop repeating the failed reads; confirm the recording-based voice
+surface before uploading licensed audio. Request IDs and raw diagnostic
+summaries are retained locally under gitignored `results/openai/`.
+
+There is no active catalog entry, score, published latency,
 batch synthesis implementation, or uploaded GPT-Live clip in this change.
 Vapi product integration and multilingual/full duplex evaluation are outside
 this benchmark's scope.
